@@ -11,11 +11,11 @@
 
 ##编译准备
 
-JDK 1.7+
-Android SDK 23+
-Android NDK r10e+
+* JDK 1.7+
+* Android SDK 23+
+* Android NDK r10e+
 
-请使用最新版本的Android Studio以减少编译时遇到问题的可能。
+* 请使用最新版本的Android Studio以减少编译时遇到问题的可能。
 
 ##版本修改
 
