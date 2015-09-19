@@ -1,6 +1,5 @@
 package com.proxy.shadowsocksr;
 
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -70,7 +69,7 @@ public class SSRVPNService extends VpnService
             callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
         }
         catch (Exception e)
-        {//Ignore remote exception and nullpoint exception
+        {//Ignore remote exception and null point exception
         }
         stopRunner();
     }
@@ -201,8 +200,6 @@ public class SSRVPNService extends VpnService
         );
     }
 
-    private BroadcastReceiver receiver;
-
     private void startRunner()
     {
         vpnThread = new SSRVPNThread();
@@ -263,6 +260,7 @@ public class SSRVPNService extends VpnService
                         }
                     }
                     stopRunner();
+
                 }
             }
         }).start();
@@ -285,7 +283,7 @@ public class SSRVPNService extends VpnService
         StringBuilder s = new StringBuilder();
         for (String a : acl)
         {
-            s.append(a);
+            s.append(a).append(Consts.lineSept);
         }
         ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
 
@@ -295,7 +293,7 @@ public class SSRVPNService extends VpnService
                                        cfg.localPort,
                                        cfg.passwd,
                                        cfg.cryptMethod,
-                                       30);
+                                       20);
         ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-local-vpn.conf"));
 
         StringBuilder sb = new StringBuilder();
@@ -471,10 +469,11 @@ public class SSRVPNService extends VpnService
             stopSelf();
         }
 
-        if (receiver != null)
-        {
-            unregisterReceiver(receiver);
-        }
+        //        if (receiver != null)
+        //        {
+        //            unregisterReceiver(receiver);
+        //        }
+        //
     }
 
     private void killProcesses()
@@ -493,21 +492,21 @@ public class SSRVPNService extends VpnService
             }
         }
     }
-//
-//    private boolean isByPass(SubnetUtils net)
-//    {
-//        return net.getInfo().isInRange(cfg.server);
-//    }
-//
-//    private boolean isPrivateA(int a)
-//    {
-//        return a == 10 || a == 192 || a == 172;
-//    }
-//
-//    private boolean isPrivateB(int a, int b)
-//    {
-//        return a == 10 || (a == 192 && b == 168) || (a == 172 && b >= 16 && b < 32);
-//    }
+
+    //    private boolean isByPass(SubnetUtils net)
+    //    {
+    //        return net.getInfo().isInRange(cfg.server);
+    //    }
+    //
+    //    private boolean isPrivateA(int a)
+    //    {
+    //        return a == 10 || a == 192 || a == 172;
+    //    }
+    //
+    //    private boolean isPrivateB(int a, int b)
+    //    {
+    //        return a == 10 || (a == 192 && b == 168) || (a == 172 && b >= 16 && b < 32);
+    //    }
 
     class SSRVPNThread extends Thread
     {

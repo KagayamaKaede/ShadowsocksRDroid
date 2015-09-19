@@ -13,12 +13,10 @@ public class SSRBootReceiver extends BroadcastReceiver
         boolean isBoot = Hawk.get("AutoConnect");
         if (isBoot)
         {
-            Intent vpn = SSRVPNService.prepare(context);
-            if (vpn == null)
-            {
-                context.startService(new Intent(context, SSRVPNService.class));
-            }
-            //TODO: Use stub activity process vpn dialog result
+            Intent run = new Intent(context, StubActivity.class);
+            run.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            run.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            context.startActivity(run);
         }
     }
 }

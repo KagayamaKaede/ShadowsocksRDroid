@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
+import com.proxy.shadowsocksr.ui.DialogManager;
 import com.proxy.shadowsocksr.util.ShellUtil;
 import com.readystatesoftware.systembartint.SystemBarTintManager;
 
@@ -43,18 +44,17 @@ public class MainActivity extends Activity
     private PrefFragment pref;
     //
     private VPNServiceCallBack callback;
+    private ISSRService ssrs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        spinner = (Spinner) findViewById(R.id.spinner_nav);
-        fab = (FloatingActionButton) findViewById(R.id.fab);
+
         setupUI();
-        loadServerList();
         cfgKitKatTint();
+        loadServerList();
 
         if (savedInstanceState == null)
         {
@@ -62,8 +62,6 @@ public class MainActivity extends Activity
             getFragmentManager().beginTransaction().add(R.id.pref, pref).commit();
         }
     }
-
-    private ISSRService ssrs;
 
     @Override protected void onResume()
     {
@@ -73,14 +71,6 @@ public class MainActivity extends Activity
 
     @Override protected void onPause()
     {
-        try
-        {
-            ssrs.unRegisterISSRServiceCallBack(callback);
-        }
-        catch (RemoteException e)
-        {
-            e.printStackTrace();
-        }
         unbindService(this);
         super.onPause();
     }
@@ -92,7 +82,7 @@ public class MainActivity extends Activity
         try
         {
             ssrs.registerISSRServiceCallBack(callback);
-            if(ssrs.status())
+            if (ssrs.status())
             {
                 switchUI(false);
             }
@@ -105,7 +95,21 @@ public class MainActivity extends Activity
 
     @Override public void onServiceDisconnected(ComponentName name)
     {
+        if (ssrs != null)
+        {
+            try
+            {
+                ssrs.unRegisterISSRServiceCallBack(callback);
+            }
+            catch (RemoteException e)
+            {
+                e.printStackTrace();
+            }
+        }
         ssrs = null;
+
+        switchUI(true);
+
     }
 
     class VPNServiceCallBack extends ISSRServiceCallback.Stub
@@ -120,9 +124,15 @@ public class MainActivity extends Activity
                     {
                     case Consts.STATUS_CONNECTED:
                         switchUI(false);
+                        DialogManager.getInstance().dismissWaitDialog();
+                        Toast.makeText(MainActivity.this, "Connected", Toast.LENGTH_SHORT)
+                             .show();
                         break;
                     case Consts.STATUS_DISCONNECTED:
                         switchUI(true);
+                        DialogManager.getInstance().dismissWaitDialog();
+                        Toast.makeText(MainActivity.this, "Disconnected", Toast.LENGTH_SHORT)
+                             .show();
                         break;
                     }
                 }
@@ -132,6 +142,10 @@ public class MainActivity extends Activity
 
     private void setupUI()
     {
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        spinner = (Spinner) findViewById(R.id.spinner_nav);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        //
         toolbar.inflateMenu(R.menu.menu_main);
         toolbar.setOnMenuItemClickListener(this);
         //
@@ -224,10 +238,12 @@ public class MainActivity extends Activity
         return true;
     }
 
-    private Intent startS;
-
     @Override public void onClick(View v)
     {
+        if (ssrs == null)
+        {
+            return;
+        }
         try
         {
             if (ssrs.status())
@@ -262,8 +278,8 @@ public class MainActivity extends Activity
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 0 && resultCode == RESULT_OK)
         {
-            startS = new Intent(this, SSRVPNService.class);
-            startService(startS);
+            DialogManager.getInstance().showWaitDialog(this);
+            startService(new Intent(this, SSRVPNService.class));
             try
             {
                 ssrs.start();

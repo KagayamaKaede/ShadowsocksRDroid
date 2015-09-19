@@ -18,4 +18,6 @@ public class Consts
     public final static int STATUS_DISCONNECTED = 1;
     //
     public final static String TEMP_PREF_NAME = "73c5db1c-98b3-460e-9f6e-2a9f6897e43f";
+    //
+    public static String lineSept = System.getProperty("line.separator");
 }

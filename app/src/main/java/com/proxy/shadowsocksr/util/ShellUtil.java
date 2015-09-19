@@ -1,5 +1,7 @@
 package com.proxy.shadowsocksr.util;
 
+import com.proxy.shadowsocksr.Consts;
+
 import java.util.List;
 
 import eu.chainfire.libsuperuser.Shell;
@@ -83,7 +85,7 @@ public final class ShellUtil
                 {
                     for (String str : output)
                     {
-                        sb.append(str).append(System.getProperty("line.separator"));
+                        sb.append(str).append(Consts.lineSept);
                     }
                 }
             }

@@ -35,10 +35,10 @@
         <activity
             android:name=".ProxyAppsActivity"/>
 
-        <!--<activity-->
-            <!--android:name=".StubActivity"-->
-            <!--android:launchMode="singleTask"-->
-            <!--android:theme="@android:style/Theme.NoDisplay"/>-->
+        <activity
+            android:name=".StubActivity"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.NoDisplay"/>
 
         <service
             android:name=".SSRVPNService"

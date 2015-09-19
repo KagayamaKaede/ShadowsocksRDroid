@@ -32,4 +32,6 @@
     <string name="etc">Etc.</string>
     <string name="about">About</string>
     <string name="being_set">Being set</string>
+    <string name="warning">Warning!</string>
+    <string name="test_ver_tip">This is a test version!</string>
 </resources>

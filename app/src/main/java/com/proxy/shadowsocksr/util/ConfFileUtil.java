@@ -1,5 +1,7 @@
 package com.proxy.shadowsocksr.util;
 
+import com.proxy.shadowsocksr.Consts;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -31,115 +33,114 @@ public class ConfFileUtil
             "}";
 
     //TODO must split line?
-    public static String lineSept = System.getProperty("line.separator");
     public static String PDNSdLocal =
-            "global {" + lineSept +
-            " perm_cache = 2048;" + lineSept +
-            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + lineSept +
-            " server_ip = %s;" + lineSept +
-            " server_port = %d;" + lineSept +
-            " query_method = tcp_only;" + lineSept +
-            " run_ipv4 = on;" + lineSept +
-            " min_ttl = 15m;" + lineSept +
-            " max_ttl = 1w;" + lineSept +
-            " timeout = 10;" + lineSept +
-            " daemon = on;" + lineSept +
-            " pid_file = %s;" + lineSept +
-            "}" + lineSept +
-            "server {" + lineSept +
-            " label = \"local\";" + lineSept +
-            " ip = 127.0.0.1;" + lineSept +
-            " port = %d;" + lineSept +
-            " reject = ::/0;" + lineSept +
-            " reject_policy = negate;" + lineSept +
-            " reject_recursively = on;" + lineSept +
-            " timeout = 5;" + lineSept +
-            "}" + lineSept +
-            "rr {" + lineSept +
-            " name=localhost;" + lineSept +
-            " reverse=on;" + lineSept +
-            " a=127.0.0.1;" + lineSept +
-            " owner=localhost;" + lineSept +
-            " soa=localhost,root.localhost,42,86400,900,86400,86400;"+ lineSept +
+            "global {" + Consts.lineSept +
+            " perm_cache = 2048;" + Consts.lineSept +
+            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + Consts.lineSept +
+            " server_ip = %s;" + Consts.lineSept +
+            " server_port = %d;" + Consts.lineSept +
+            " query_method = tcp_only;" + Consts.lineSept +
+            " run_ipv4 = on;" + Consts.lineSept +
+            " min_ttl = 15m;" + Consts.lineSept +
+            " max_ttl = 1w;" + Consts.lineSept +
+            " timeout = 10;" + Consts.lineSept +
+            " daemon = on;" + Consts.lineSept +
+            " pid_file = %s;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "server {" + Consts.lineSept +
+            " label = \"local\";" + Consts.lineSept +
+            " ip = 127.0.0.1;" + Consts.lineSept +
+            " port = %d;" + Consts.lineSept +
+            " reject = ::/0;" + Consts.lineSept +
+            " reject_policy = negate;" + Consts.lineSept +
+            " reject_recursively = on;" + Consts.lineSept +
+            " timeout = 5;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "rr {" + Consts.lineSept +
+            " name=localhost;" + Consts.lineSept +
+            " reverse=on;" + Consts.lineSept +
+            " a=127.0.0.1;" + Consts.lineSept +
+            " owner=localhost;" + Consts.lineSept +
+            " soa=localhost,root.localhost,42,86400,900,86400,86400;"+ Consts.lineSept +
             "}";
 
     public static String PdNSdByPass =
-            "global {" + lineSept +
-            " perm_cache = 2048;" + lineSept +
-            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + lineSept +
-            " server_ip = %s;" + lineSept +
-            " server_port = %d;" + lineSept +
-            " query_method = tcp_only;" + lineSept +
-            " run_ipv4 = on;" + lineSept +
-            " min_ttl = 15m;" + lineSept +
-            " max_ttl = 1w;" + lineSept +
-            " timeout = 10;" + lineSept +
-            " daemon = on;" + lineSept +
-            " pid_file = %s;" + lineSept +
-            "}" + lineSept +
-            "server {" + lineSept +
-            " label = \"china-servers\";" + lineSept +
-            " ip = 114.114.114.114, 223.5.5.5;" + lineSept +
-            " uptest = none;" + lineSept +
-            " preset = on;" + lineSept +
-            " include = %s;" + lineSept +
-            " policy = excluded;" + lineSept +
-            " timeout = 2;" + lineSept +
-            "}" + lineSept +
-            "server {" + lineSept +
-            " label = \"local-server\";" + lineSept +
-            " ip = 127.0.0.1;" + lineSept +
-            " uptest = none;" + lineSept +
-            " preset = on;" + lineSept +
-            " timeout = 5;" + lineSept +
-            "}" + lineSept +
-            "rr {" + lineSept +
-            " name=localhost;" + lineSept +
-            " reverse=on;" + lineSept +
-            " a=127.0.0.1;" + lineSept +
-            " owner=localhost;" + lineSept +
-            " soa=localhost,root.localhost,42,86400,900,86400,86400;" + lineSept +
+            "global {" + Consts.lineSept +
+            " perm_cache = 2048;" + Consts.lineSept +
+            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + Consts.lineSept +
+            " server_ip = %s;" + Consts.lineSept +
+            " server_port = %d;" + Consts.lineSept +
+            " query_method = tcp_only;" + Consts.lineSept +
+            " run_ipv4 = on;" + Consts.lineSept +
+            " min_ttl = 15m;" + Consts.lineSept +
+            " max_ttl = 1w;" + Consts.lineSept +
+            " timeout = 10;" + Consts.lineSept +
+            " daemon = on;" + Consts.lineSept +
+            " pid_file = %s;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "server {" + Consts.lineSept +
+            " label = \"china-servers\";" + Consts.lineSept +
+            " ip = 114.114.114.114, 223.5.5.5;" + Consts.lineSept +
+            " uptest = none;" + Consts.lineSept +
+            " preset = on;" + Consts.lineSept +
+            " include = %s;" + Consts.lineSept +
+            " policy = excluded;" + Consts.lineSept +
+            " timeout = 2;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "server {" + Consts.lineSept +
+            " label = \"local-server\";" + Consts.lineSept +
+            " ip = 127.0.0.1;" + Consts.lineSept +
+            " uptest = none;" + Consts.lineSept +
+            " preset = on;" + Consts.lineSept +
+            " timeout = 5;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "rr {" + Consts.lineSept +
+            " name=localhost;" + Consts.lineSept +
+            " reverse=on;" + Consts.lineSept +
+            " a=127.0.0.1;" + Consts.lineSept +
+            " owner=localhost;" + Consts.lineSept +
+            " soa=localhost,root.localhost,42,86400,900,86400,86400;" + Consts.lineSept +
             "}";
 
     public static String PdNSdDirect =
-            "global {" + lineSept +
-            " perm_cache = 2048;" + lineSept +
-            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + lineSept +
-            " server_ip = %s;" + lineSept +
-            " server_port = %d;" + lineSept +
-            " query_method = tcp_only;" + lineSept +
-            " run_ipv4 = on;" + lineSept +
-            " min_ttl = 15m;" + lineSept +
-            " max_ttl = 1w;" + lineSept +
-            " timeout = 10;" + lineSept +
-            " daemon = on;" + lineSept +
-            " pid_file = %s;" + lineSept +
-            "}" + lineSept +
-            "server {" + lineSept +
-            " label = \"china-servers\";" + lineSept +
-            " ip = 114.114.114.114, 112.124.47.27;" + lineSept +
-            " timeout = 4;" + lineSept +
-            " reject = %s;" + lineSept + lineSept +
-            " reject_policy = fail;" + lineSept +
-            " reject_recursively = on;" + lineSept +
-            " exclude = %s;" + lineSept +
-            " policy = included;" + lineSept +
-            " preset = on;" + lineSept +
-            "}" + lineSept +
-            "server {" + lineSept +
-            " label = \"local-server\";" + lineSept +
-            " ip = 127.0.0.1;" + lineSept +
-            " port = %d;" + lineSept +
-            " reject = ::/0;" + lineSept +
-            " reject_policy = negate;" + lineSept +
-            " reject_recursively = on;" + lineSept +
-            "}" + lineSept +
-            "rr {" + lineSept +
-            " name=localhost;" + lineSept +
-            " reverse=on;" + lineSept +
-            " a=127.0.0.1;" + lineSept +
-            " owner=localhost;" + lineSept +
-            " soa=localhost,root.localhost,42,86400,900,86400,86400;"+ lineSept +
+            "global {" + Consts.lineSept +
+            " perm_cache = 2048;" + Consts.lineSept +
+            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + Consts.lineSept +
+            " server_ip = %s;" + Consts.lineSept +
+            " server_port = %d;" + Consts.lineSept +
+            " query_method = tcp_only;" + Consts.lineSept +
+            " run_ipv4 = on;" + Consts.lineSept +
+            " min_ttl = 15m;" + Consts.lineSept +
+            " max_ttl = 1w;" + Consts.lineSept +
+            " timeout = 10;" + Consts.lineSept +
+            " daemon = on;" + Consts.lineSept +
+            " pid_file = %s;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "server {" + Consts.lineSept +
+            " label = \"china-servers\";" + Consts.lineSept +
+            " ip = 114.114.114.114, 112.124.47.27;" + Consts.lineSept +
+            " timeout = 4;" + Consts.lineSept +
+            " reject = %s;" + Consts.lineSept + Consts.lineSept +
+            " reject_policy = fail;" + Consts.lineSept +
+            " reject_recursively = on;" + Consts.lineSept +
+            " exclude = %s;" + Consts.lineSept +
+            " policy = included;" + Consts.lineSept +
+            " preset = on;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "server {" + Consts.lineSept +
+            " label = \"local-server\";" + Consts.lineSept +
+            " ip = 127.0.0.1;" + Consts.lineSept +
+            " port = %d;" + Consts.lineSept +
+            " reject = ::/0;" + Consts.lineSept +
+            " reject_policy = negate;" + Consts.lineSept +
+            " reject_recursively = on;" + Consts.lineSept +
+            "}" + Consts.lineSept +
+            "rr {" + Consts.lineSept +
+            " name=localhost;" + Consts.lineSept +
+            " reverse=on;" + Consts.lineSept +
+            " a=127.0.0.1;" + Consts.lineSept +
+            " owner=localhost;" + Consts.lineSept +
+            " soa=localhost,root.localhost,42,86400,900,86400,86400;"+ Consts.lineSept +
             "}";
 
     public static void writeToFile(String c, File f)
