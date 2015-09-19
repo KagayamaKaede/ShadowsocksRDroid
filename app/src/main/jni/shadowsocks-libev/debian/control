@@ -1,0 +1,17 @@
+Source: shadowsocks-libev
+Section: net
+Priority: extra
+Maintainer: Max Lv <max.c.lv@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~), libssl-dev (>= 0.9.8), autotools-dev, mime-support, gawk
+Standards-Version: 3.8.4
+Homepage: http://www.shadowsocks.org
+Vcs-Git: https://github.com/shadowsocks/shadowsocks-libev.git
+Vcs-Browser: https://github.com/shadowsocks/shadowsocks-libev
+
+Package: shadowsocks-libev
+Replaces: shadowsocks (<< 1.5.3-2)
+Breaks: shadowsocks (<< 1.5.3-2)
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A lightweight and secure socks5 proxy.
+    Shadowsocks-libev is a lightweight and secure socks5 proxy for embedded devices and low end boxes.

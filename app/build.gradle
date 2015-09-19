@@ -1,0 +1,84 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.0"
+
+    defaultConfig {
+        applicationId "com.proxy.shadowsocksr"
+        minSdkVersion 17
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0 TEST"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        main {
+            jni.srcDirs = []
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    //noinspection GroovyAssignabilityCheck
+    task buildNative(type: Exec, description: 'Compile JNI source') {
+        def ndkBuild = getNdkDir() + "/ndk-build"
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            ndkBuild += ".cmd"
+        }
+        workingDir file('src/main')
+        commandLine "$ndkBuild", 'clean',
+                'NDK_APP_OUT=../../build/obj',
+                'NDK_APP_LIBS_OUT=../../libs',
+                'APP_BUILD_SCRIPT=jni/Android.mk',
+                'NDK_APPLICATION_MK=jni/Application.mk'
+        commandLine "$ndkBuild",
+                'NDK_APP_OUT=../../build/obj',
+                'NDK_APP_LIBS_OUT=../../libs',
+                'APP_BUILD_SCRIPT=jni/Android.mk',
+                'NDK_APPLICATION_MK=jni/Application.mk',
+                '-j', Runtime.runtime.availableProcessors()
+        //after compile please manually move bin to assets.
+    }
+
+    tasks.withType(JavaCompile) {
+        compileTask -> compileTask.dependsOn buildNative
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+
+def getNdkDir() {
+    if (System.env.ANDROID_NDK_ROOT != null) return System.env.ANDROID_NDK_ROOT
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def ndkdir = properties.getProperty('ndk.dir', null)
+    if (ndkdir == null) throw new GradleException("NDK location not found. Define location with ndk.dir in the local.properties file or with an ANDROID_NDK_ROOT environment variable.")
+    return ndkdir
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:design:23.0.1'
+    compile 'com.android.support:recyclerview-v7:23.0.1'
+    //Kitkat StatusBar Tint Color
+    compile 'com.readystatesoftware.systembartint:systembartint:1.0.3'
+    //Crypt Storage
+    compile 'com.orhanobut:hawk:1.18'
+    //Shell
+    compile project(':libsuperuser')
+    //DNS Resolve
+    compile files('libs/org.xbill.dns_2.1.7.jar')
+}

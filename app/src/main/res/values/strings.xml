@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">ShadowsocksR Droid</string>
+    <string name="fresh_dns_cache">Fresh DNS Cache(need root)</string>
+    <string name="add_server">Add Server</string>
+    <string name="del_current_server">Delete Current Server</string>
+    <string name="proxy_tip">Checked apps will use proxy access internet.</string>
+    <string name="configuration_label">Configuration Name</string>
+    <string name="server_host_name">Server host name or ip</string>
+    <string name="server_name">Server</string>
+    <string name="remote_server_port">Remote server\'s port</string>
+    <string name="remote_port">Remote Port</string>
+    <string name="local_port_to_listen">Local port to listen</string>
+    <string name="local_port">Local Port</string>
+    <string name="crypt_method">Crypt method</string>
+    <string name="not_set_yet">Not set yet</string>
+    <string name="password">Password</string>
+    <string name="whether_use_route">Whether use route</string>
+    <string name="route">Route</string>
+    <string name="global_proxy">Global Proxy</string>
+    <string name="set_proxy_for_sel_apps">Set proxy for selected apps</string>
+    <string name="per_add_proxy">Per App Proxy</string>
+    <string name="relay_udp_packet_to_remote_svr">Forward UDP packets to remote server</string>
+    <string name="udp_relay">UDP Forwarding</string>
+    <string name="start_ssr_on_boot">Enable ShadowsocksR Droid on startup</string>
+    <string name="auto_connect">Auto Connect</string>
+    <string name="direct_to_ssr_page">Open ShadowsocksR Droid GitHub page.</string>
+    <string name="all">All</string>
+    <string name="bypass_lan">Bypass Lan</string>
+    <string name="bypass_lan_list">Bypass Lan &amp; List</string>
+    <string name="server_configuration">Server Configuration</string>
+    <string name="global_configure">Global Configuration</string>
+    <string name="etc">Etc.</string>
+    <string name="about">About</string>
+    <string name="being_set">Being set</string>
+</resources>

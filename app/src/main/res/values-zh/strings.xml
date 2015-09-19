@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ShadowsocksR Droid</string>
+    <string name="add_server">添加服务器</string>
+    <string name="del_current_server">删除当前服务器</string>
+    <string name="fresh_dns_cache">刷新DNS缓存(需要root)</string>
+    <string name="proxy_tip">勾选的应用将通过代理访问互联网。</string>
+    <string name="auto_connect">自动连接</string>
+    <string name="configuration_label">配置名称</string>
+    <string name="crypt_method">加密方法</string>
+    <string name="direct_to_ssr_page">打开ShadowsocksR Droid GitHub页面</string>
+    <string name="global_proxy">全局代理</string>
+    <string name="local_port">本地端口</string>
+    <string name="local_port_to_listen">要监听的本地端口</string>
+    <string name="not_set_yet">尚未设置</string>
+    <string name="password">密码</string>
+    <string name="per_add_proxy">分应用代理</string>
+    <string name="reject" translatable="false"></string>
+    <string name="relay_udp_packet_to_remote_svr">转发UDP包到远程服务器</string>
+    <string name="remote_port">远程端口</string>
+    <string name="remote_server_port">远程服务器端口</string>
+    <string name="route">路由</string>
+    <string name="server_host_name">服务器主机名或IP地址</string>
+    <string name="server_name">服务器</string>
+    <string name="set_proxy_for_sel_apps">给选中的应用设置代理</string>
+    <string name="start_ssr_on_boot">开机自动启动ShadowsocksR Droid</string>
+    <string name="udp_relay">UDP转发</string>
+    <string name="whether_use_route">是否使用路由</string>
+    <string name="all">全局</string>
+    <string name="bypass_lan">绕过局域网</string>
+    <string name="bypass_lan_list">绕过局域网和列表</string>
+    <string name="about">关于</string>
+    <string name="etc">其它</string>
+    <string name="global_configure">全局设置</string>
+    <string name="server_configuration">服务器配置</string>
+    <string name="being_set">已设置</string>
+</resources>

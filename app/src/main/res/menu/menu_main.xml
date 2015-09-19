@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context=".MainActivity">
+    <item
+        android:id="@+id/action_fresh_dns_cache"
+        android:orderInCategory="100"
+        android:title="@string/fresh_dns_cache"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_add_server"
+        android:orderInCategory="100"
+        android:title="@string/add_server"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_del_server"
+        android:orderInCategory="100"
+        android:title="@string/del_current_server"
+        app:showAsAction="never"/>
+</menu>
