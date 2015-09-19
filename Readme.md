@@ -1,6 +1,6 @@
 # ShadowsocksR Droid
 
-[中文版本介绍](https://github.com/KagayamaKaede/ShadowsocksRDroid/Readme.cn.md)
+[中文版本介绍](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/Readme.cn.md)
 
 A ShadowsocksR client for Android4.2+(API Level 17+,and support 64bit cpu), written in Java.
 Compatible Shadowsocks(Shadowsocks-libev) protocol and will support ShadowsocksR protocol in the future.
@@ -19,7 +19,7 @@ Please use the latest version of Android Studio to reduce problems.
 
 ##Changes
 
-[Changes](https://github.com/KagayamaKaede/ShadowsocksRDroid/CHANGE.md)
+[Changes](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/CHANGE.md)
 
 ##Issues
 
