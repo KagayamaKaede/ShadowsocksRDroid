@@ -54,7 +54,6 @@ public class SSRVPNService extends VpnService
     }
 
     private SSRService binder;
-    //
 
     @Override public IBinder onBind(Intent intent)
     {
@@ -219,48 +218,61 @@ public class SSRVPNService extends VpnService
                     if (ip == null)
                     {
                         stopRunner();
+                        try
+                        {
+                            callback.onStatusChanged(Consts.STATUS_FAILED);
+                        }
+                        catch (Exception e)
+                        {//Ignore remoteexcetpion and nullpoint
+                        }
                         return;
                     }
                     cfg.server = ip;
-                    //
-                    startSSRDaemon();
-                    if (cfg.dnsForward)
+                }
+                //
+                startSSRDaemon();
+                if (cfg.dnsForward)
+                {
+                    startDnsDaemon();
+                    startDnsTunnel();
+                }
+                //
+                int fd = startVpn();
+                if (fd != -1)
+                {
+                    int tries = 1;
+                    while (tries < 5)
                     {
-                        startDnsDaemon();
-                        startDnsTunnel();
-                    }
-                    //
-                    int fd = startVpn();
-                    if (fd != -1)
-                    {
-                        int tries = 1;
-                        while (tries < 5)
+                        try
                         {
+                            Thread.sleep(1000 * tries);
+                        }
+                        catch (InterruptedException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        if (Jni.sendFd(fd) != -1)
+                        {
+                            isVPNConnected = true;
                             try
                             {
-                                Thread.sleep(1000 * tries);
+                                callback.onStatusChanged(Consts.STATUS_CONNECTED);
                             }
-                            catch (InterruptedException e)
-                            {
-                                e.printStackTrace();
+                            catch (Exception e)
+                            {//Ignore remoteexcetpion and nullpoint
                             }
-                            if (Jni.sendFd(fd) != -1)
-                            {
-                                isVPNConnected = true;
-                                try
-                                {
-                                    callback.onStatusChanged(Consts.STATUS_CONNECTED);
-                                }
-                                catch (Exception e)
-                                {//Ignore remoteexcetpion and nullpoint
-                                }
-                                return;
-                            }
-                            tries++;
+                            return;
                         }
+                        tries++;
                     }
-                    stopRunner();
-
+                }
+                stopRunner();
+                try
+                {
+                    callback.onStatusChanged(Consts.STATUS_FAILED);
+                }
+                catch (Exception e)
+                {//Ignore remoteexcetpion and nullpoint
                 }
             }
         }).start();
@@ -405,7 +417,6 @@ public class SSRVPNService extends VpnService
 
         if (conn == null)
         {
-            stopRunner();
             return -1;
         }
 
@@ -468,12 +479,6 @@ public class SSRVPNService extends VpnService
         {
             stopSelf();
         }
-
-        //        if (receiver != null)
-        //        {
-        //            unregisterReceiver(receiver);
-        //        }
-        //
     }
 
     private void killProcesses()
