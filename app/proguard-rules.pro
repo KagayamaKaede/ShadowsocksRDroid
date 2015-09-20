@@ -7,12 +7,11 @@
 -ignorewarning
 
 -optimizations !code/simplification/arithmetic,!field/*,!class/merging/* #Confusion algorithm
--optimizations !code/simplification/arithmetic
 -optimizations !code/simplification/cast
 
 -allowaccessmodification
 -useuniqueclassmembernames
--keepattributes SourceFile,LineNumberTable
+-keepattributes *Annotation*,Exceptions,Signature,SourceFile,LineNumberTable,InnerClass,EnclosingMethod
 -dontwarn android.support.**
 -dontskipnonpubliclibraryclasses -dontskipnonpubliclibraryclassmembers
 
@@ -27,12 +26,11 @@
 #-printmapping pgd_mapping.txt
 
 # 混淆jar
-#-libraryjars libs/juniversalchardet-1.0.3.jar
+#-libraryjars libs/org.xbill.dns_2.1.7.jar
 
-#保护注解
--keepattributes Signature
--keepattributes *Annotation*
--keepattributes EnclosingMethod
+-keepclassmembers class **.R$* {
+    public static <fields>;
+}
 
 # 不混淆 下面类及其子类
 -keep public class * extends android.app.Fragment
@@ -56,10 +54,14 @@
   public static final android.os.Parcelable$Creator *;
 }
 
+
 #不混淆Serializable的子类
 -keepclassmembers class * implements java.io.Serializable {
     static final long serialVersionUID;
     private static final java.io.ObjectStreamField[] serialPersistentFields;
+    !static !transient <fields>;
+    !private <fields>;
+    !private <methods>;
     private void writeObject(java.io.ObjectOutputStream);
     private void readObject(java.io.ObjectInputStream);
     java.lang.Object writeReplace();
@@ -103,14 +105,13 @@
 # 不混淆v4库
 -keep class android.support.v4.** { *; }
 -keep interface android.support.v4.** { *; }
-
-#-keep public class * extends android.support.v4.view.ActionProvider {
-#    public <init>(android.content.Context);
-#}
+-keep public class * extends android.support.v4.view.ActionProvider {
+    public <init>(android.content.Context);
+}
 
 # LeakCanary
--keep class org.eclipse.mat.** { *; }
--keep class com.squareup.leakcanary.** { *; }
+#-keep class org.eclipse.mat.** { *; }
+#-keep class com.squareup.leakcanary.** { *; }
 
 # class$ methods are inserted by some compilers to implement .class construct,
 -keepclassmembernames class * {
@@ -124,35 +125,14 @@
     @com.google.common.annotations.VisibleForTesting *;
 }
 
-##########################
-#Keep square Retrofit okhttp stuff
-#-dontwarn com.squareup.okhttp.internal.huc.**
-#-dontwarn okio.**
-#-dontwarn com.google.appengine.api.urlfetch.**
-#-dontwarn rx.**
-#-keep class com.squareup.** { *; }
-#-keep class com.viselabs.aquariummanager.util.seneye.** { *; }
-#-keep class retrofit.http.* { *; }
-#-keep class retrofit.** { *; }
-#-keepclasseswithmembers class * {
-#    @retrofit.** *;
-#}
-#-keepclassmembers class * {
-#    @retrofit.** *;
-#}
-
-# OkHttp oddities
-#-dontwarn com.squareup.okhttp.internal.http.*
-#-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
-#-keepnames class com.levelup.http.okhttp.** { *; }
-#-keepnames interface com.levelup.http.okhttp.** { *; }
-#-keepnames class com.squareup.okhttp.** { *; }
-#-keepnames interface com.squareup.okhttp.** { *; }
-
 # Keep GSON stuff
-#-keep class sun.misc.Unsafe { *; }
-#-keep class com.google.gson.** { *; }
+-keep class sun.misc.Unsafe { *; }
+-keep class com.google.gson.** { *; }
+
 # Application classes that will be serialized/deserialized over Gson
 #-keep class com.xxx.xxx.** { *; }#保持实体数据结构接口不被混淆(也就是被GSON注解的实体结构) 此处xxx.xxx是自己接口的包名
 
 #-keep class com.xxx.xxx.** { *; }#保持WEB接口不被混淆 此处xxx.xxx是自己接口的包名
+
+-keep class * extends android.os.IInterface
+-keep class * extends android.os.Binder

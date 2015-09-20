@@ -19,9 +19,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.orhanobut.hawk.Hawk;
+import com.proxy.shadowsocksr.etc.SSProfile;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
 import com.proxy.shadowsocksr.ui.DialogManager;
+import com.proxy.shadowsocksr.util.SSAddressUtil;
 import com.proxy.shadowsocksr.util.ShellUtil;
 import com.readystatesoftware.systembartint.SystemBarTintManager;
 
@@ -109,7 +113,6 @@ public class MainActivity extends Activity
         ssrs = null;
 
         switchUI(true);
-
     }
 
     class VPNServiceCallBack extends ISSRServiceCallback.Stub
@@ -126,6 +129,13 @@ public class MainActivity extends Activity
                         switchUI(false);
                         DialogManager.getInstance().dismissWaitDialog();
                         Toast.makeText(MainActivity.this, R.string.connected, Toast.LENGTH_SHORT)
+                             .show();
+                        break;
+                    case Consts.STATUS_FAILED:
+                        switchUI(true);
+                        DialogManager.getInstance().dismissWaitDialog();
+                        Toast.makeText(MainActivity.this, R.string.connect_failed,
+                                       Toast.LENGTH_SHORT)
                              .show();
                         break;
                     case Consts.STATUS_DISCONNECTED:
@@ -183,14 +193,14 @@ public class MainActivity extends Activity
         spinner.setSelection(spinnerAdapter.getPosition(cur));
     }
 
-    public void addDftServer()
+    public void addNewServer(String server, int rmtPort, String method, String pwd)
     {
         Map<String, String> map = new HashMap<>();
         String lbl = "Svr-" + System.currentTimeMillis();
-        map.put("Server", Consts.defaultIP);
-        map.put("RemotePort", String.valueOf(Consts.remotePort));
-        map.put("CryptMethod", Consts.defaultMethod);
-        map.put("Password", Consts.defaultPassword);
+        map.put("Server", server);
+        map.put("RemotePort", String.valueOf(rmtPort));
+        map.put("CryptMethod", method);
+        map.put("Password", pwd);
         map.put("LocalPort", String.valueOf(Consts.localPort));
         Hawk.put(lbl, map);
 
@@ -205,10 +215,17 @@ public class MainActivity extends Activity
     {
         switch (item.getItemId())
         {
-        case R.id.action_add_server:
-            addDftServer();
+        case R.id.action_maunally_add_server:
+            addNewServer(
+                    Consts.defaultIP,
+                    Consts.remotePort,
+                    Consts.defaultMethod,
+                    Consts.defaultPassword);
             loadServerList();
             pref.reloadPref();
+            break;
+        case R.id.action_add_server_from_qrcode:
+            new IntentIntegrator(this).initiateScan();
             break;
         case R.id.action_del_server:
             ArrayList<String> list = Hawk.get("ServerList");
@@ -218,7 +235,11 @@ public class MainActivity extends Activity
             //
             if (list.size() == 0)
             {
-                addDftServer();
+                addNewServer(
+                        Consts.defaultIP,
+                        Consts.remotePort,
+                        Consts.defaultMethod,
+                        Consts.defaultPassword);
             }
             else
             {
@@ -276,22 +297,40 @@ public class MainActivity extends Activity
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 0 && resultCode == RESULT_OK)
+        switch (requestCode)
         {
-            DialogManager.getInstance().showWaitDialog(this);
-            startService(new Intent(this, SSRVPNService.class));
-            try
+        case 0:
+            if (resultCode == RESULT_OK)
             {
-                ssrs.start();
+                DialogManager.getInstance().showWaitDialog(this);
+                startService(new Intent(this, SSRVPNService.class));
+                try
+                {
+                    ssrs.start();
+                }
+                catch (RemoteException e)
+                {
+                    e.printStackTrace();
+                }
             }
-            catch (RemoteException e)
+            else
             {
-                e.printStackTrace();
+                switchUI(true);
             }
-        }
-        else
-        {
-            switchUI(true);
+            break;
+        default:
+            IntentResult scanResult = IntentIntegrator
+                    .parseActivityResult(requestCode, resultCode, data);
+            if (scanResult != null)
+            {
+                SSProfile pro = SSAddressUtil.getUtil().parse(scanResult.getContents());
+                if (pro != null)
+                {
+                    addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
+                    loadServerList();
+                    pref.reloadPref();
+                }
+            }
         }
     }
 

@@ -8,10 +8,17 @@
         android:title="@string/fresh_dns_cache"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/action_add_server"
+        android:id="@+id/action_maunally_add_server"
         android:orderInCategory="100"
         android:title="@string/add_server"
         app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_add_server_from_qrcode"
+        android:orderInCategory="100"
+        android:title="@string/add_svr_from_pic"
+        app:showAsAction="never"/>
+
     <item
         android:id="@+id/action_del_server"
         android:orderInCategory="100"

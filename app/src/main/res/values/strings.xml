@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">ShadowsocksR Droid</string>
     <string name="fresh_dns_cache">Fresh DNS Cache(need root)</string>
-    <string name="add_server">Add Server</string>
+    <string name="add_server">Manually Add Server</string>
     <string name="del_current_server">Delete Current Server</string>
     <string name="proxy_tip">Checked apps will use proxy access internet.</string>
     <string name="configuration_label">Configuration Name</string>
@@ -37,4 +37,6 @@
     <string name="connecting">Connecting&#8230;</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
+    <string name="connect_failed">Connect failed!</string>
+    <string name="add_svr_from_pic">Add Server From Picture</string>
 </resources>

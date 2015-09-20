@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ShadowsocksR Droid</string>
-    <string name="add_server">添加服务器</string>
+    <string name="add_server">手动添加服务器</string>
     <string name="del_current_server">删除当前服务器</string>
     <string name="fresh_dns_cache">刷新DNS缓存(需要root)</string>
     <string name="proxy_tip">勾选的应用将通过代理访问互联网。</string>

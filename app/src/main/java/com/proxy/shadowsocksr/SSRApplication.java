@@ -1,6 +1,5 @@
 package com.proxy.shadowsocksr;
 
-import android.app.AlertDialog;
 import android.app.Application;
 
 import com.orhanobut.hawk.Hawk;
@@ -47,11 +46,6 @@ public class SSRApplication extends Application
             Hawk.put("AutoConnect", false);
 
             Hawk.put("FirstUse", false);
-
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.warning)
-                    .setMessage(R.string.test_ver_tip)
-                    .show();
         }
     }
 }
