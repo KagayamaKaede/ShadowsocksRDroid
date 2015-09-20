@@ -125,13 +125,13 @@ public class MainActivity extends Activity
                     case Consts.STATUS_CONNECTED:
                         switchUI(false);
                         DialogManager.getInstance().dismissWaitDialog();
-                        Toast.makeText(MainActivity.this, "Connected", Toast.LENGTH_SHORT)
+                        Toast.makeText(MainActivity.this, R.string.connected, Toast.LENGTH_SHORT)
                              .show();
                         break;
                     case Consts.STATUS_DISCONNECTED:
                         switchUI(true);
                         DialogManager.getInstance().dismissWaitDialog();
-                        Toast.makeText(MainActivity.this, "Disconnected", Toast.LENGTH_SHORT)
+                        Toast.makeText(MainActivity.this, R.string.disconnected, Toast.LENGTH_SHORT)
                              .show();
                         break;
                     }

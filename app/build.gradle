@@ -10,12 +10,28 @@ android {
         applicationId "com.proxy.shadowsocksr"
         minSdkVersion 17
         targetSdkVersion 23
-        versionCode 1
-        versionName "1.0 TEST"
+        versionCode 2
+        versionName "1.0.1 Beta"
     }
     buildTypes {
-        release {
+        debug {
+            ndk {
+                moduleName "Jni"
+                stl "stlport_static"
+                abiFilters "armeabi-v7a"
+            }
             minifyEnabled false
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            ndk {
+                moduleName "Jni"
+                stl "stlport_static"
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            }
+            minifyEnabled true
+            zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

@@ -3,6 +3,8 @@ package com.proxy.shadowsocksr.ui;
 import android.app.ProgressDialog;
 import android.content.Context;
 
+import com.proxy.shadowsocksr.R;
+
 public class DialogManager
 {
     private DialogManager()
@@ -25,7 +27,7 @@ public class DialogManager
     public void showWaitDialog(Context cxt)
     {
         pd = new ProgressDialog(cxt);
-        pd.setMessage("Connecting...");
+        pd.setMessage(cxt.getString(R.string.connecting));
         pd.setIndeterminate(true);
         pd.setCancelable(false);
         pd.show();

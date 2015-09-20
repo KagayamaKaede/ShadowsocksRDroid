@@ -36,4 +36,7 @@
     <string name="being_set">已设置</string>
     <string name="test_ver_tip">这是一个测试版本软件！</string>
     <string name="warning">警告</string>
+    <string name="connected">已连接</string>
+    <string name="connecting">正在连接&#8230;</string>
+    <string name="disconnected">连接断开</string>
 </resources>

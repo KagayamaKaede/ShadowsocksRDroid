@@ -34,4 +34,7 @@
     <string name="being_set">Being set</string>
     <string name="warning">Warning!</string>
     <string name="test_ver_tip">This is a test version!</string>
+    <string name="connecting">Connecting&#8230;</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
 </resources>
