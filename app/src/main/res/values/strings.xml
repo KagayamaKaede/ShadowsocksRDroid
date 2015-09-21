@@ -44,4 +44,5 @@
     <string name="add_success">Add Success</string>
     <string name="add_canceled">Add Canceled</string>
     <string name="add_failed">Add Failed</string>
+    <string name="show_qr">Show current QRCode</string>
 </resources>

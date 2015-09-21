@@ -28,10 +28,6 @@
 # 混淆jar
 #-libraryjars libs/org.xbill.dns_2.1.7.jar
 
--keepclassmembers class **.R$* {
-    public static <fields>;
-}
-
 # 不混淆 下面类及其子类
 -keep public class * extends android.app.Fragment
 -keep public class * extends android.app.Activity
@@ -43,6 +39,10 @@
 -keep public class * extends android.preference.Preference
 -keep public class * extends android.support.v4.app.Fragment
 -keep public class com.android.vending.licensing.ILicensingService
+
+-keepclassmembers class **.R$* {
+    public static <fields>;
+}
 
 # 不混淆Native方法名
 -keepclasseswithmembernames class * {
@@ -100,7 +100,7 @@
 -keep public class android.support.design.R$* { *; }
 
 # 不混淆BuildConfig
-#-keep class com.example.BuildConfig { *; }
+#-keep class **.BuildConfig { *; }
 
 # 不混淆v4库
 -keep class android.support.v4.** { *; }

@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -20,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -28,8 +30,11 @@ import com.proxy.shadowsocksr.etc.SSProfile;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
 import com.proxy.shadowsocksr.ui.DialogManager;
 import com.proxy.shadowsocksr.util.SSAddressUtil;
+import com.proxy.shadowsocksr.util.ScreenUtil;
 import com.proxy.shadowsocksr.util.ShellUtil;
 import com.readystatesoftware.systembartint.SystemBarTintManager;
+
+import net.glxn.qrgen.android.QRCode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -292,6 +297,30 @@ public class MainActivity extends Activity
             //TODO: Android6 not test
             ShellUtil.runRootCmd(
                     new String[]{"ndc resolver flushdefaultif", "ndc resolver flushif wlan0"});
+            break;
+        case R.id.action_show_current_qrcode:
+            String cur = Hawk.get("CurrentServer");
+            HashMap<String, String> curmap = Hawk.get(cur);
+            String b64 = SSAddressUtil.getUtil().generate(new SSProfile(
+                    curmap.get("Server"),
+                    Integer.valueOf(curmap.get("RemotePort")),
+                    curmap.get("CryptMethod"),
+                    curmap.get("Password")
+            ));
+            if (b64 != null)
+            {
+                int px = ScreenUtil.dp2px(this, 200);
+                Bitmap bm = ((QRCode) QRCode.from(b64).withSize(px, px)).bitmap();
+                ImageView iv = new ImageView(this);
+                iv.setImageBitmap(bm);
+                AlertDialog ad = new AlertDialog.Builder(this)
+                        .setView(iv)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show();
+                iv.getLayoutParams().height = ScreenUtil.dp2px(this, 200);
+                iv.getLayoutParams().width = ScreenUtil.dp2px(this, 200);
+                iv.requestLayout();
+            }
             break;
         }
         return true;

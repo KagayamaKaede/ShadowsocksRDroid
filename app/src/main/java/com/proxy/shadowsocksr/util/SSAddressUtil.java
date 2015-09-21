@@ -3,7 +3,6 @@ package com.proxy.shadowsocksr.util;
 import android.util.Base64;
 
 import com.proxy.shadowsocksr.etc.SSProfile;
-import com.proxy.shadowsocksr.etc.SSRConfig;
 
 public class SSAddressUtil
 {
@@ -22,7 +21,7 @@ public class SSAddressUtil
         return util;
     }
 
-    public String generate(SSRConfig cfg)
+    public String generate(SSProfile cfg)
     {
         String path = String
                 .format("%s:%s@%s:%d", cfg.cryptMethod, cfg.passwd, cfg.server, cfg.remotePort);
