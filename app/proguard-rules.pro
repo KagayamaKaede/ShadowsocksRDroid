@@ -1,9 +1,10 @@
 -optimizationpasses 10
+-target 1.7
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 -dontoptimize
 -dontpreverify
-#-verbose # enable log
+-verbose
 -ignorewarning
 
 -optimizations !code/simplification/arithmetic,!field/*,!class/merging/* #Confusion algorithm
@@ -15,18 +16,8 @@
 -dontwarn android.support.**
 -dontskipnonpubliclibraryclasses -dontskipnonpubliclibraryclassmembers
 
-# 记录生成的日志数据,gradle build时在本项目根目录输出
-# apk 包内所有 class 的内部结构
-#-dump pgd_class_files.txt
-# 未混淆的类和成员
-#-printseeds pgd_seeds.txt
-# 列出从 apk 中删除的代码
-#-printusage pgd_unused.txt
-# 混淆前后的映射
-#-printmapping pgd_mapping.txt
-
-# 混淆jar
-#-libraryjars libs/org.xbill.dns_2.1.7.jar
+-dontwarn org.xbill.**
+-keep class com.proxy.shadowsocksr.** { *; }
 
 # 不混淆 下面类及其子类
 -keep public class * extends android.app.Fragment
