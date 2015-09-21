@@ -96,8 +96,8 @@ dependencies {
     //Shell
     compile project(':libsuperuser')
     //Encode/Decode QRCode
-    compile 'com.google.zxing:core:3.2.1'
-    compile 'com.journeyapps:zxing-android-embedded:3.0.3@aar'
+    //compile 'com.google.zxing:core:3.2.1'
+    //compile 'com.journeyapps:zxing-android-embedded:3.0.3@aar'
     //DNS Resolve
     compile files('libs/org.xbill.dns_2.1.7.jar')
 }

@@ -39,4 +39,11 @@
     <string name="connected">已连接</string>
     <string name="connecting">正在连接&#8230;</string>
     <string name="disconnected">连接断开</string>
+    <string name="add_canceled">取消添加</string>
+    <string name="add_failed">添加失败</string>
+    <string name="add_success">添加成功</string>
+    <string name="add_svr_from_pic">从二维码添加服务器</string>
+    <string name="connect_failed">连接失败！</string>
+    <string name="req_install_qrscan_app">是否安装 条码扫描器？</string>
+    <string name="req_install_qrscan_app_msg">我们需要 条码扫描器来扫描二维码，您想要安装它吗？</string>
 </resources>

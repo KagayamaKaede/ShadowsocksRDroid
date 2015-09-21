@@ -8,14 +8,14 @@
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!--scan qr code-->
-    <uses-permission android:name="android.permission.CAMERA"/>
+    <!--<uses-permission android:name="android.permission.CAMERA"/>-->
 
     <uses-permission-sdk-23 android:name="android.permission.INTERNET"/>
     <uses-permission-sdk-23 android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission-sdk-23 android:name="android.permission.ACCESS_SUPERUSER"/>
     <uses-permission-sdk-23 android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!--scan qr code-->
-    <uses-permission-sdk-23 android:name="android.permission.CAMERA"/>
+    <!--<uses-permission-sdk-23 android:name="android.permission.CAMERA"/>-->
 
     <application
         android:name=".SSRApplication"

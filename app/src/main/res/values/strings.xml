@@ -38,5 +38,10 @@
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
     <string name="connect_failed">Connect failed!</string>
-    <string name="add_svr_from_pic">Add Server From Picture</string>
+    <string name="add_svr_from_pic">Add Server From QRCode</string>
+    <string name="req_install_qrscan_app">Install Barcode Scanner?</string>
+    <string name="req_install_qrscan_app_msg">We need Barcode Scanner to scan QRCode.Would you like to install it?</string>
+    <string name="add_success">Add Success</string>
+    <string name="add_canceled">Add Canceled</string>
+    <string name="add_failed">Add Failed</string>
 </resources>

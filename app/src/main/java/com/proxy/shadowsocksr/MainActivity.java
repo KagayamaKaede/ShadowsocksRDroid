@@ -1,11 +1,15 @@
 package com.proxy.shadowsocksr;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -19,8 +23,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.etc.SSProfile;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
@@ -225,7 +227,43 @@ public class MainActivity extends Activity
             pref.reloadPref();
             break;
         case R.id.action_add_server_from_qrcode:
-            new IntentIntegrator(this).initiateScan();
+            //new IntentIntegrator(this).initiateScan();
+            //
+            //            Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            //            if (cap.resolveActivity(getPackageManager()) != null)
+            //            {
+            //                startActivityForResult(cap, 1);
+            //            }
+            //
+            Intent intent = new Intent("com.google.zxing.client.android.SCAN");
+            List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, 0);
+            if (activities.size() > 0)
+            {
+                intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+                startActivityForResult(intent, 1);
+            }
+            else
+            {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.req_install_qrscan_app)
+                        .setMessage(
+                                R.string.req_install_qrscan_app_msg)
+                        .setPositiveButton(android.R.string.ok,
+                                           new DialogInterface.OnClickListener()
+                                           {
+                                               @Override public void onClick(DialogInterface dialog,
+                                                       int which)
+                                               {
+                                                   Intent goToMarket = new Intent(
+                                                           Intent.ACTION_VIEW)
+                                                           .setData(Uri.parse(
+                                                                   "market://details?id=com.google.zxing.client.android"));
+                                                   startActivity(goToMarket);
+                                               }
+                                           })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            }
             break;
         case R.id.action_del_server:
             ArrayList<String> list = Hawk.get("ServerList");
@@ -318,19 +356,97 @@ public class MainActivity extends Activity
                 switchUI(true);
             }
             break;
-        default:
-            IntentResult scanResult = IntentIntegrator
-                    .parseActivityResult(requestCode, resultCode, data);
-            if (scanResult != null)
+        case 1:
+            if (resultCode == RESULT_OK)
             {
-                SSProfile pro = SSAddressUtil.getUtil().parse(scanResult.getContents());
-                if (pro != null)
+                String contents = data.getStringExtra("SCAN_RESULT");
+                if (contents != null)
                 {
-                    addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
-                    loadServerList();
-                    pref.reloadPref();
+                    SSProfile pro = SSAddressUtil.getUtil().parse(contents);
+                    if (pro != null)
+                    {
+                        addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
+                        loadServerList();
+                        pref.reloadPref();
+                        Toast.makeText(MainActivity.this, R.string.add_success, Toast.LENGTH_SHORT)
+                             .show();
+                        return;
+                    }
                 }
             }
+            else if (resultCode == RESULT_CANCELED)
+            {
+                Toast.makeText(MainActivity.this, R.string.add_canceled, Toast.LENGTH_SHORT)
+                     .show();
+                return;
+            }
+            Toast.makeText(MainActivity.this, R.string.add_failed, Toast.LENGTH_SHORT)
+                 .show();
+            break;
+        //        case 1:
+        //            if (resultCode == RESULT_OK)
+        //            {
+        //                Bundle extras = data.getExtras();
+        //                Bitmap bmp = (Bitmap) extras.get("data");
+        //
+        //                //
+        //                if (bmp != null)
+        //                {
+        //                    int[] intArray = new int[bmp.getWidth() * bmp.getHeight()];
+        //                    bmp.getPixels(intArray, 0, bmp.getWidth(), 0, 0, bmp.getWidth(),
+        //                                  bmp.getHeight());
+        //
+        //                    LuminanceSource source = new com.google.zxing.RGBLuminanceSource(
+        //                            bmp.getWidth(), bmp.getHeight(), intArray);
+        //                    BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+        //                    Reader reader = new MultiFormatReader();
+        //                    try
+        //                    {
+        //                        Result result = reader.decode(bitmap);
+        //
+        //                        SSProfile pro = SSAddressUtil.getUtil().parse(result.getText());
+        //                        if (pro != null)
+        //                        {
+        //                            addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
+        //                            loadServerList();
+        //                            pref.reloadPref();
+        //                            Toast.makeText(MainActivity.this, "Add Success", Toast.LENGTH_SHORT)
+        //                                 .show();
+        //                            return;
+        //                        }
+        //
+        //                    }
+        //                    catch (Exception e)
+        //                    {
+        //
+        //                        e.printStackTrace();
+        //                    }
+        //                }
+        //                //
+        //                Toast.makeText(MainActivity.this, "Add Failed", Toast.LENGTH_SHORT)
+        //                     .show();
+        //            }
+        //            else
+        //            {
+        //                Toast.makeText(MainActivity.this, "Add Canceled", Toast.LENGTH_SHORT)
+        //                     .show();
+        //            }
+        //            break;
+        //        default:
+        //            IntentResult scanResult = IntentIntegrator
+        //                    .parseActivityResult(requestCode, resultCode, data);
+        //            if (scanResult != null)
+        //            {
+        //                SSProfile pro = SSAddressUtil.getUtil().parse(scanResult.getContents());
+        //                if (pro != null)
+        //                {
+        //                    addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
+        //                    loadServerList();
+        //                    pref.reloadPref();
+        //                    return;
+        //                }
+        //            }
+        //            Toast.makeText(this, "Nothing...", Toast.LENGTH_SHORT).show();
         }
     }
 
