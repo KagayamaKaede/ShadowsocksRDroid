@@ -13,9 +13,11 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.system.OsConstants;
+import android.util.Log;
 
-import com.orhanobut.hawk.Hawk;
-import com.proxy.shadowsocksr.etc.SSRConfig;
+import com.proxy.shadowsocksr.items.ConnectProfile;
+import com.proxy.shadowsocksr.items.GlobalProfile;
+import com.proxy.shadowsocksr.items.SSProfile;
 import com.proxy.shadowsocksr.util.ConfFileUtil;
 import com.proxy.shadowsocksr.util.DNSUtil;
 import com.proxy.shadowsocksr.util.InetAddressUtil;
@@ -23,14 +25,13 @@ import com.proxy.shadowsocksr.util.ShellUtil;
 
 import java.io.File;
 import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -41,19 +42,18 @@ public class SSRVPNService extends VpnService
     private int VPN_MTU = 1500;
     private String PRIVATE_VLAN = "27.27.27.%s";
     private ParcelFileDescriptor conn;
+
+    private String session;
+    private SSProfile ssProfile;
+    private GlobalProfile globalProfile;
     private List<String> proxyApps;
-    private SSRConfig cfg;
     private SSRVPNThread vpnThread;
 
     private volatile boolean isVPNConnected = false;
 
-    @Override public void onCreate()
-    {
-        super.onCreate();
-        binder = new SSRService();
-    }
+    private ISSRServiceCallback callback = null;
 
-    private SSRService binder;
+    private SSRService binder = new SSRService();
 
     @Override public IBinder onBind(Intent intent)
     {
@@ -62,25 +62,30 @@ public class SSRVPNService extends VpnService
 
     @Override public void onRevoke()
     {
+        if (vpnThread != null)
+        {
+            vpnThread.stopThread();
+            vpnThread = null;
+        }
+
         isVPNConnected = false;
+
         try
         {
             callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
         }
-        catch (Exception e)
-        {//Ignore remote exception and null point exception
+        catch (RemoteException ignored)
+        {
         }
+
         stopRunner();
     }
-
-    private ISSRServiceCallback callback = null;
 
     class SSRService extends ISSRService.Stub
     {
         @Override public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
         throws RemoteException
-        {
-            //if user use system dialog close vpn,onRevoke will not called
+        {   //if user use system dialog close vpn,onRevoke will not called
             if (code == IBinder.LAST_CALL_TRANSACTION)
             {
                 onRevoke();
@@ -106,16 +111,24 @@ public class SSRVPNService extends VpnService
             callback = null;
         }
 
-        @Override public void start() throws RemoteException
+        @Override public void start(ConnectProfile cp) throws RemoteException
         {
-            loadConfig();
+            session = cp.label;
+            ssProfile = new SSProfile(cp.server, cp.remotePort, cp.localPort, cp.cryptMethod,
+                                      cp.passwd);
+            globalProfile = new GlobalProfile(cp.route, cp.globalProxy, cp.dnsForward,
+                                              cp.autoConnect);
+            if (!cp.globalProxy)
+            {
+                proxyApps = cp.proxyApps;
+            }
             checkDaemonFile();
             startRunner();
         }
 
         @Override public void stop() throws RemoteException
         {
-            stopRunner();
+            onRevoke();
         }
     }
 
@@ -126,22 +139,15 @@ public class SSRVPNService extends VpnService
             File f = new File(Consts.baseDir + fn);
             if (f.exists())
             {
-                if (!f.canRead() || !f.canWrite() || !f.canExecute())
+                if (!f.canRead() || !f.canExecute())
                 {
                     ShellUtil.runCmd("chmod 755 " + f.getAbsolutePath());
                 }
             }
             else
             {
-                try
-                {
-                    copyDaemonBin(fn, f);
-                    ShellUtil.runCmd("chmod 755 " + f.getAbsolutePath());
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
+                copyDaemonBin(fn, f);
+                ShellUtil.runCmd("chmod 755 " + f.getAbsolutePath());
             }
         }
 
@@ -159,7 +165,7 @@ public class SSRVPNService extends VpnService
             {
                 throw new IOException("Create File Failed!");
             }
-            InputStream is = am.open(abi + "/" + file);
+            InputStream is = am.open(abi + File.separator + file);
             FileOutputStream fos = new FileOutputStream(out);
             int length = is.read(buf);
             while (length > 0)
@@ -173,30 +179,8 @@ public class SSRVPNService extends VpnService
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            onRevoke();
         }
-    }
-
-    public void loadConfig()
-    {
-        boolean globalProxy = Hawk.get("GlobalProxy");
-        if (!globalProxy)
-        {
-            proxyApps = Hawk.get("PerAppProxy");
-        }
-        String label = Hawk.get("CurrentServer");
-        HashMap<String, String> map = Hawk.get(label);
-        cfg = new SSRConfig(
-                label,
-                map.get("Server"),
-                Integer.valueOf(map.get("RemotePort")),
-                Integer.valueOf(map.get("LocalPort")),
-                map.get("CryptMethod"),
-                map.get("Password"),
-                (String) Hawk.get("Route"),
-                globalProxy,
-                (Boolean) Hawk.get("UdpForwarding")
-        );
     }
 
     private void startRunner()
@@ -210,11 +194,13 @@ public class SSRVPNService extends VpnService
         {
             @Override public void run()
             {
-                if (!InetAddressUtil.isIPv4Address(cfg.server) &&
-                    !InetAddressUtil.isIPv6Address(cfg.server))
+                Log.e("EXC", ssProfile.server);
+                Log.e("EXC", globalProfile.route);
+                if (!InetAddressUtil.isIPv4Address(ssProfile.server) &&
+                    !InetAddressUtil.isIPv6Address(ssProfile.server))
                 {
                     DNSUtil du = new DNSUtil();
-                    String ip = du.resolve(cfg.server, true);
+                    String ip = du.resolve(ssProfile.server, true);
                     if (ip == null)
                     {
                         stopRunner();
@@ -222,16 +208,16 @@ public class SSRVPNService extends VpnService
                         {
                             callback.onStatusChanged(Consts.STATUS_FAILED);
                         }
-                        catch (Exception e)
-                        {//Ignore remoteexcetpion and nullpoint
+                        catch (Exception ignored)
+                        {//Ignore remote exception and null point exception
                         }
                         return;
                     }
-                    cfg.server = ip;
+                    ssProfile.server = ip;
                 }
                 //
                 startSSRDaemon();
-                if (cfg.dnsForward)
+                if (globalProfile.dnsForward)
                 {
                     startDnsDaemon();
                     startDnsTunnel();
@@ -258,7 +244,7 @@ public class SSRVPNService extends VpnService
                             {
                                 callback.onStatusChanged(Consts.STATUS_CONNECTED);
                             }
-                            catch (Exception e)
+                            catch (Exception ignored)
                             {//Ignore remoteexcetpion and nullpoint
                             }
                             return;
@@ -271,18 +257,49 @@ public class SSRVPNService extends VpnService
                 {
                     callback.onStatusChanged(Consts.STATUS_FAILED);
                 }
-                catch (Exception e)
+                catch (Exception ignored)
                 {//Ignore remoteexcetpion and nullpoint
                 }
             }
         }).start();
     }
 
+    private void stopRunner()
+    {
+        isVPNConnected = false;
+        if (vpnThread != null)
+        {
+            vpnThread.stopThread();
+            vpnThread = null;
+        }
+
+        //reset
+        killProcesses();
+
+        //close conn
+        if (conn != null)
+        {
+            try
+            {
+                conn.close();
+            }
+            catch (IOException ignored)
+            {
+            }
+            conn = null;
+        }
+        ////////////////
+        //stop service
+        if (callback == null)
+        {
+            stopSelf();
+        }
+    }
+
     private void startSSRDaemon()
     {
-        String route = Hawk.get("Route");
         String[] acl = new String[0];
-        switch (route)
+        switch (globalProfile.route)
         {
         case "bypass_lan":
             acl = getResources().getStringArray(R.array.private_route);
@@ -300,11 +317,11 @@ public class SSRVPNService extends VpnService
         ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
 
         String ssrconf = String.format(ConfFileUtil.SSRConf,
-                                       cfg.server,
-                                       cfg.remotePort,
-                                       cfg.localPort,
-                                       cfg.passwd,
-                                       cfg.cryptMethod,
+                                       ssProfile.server,
+                                       ssProfile.remotePort,
+                                       ssProfile.localPort,
+                                       ssProfile.passwd,
+                                       ssProfile.cryptMethod,
                                        20);
         ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-local-vpn.conf"));
 
@@ -314,7 +331,7 @@ public class SSRVPNService extends VpnService
                 "ss-local-vpn.conf -f " + Consts.baseDir +
                 "ss-local-vpn.pid");
 
-        if (!cfg.route.equals("all"))
+        if (!globalProfile.route.equals("all"))
         {
             sb.append(" --acl").append(Consts.baseDir + "acl.list");
         }
@@ -324,13 +341,9 @@ public class SSRVPNService extends VpnService
 
     private void startDnsTunnel()
     {
-        String ssrconf = String.format(ConfFileUtil.SSRConf,
-                                       cfg.server,
-                                       cfg.remotePort,
-                                       8163,
-                                       cfg.passwd,
-                                       cfg.cryptMethod,
-                                       10);
+        String ssrconf = String.format(ConfFileUtil.SSRConf, ssProfile.server,
+                                       ssProfile.remotePort, 8163, ssProfile.passwd,
+                                       ssProfile.cryptMethod, 10);
         ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-tunnel-vpn.conf"));
 
         ShellUtil.runCmd((Consts.baseDir +
@@ -343,7 +356,7 @@ public class SSRVPNService extends VpnService
     private void startDnsDaemon()
     {
         String pdnsd;
-        if (cfg.route.equals("bypass_lan_list"))
+        if (globalProfile.route.equals("bypass_lan_list"))
         {
             String reject = getResources().getString(R.string.reject);
             String blklst = getResources().getString(R.string.black_list);
@@ -366,7 +379,7 @@ public class SSRVPNService extends VpnService
     private int startVpn()
     {
         Builder builder = new Builder();
-        builder.setSession(cfg.label)
+        builder.setSession(session)
                .setMtu(VPN_MTU)
                .addAddress(String.format(PRIVATE_VLAN, "1"), 24)
                .addDnsServer("8.8.8.8");
@@ -375,7 +388,7 @@ public class SSRVPNService extends VpnService
         {
             builder.allowFamily(OsConstants.AF_INET6);
 
-            if (!cfg.globalProxy)
+            if (!globalProfile.globalProxy)
             {
                 for (String pkg : proxyApps)
                 {
@@ -390,7 +403,7 @@ public class SSRVPNService extends VpnService
             }
         }
 
-        if (cfg.route.equals("all"))
+        if (globalProfile.route.equals("all"))
         {
             builder.addRoute("0.0.0.0", 0);
         }
@@ -431,9 +444,9 @@ public class SSRVPNService extends VpnService
                                    + "--loglevel 3 "
                                    + "--pid %stun2socks-vpn.pid",
                                    String.format(PRIVATE_VLAN, "2"),
-                                   cfg.localPort, fd, VPN_MTU, Consts.baseDir);
+                                   ssProfile.localPort, fd, VPN_MTU, Consts.baseDir);
 
-        if (cfg.dnsForward)
+        if (globalProfile.dnsForward)
         {
             cmd += " --enable-udprelay";
         }
@@ -448,54 +461,37 @@ public class SSRVPNService extends VpnService
         return fd;
     }
 
-    private void stopRunner()
-    {
-        isVPNConnected = false;
-        if (vpnThread != null)
-        {
-            vpnThread.stopThread();
-            vpnThread = null;
-        }
-
-        //reset
-        killProcesses();
-
-        //close conn
-        if (conn != null)
-        {
-            try
-            {
-                conn.close();
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-            conn = null;
-        }
-
-        //stop service
-        if (callback == null)
-        {
-            stopSelf();
-        }
-    }
-
-    private void killProcesses()
+    @SuppressWarnings("ResultOfMethodCallIgnored") private void killProcesses()
     {
         String[] tasks = new String[]{"ss-local", "ss-tunnel", "pdnsd", "tun2socks"};
+        List<String> cmds = new ArrayList<>();
+
+        for (String task : tasks)
+        {
+            cmds.add(String.format("chmod 666 %s%s-vpn.pid", Consts.baseDir, task));
+        }
+        String[] cmdarr = new String[cmds.size()];
+        cmds.toArray(cmdarr);
+        ShellUtil.runCmd(cmdarr);
+        cmds.clear();
+
         for (String t : tasks)
         {
             try
             {
-                int pid = new Scanner(new File(Consts.baseDir + t + "-vpn.pid")).useDelimiter("\\Z")
-                                                                                .nextInt();
+                File pidf = new File(Consts.baseDir + t + "-vpn.pid");
+                int pid = new Scanner(pidf).useDelimiter("\\Z").nextInt();
                 android.os.Process.killProcess(pid);
+                pidf.delete();
             }
-            catch (FileNotFoundException ignored)
+            catch (Exception ignored)
             {
             }
+            cmds.add(String.format("rm -f %s%s-vpn.conf", Consts.baseDir, t));
         }
+        cmdarr = new String[cmds.size()];
+        cmds.toArray(cmdarr);
+        ShellUtil.runCmd(cmdarr);
     }
 
     //    private boolean isByPass(SubnetUtils net)
@@ -518,7 +514,7 @@ public class SSRVPNService extends VpnService
         volatile private LocalServerSocket lss;
         volatile private boolean isRunning = true;
 
-        @Override public void run()
+        @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
         {
             try
             {

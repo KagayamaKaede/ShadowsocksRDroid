@@ -11,7 +11,7 @@ It is a port of [shadowsocks](https://github.com/shadowsocks/shadowsocks)
 created by [@clowwindy](https://github.com/clowwindy) maintained by 
 [@madeye](https://github.com/madeye) and [@linusyang](https://github.com/linusyang).
 
-Current version: 2.3.1 | [Changelog](debian/changelog)
+Current version: 2.4.0 | [Changelog](debian/changelog)
 
 Travis CI: [![Travis CI](https://travis-ci.org/shadowsocks/shadowsocks-libev.png?branch=master)](https://travis-ci.org/shadowsocks/shadowsocks-libev) | Jenkins Matrix: [![Jenkins](https://jenkins.shadowvpn.org/buildStatus/icon?job=Shadowsocks-libev)](https://jenkins.shadowvpn.org/job/Shadowsocks-libev/)
 
@@ -69,8 +69,8 @@ sudo apt-get install shadowsocks-libev
 
 ``` bash
 cd shadowsocks-libev
-sudo apt-get install build-essential autoconf libtool libssl-dev gawk debhelper
-dpkg-buildpackage -us -uc
+sudo apt-get install build-essential automake libtool libssl-dev gawk debhelper dh-systemd
+sh debian/autopkg.sh
 cd ..
 sudo dpkg -i shadowsocks-libev*.deb
 ```

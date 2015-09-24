@@ -2,7 +2,8 @@ package com.proxy.shadowsocksr.util;
 
 import android.util.Base64;
 
-import com.proxy.shadowsocksr.etc.SSProfile;
+import com.proxy.shadowsocksr.Consts;
+import com.proxy.shadowsocksr.items.SSProfile;
 
 public class SSAddressUtil
 {
@@ -47,6 +48,7 @@ public class SSAddressUtil
                 ssp = new SSProfile(
                         path.substring(pwdIdx + 1, hostIdx),
                         Integer.valueOf(path.substring(hostIdx + 1)),
+                        Consts.localPort,
                         path.substring(0, methodIdx),
                         path.substring(methodIdx + 1, pwdIdx)
                 );

@@ -10,12 +10,13 @@ import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.Consts;
 import com.proxy.shadowsocksr.MainActivity;
 import com.proxy.shadowsocksr.R;
+import com.proxy.shadowsocksr.items.GlobalProfile;
+import com.proxy.shadowsocksr.items.SSProfile;
 import com.proxy.shadowsocksr.preference.PasswordPreference;
 import com.proxy.shadowsocksr.preference.SummaryEditTextPreference;
 import com.proxy.shadowsocksr.preference.SummaryListPreference;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 
 public class PrefFragment extends PreferenceFragment
@@ -53,7 +54,6 @@ public class PrefFragment extends PreferenceFragment
         prefGlobal = (CheckBoxPreference) findPreference("global_proxy");
         prefUdp = (CheckBoxPreference) findPreference("udp_forwarding");
         prefAuto = (CheckBoxPreference) findPreference("auto_connect");
-        //
     }
 
     @Override public void onResume()
@@ -99,26 +99,36 @@ public class PrefFragment extends PreferenceFragment
         prefAuto.setEnabled(isEnable);
     }
 
+    private GlobalProfile globalProfile;
+
     @Override public void onSharedPreferenceChanged(SharedPreferences sp, String key)
     {
+        boolean jump = false;
         switch (key)
         {
         case "route":
-            Hawk.put("Route", sp.getString(key, "bypass-lan"));
-            return;
+            globalProfile.route = sp.getString(key, "bypass-lan");
+            break;
         case "global_proxy":
-            Hawk.put("GlobalProxy", sp.getBoolean(key, false));
-            return;
+            globalProfile.globalProxy = sp.getBoolean(key, false);
+            break;
         case "udp_forwarding":
-            Hawk.put("UdpForwarding", sp.getBoolean(key, true));
-            return;
+            globalProfile.dnsForward = sp.getBoolean(key, true);
+            break;
         case "auto_connect":
-            Hawk.put("AutoConnect", sp.getBoolean(key, false));
-            return;
+            globalProfile.autoConnect = sp.getBoolean(key, false);
+            break;
+        default:
+            jump = true;
+        }
+        if (!jump)
+        {
+            Hawk.put("GlobalProfile", globalProfile);
         }
 
         String currentSvr = Hawk.get("CurrentServer");
-        HashMap<String, String> map = Hawk.get(currentSvr);
+        SSProfile ss = Hawk.get(currentSvr);
+
         switch (key)
         {
         case "label":
@@ -130,7 +140,7 @@ public class PrefFragment extends PreferenceFragment
             }
 
             Hawk.remove(currentSvr);
-            Hawk.put(changed, map);
+            Hawk.put(changed, ss);
 
             lst.remove(currentSvr);
             lst.add(changed);
@@ -141,38 +151,39 @@ public class PrefFragment extends PreferenceFragment
             reloadPref();//TODO: fresh label bug
             return;
         case "server":
-            map.put("Server", sp.getString(key, Consts.defaultIP));
+            ss.server = sp.getString(key, Consts.defaultIP);
             break;
         case "remote_port":
-            map.put("RemotePort", sp.getString(key, String.valueOf(Consts.remotePort)));
+            ss.remotePort = sp.getInt(key, Consts.remotePort);
             break;
         case "local_port":
-            map.put("LocalPort", sp.getString(key, String.valueOf(Consts.localPort)));
+            ss.localPort = sp.getInt(key, Consts.localPort);
             break;
         case "crypt_method":
-            map.put("CryptMethod", sp.getString(key, Consts.defaultMethod));
+            ss.cryptMethod = sp.getString(key, Consts.defaultMethod);
             break;
         case "password":
-            map.put("Password", sp.getString(key, Consts.defaultPassword));
+            ss.passwd = sp.getString(key, Consts.defaultPassword);
             break;
         }
-        Hawk.put(currentSvr, map);
+        Hawk.put(currentSvr, ss);
     }
 
     private void loadCurrentPref()
     {
         String currentSvr = Hawk.get("CurrentServer");
-        HashMap<String, String> map = Hawk.get(currentSvr);
+        SSProfile ss = Hawk.get(currentSvr);
         prefLbl.setText(currentSvr);
-        prefSvr.setText(map.get("Server"));
-        prefRmtPort.setText(map.get("RemotePort"));
-        prefMethod.setValue(map.get("CryptMethod"));
-        prefLocPort.setText(map.get("LocalPort"));
+        prefSvr.setText(ss.server);
+        prefRmtPort.setText(ss.remotePort + "");
+        prefMethod.setValue(ss.cryptMethod);
+        prefLocPort.setText(ss.localPort + "");
         //
-        prefRoute.setValue(Hawk.<String>get("Route"));
-        prefGlobal.setChecked(Hawk.<Boolean>get("GlobalProxy"));
-        prefUdp.setChecked(Hawk.<Boolean>get("UdpForwarding"));
-        prefAuto.setChecked(Hawk.<Boolean>get("AutoConnect"));
+        globalProfile = Hawk.get("GlobalProfile");
+        prefRoute.setValue(globalProfile.route);
+        prefGlobal.setChecked(globalProfile.globalProxy);
+        prefUdp.setChecked(globalProfile.dnsForward);
+        prefAuto.setChecked(globalProfile.autoConnect);
     }
 
     private void cleanTempPref()

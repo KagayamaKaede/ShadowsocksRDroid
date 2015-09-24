@@ -5,10 +5,6 @@
 这是一个用Java编写的ShadowSocksR安卓客户端，支持安卓4.2+，支持64位CPU机型。
 兼容Shadowsocks(Shadowsocks-libev)协议，在未来会加入对ShadowsocksR协议的支持。
 
-##注意
-
-这是一个```测试版本```的程序，可能存在大量问题。
-
 ##编译准备
 
 * JDK 1.7+
@@ -23,7 +19,7 @@
 
 ##疑问
 
-如果您有任何建议或是问题，欢迎提交问题或给我发[邮件](mailto:kagayamakaede@gmail.com)。
+如果您有任何建议或是问题，欢迎Pull Request,提交问题或给我发[邮件](mailto:kagayamakaede@gmail.com)。
 
 ##感谢
 

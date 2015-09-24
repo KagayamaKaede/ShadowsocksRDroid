@@ -140,15 +140,23 @@ typedef struct {
 #define SALSA20             15
 #define CHACHA20            16
 
-#define ONETIMEAUTH_BYTES 16U
-#define ONETIMEAUTH_KEYBYTES 32U
 
 #define ONETIMEAUTH_FLAG 0x10
-#define ONETIMEAUTH_MASK 0xF0
 #define ADDRTYPE_MASK 0xF
+
+#define ONETIMEAUTH_BYTES 10U
+#define CLEN_BYTES 2U
+#define AUTH_BYTES (ONETIMEAUTH_BYTES + CLEN_BYTES)
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
+
+struct chunk {
+    uint32_t idx;
+    uint32_t len;
+    uint32_t counter;
+    char *buf;
+};
 
 struct enc_ctx {
     uint8_t init;
@@ -156,8 +164,8 @@ struct enc_ctx {
     cipher_ctx_t evp;
 };
 
-char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method);
-char * ss_decrypt_all(int buf_size, char *ciphertext, ssize_t *len, int method);
+char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method, int auth);
+char * ss_decrypt_all(int buf_size, char *ciphertext, ssize_t *len, int method, int auth);
 char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
                   struct enc_ctx *ctx);
 char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len,
@@ -168,7 +176,10 @@ int enc_get_iv_len(void);
 void cipher_context_release(cipher_ctx_t *evp);
 unsigned char *enc_md5(const unsigned char *d, size_t n, unsigned char *md);
 
-int ss_onetimeauth(char *auth, char *msg, int msg_len);
-int ss_onetimeauth_verify(char *auth, char *msg, int msg_len);
+int ss_onetimeauth(char *auth, char *msg, int msg_len, uint8_t *iv);
+int ss_onetimeauth_verify(char *auth, char *msg, int msg_len, uint8_t *iv);
+
+int ss_check_hash(char **buf_ptr, ssize_t *buf_len, struct chunk *chunk, struct enc_ctx *ctx, int buf_size);
+char *ss_gen_hash(char *buf, ssize_t *buf_len, uint32_t *counter, struct enc_ctx *ctx, int buf_size);
 
 #endif // _ENCRYPT_H

@@ -244,6 +244,10 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
                 return;
             }
 
+            if (!remote->direct && remote->send_ctx->connected && auth) {
+                remote->buf = ss_gen_hash(remote->buf, &r, &remote->counter, server->e_ctx, BUF_SIZE);
+            }
+
             // insert shadowsocks header
             if (!remote->direct) {
                 remote->buf = ss_encrypt(BUF_SIZE, remote->buf, &r,
@@ -473,12 +477,16 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
                 if (!remote->direct) {
                     if (auth) {
                         ss_addr_to_send[0] |= ONETIMEAUTH_FLAG;
-                        ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len);
+                        ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len, server->e_ctx->evp.iv);
                         addr_len += ONETIMEAUTH_BYTES;
                     }
 
                     memcpy(remote->buf, ss_addr_to_send, addr_len);
+
                     if (r > 0) {
+                        if (auth) {
+                            buf = ss_gen_hash(buf, &r, &remote->counter, server->e_ctx, BUF_SIZE);
+                        }
                         memcpy(remote->buf + addr_len, buf, r);
                     }
                     r += addr_len;
@@ -989,7 +997,6 @@ int main(int argc, char **argv)
             break;
         case 'A':
             auth = 1;
-            LOGI("onetime authentication enabled");
             break;
 #ifdef ANDROID
         case 'V':
@@ -1082,6 +1089,10 @@ int main(int argc, char **argv)
 #endif
     }
 
+    if (auth) {
+        LOGI("onetime authentication enabled");
+    }
+
 #ifdef __MINGW32__
     winsock_init();
 #else
@@ -1142,7 +1153,7 @@ int main(int argc, char **argv)
     if (mode != TCP_ONLY) {
         LOGI("udprelay enabled");
         init_udprelay(local_addr, local_port, listen_ctx.remote_addr[0],
-                      get_sockaddr_len(listen_ctx.remote_addr[0]), m, listen_ctx.timeout, iface);
+                      get_sockaddr_len(listen_ctx.remote_addr[0]), m, auth, listen_ctx.timeout, iface);
     }
 
     LOGI("listening at %s:%s", local_addr, local_port);
@@ -1278,7 +1289,7 @@ int start_ss_local_server(profile_t profile)
         LOGI("udprelay enabled");
         struct sockaddr *addr = (struct sockaddr *)storage;
         init_udprelay(local_addr, local_port_str, addr,
-                      get_sockaddr_len(addr), m, timeout, NULL);
+                      get_sockaddr_len(addr), m, auth, timeout, NULL);
     }
 
     LOGI("listening at %s:%s", local_addr, local_port_str);

@@ -196,6 +196,10 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         }
     }
 
+    if (auth) {
+        remote->buf = ss_gen_hash(remote->buf, &r, &remote->counter, server->e_ctx, BUF_SIZE);
+    }
+
     remote->buf = ss_encrypt(BUF_SIZE, remote->buf, &r, server->e_ctx);
 
     if (remote->buf == NULL) {
@@ -412,7 +416,7 @@ static void remote_send_cb(EV_P_ ev_io *w, int revents)
 
             if (auth) {
                 ss_addr_to_send[0] |= ONETIMEAUTH_FLAG;
-                ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len);
+                ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len, server->e_ctx->evp.iv);
                 addr_len += ONETIMEAUTH_BYTES;
             }
 
@@ -485,6 +489,9 @@ static struct remote * new_remote(int fd, int timeout)
 {
     struct remote *remote;
     remote = malloc(sizeof(struct remote));
+
+    memset(remote, 0, sizeof(struct remote));
+
     remote->buf = malloc(BUF_SIZE);
     remote->recv_ctx = malloc(sizeof(struct remote_ctx));
     remote->send_ctx = malloc(sizeof(struct remote_ctx));
@@ -731,7 +738,6 @@ int main(int argc, char **argv)
             break;
         case 'A':
             auth = 1;
-            LOGI("onetime authentication enabled");
             break;
 #ifdef ANDROID
         case 'V':
@@ -799,6 +805,10 @@ int main(int argc, char **argv)
         daemonize(pid_path);
     }
 
+    if (auth) {
+        LOGI("onetime authentication enabled");
+    }
+
     // parse tunnel addr
     parse_addr(tunnel_addr_str, &tunnel_addr);
 
@@ -863,7 +873,7 @@ int main(int argc, char **argv)
         LOGI("UDP relay enabled");
         init_udprelay(local_addr, local_port, listen_ctx.remote_addr[0],
                       get_sockaddr_len(listen_ctx.remote_addr[0]),
-                      tunnel_addr, m, listen_ctx.timeout, iface);
+                      tunnel_addr, m, auth, listen_ctx.timeout, iface);
     }
 
     if (mode == UDP_ONLY) {

@@ -1,6 +1,7 @@
 package com.proxy.shadowsocksr;
 
 import com.proxy.shadowsocksr.ISSRServiceCallback;
+import com.proxy.shadowsocksr.items.ConnectProfile;
 
 interface ISSRService
 {
@@ -9,6 +10,6 @@ interface ISSRService
     oneway void registerISSRServiceCallBack(ISSRServiceCallback cb);
     oneway void unRegisterISSRServiceCallBack(ISSRServiceCallback cb);
 
-    oneway void start();
+    oneway void start(in ConnectProfile cp);
     oneway void stop();
 }

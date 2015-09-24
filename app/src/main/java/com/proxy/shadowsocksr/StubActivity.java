@@ -12,6 +12,13 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 
+import com.orhanobut.hawk.Hawk;
+import com.proxy.shadowsocksr.items.ConnectProfile;
+import com.proxy.shadowsocksr.items.GlobalProfile;
+import com.proxy.shadowsocksr.items.SSProfile;
+
+import java.util.List;
+
 public class StubActivity extends Activity implements ServiceConnection
 {
     private BroadcastReceiver receiver;
@@ -99,7 +106,16 @@ public class StubActivity extends Activity implements ServiceConnection
         {
             try
             {
-                ssrs.start();
+                String label = Hawk.get("CurrentServer");
+                SSProfile ssp = Hawk.get(label);
+                GlobalProfile gp = Hawk.get("GlobalProfile");
+                List<String> proxyApps = null;
+                if (!gp.globalProxy)
+                {
+                    proxyApps = Hawk.get("PerAppProxy");
+                }
+                ConnectProfile cp = new ConnectProfile(label, ssp, gp, proxyApps);
+                ssrs.start(cp);
             }
             catch (RemoteException e)
             {

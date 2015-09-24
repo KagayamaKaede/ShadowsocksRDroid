@@ -10,15 +10,15 @@ android {
         applicationId "com.proxy.shadowsocksr"
         minSdkVersion 17
         targetSdkVersion 23
-        versionCode 3
-        versionName "1.0.2 Beta"
+        versionCode 4
+        versionName "1.0.3 Beta"
     }
     buildTypes {
         debug {
             ndk {
                 moduleName "Jni"
                 stl "stlport_static"
-                abiFilters "armeabi-v7a"
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
             }
             minifyEnabled true
             shrinkResources true
@@ -30,6 +30,28 @@ android {
                 moduleName "Jni"
                 stl "stlport_static"
                 abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            }
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release_arm {
+            ndk {
+                moduleName "Jni"
+                stl "stlport_static"
+                abiFilters "armeabi-v7a", "arm64-v8a"
+            }
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release_intel {
+            ndk {
+                moduleName "Jni"
+                stl "stlport_static"
+                abiFilters "x86", "x86_64"
             }
             minifyEnabled true
             shrinkResources true
@@ -86,6 +108,10 @@ def getNdkDir() {
     return ndkdir
 }
 
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:23.0.1'
@@ -97,9 +123,6 @@ dependencies {
     compile 'com.orhanobut:hawk:1.18'
     //Shell
     compile project(':libsuperuser')
-    //Encode/Decode QRCode
-    //compile 'com.google.zxing:core:3.2.1'
-    //compile 'com.journeyapps:zxing-android-embedded:3.0.3@aar'
     compile ("net.glxn.qrgen:android:2.0")
     //DNS Resolve
     compile files('libs/org.xbill.dns_2.1.7.jar')

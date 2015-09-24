@@ -495,6 +495,13 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
 
     // handshake and transmit data
     if (server->stage == 5) {
+        if (server->auth && !ss_check_hash(&remote->buf, &r, server->chunk, server->d_ctx, BUF_SIZE)) {
+            LOGE("hash error");
+            report_addr(server->fd);
+            close_and_free_server(EV_A_ server);
+            close_and_free_remote(EV_A_ remote);
+            return;
+        }
         int s = send(remote->fd, remote->buf, r, 0);
         if (s == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -519,13 +526,31 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
     } else if (server->stage == 0) {
 
         /*
-         * Shadowsocks TCP Relay Protocol:
+         * Shadowsocks TCP Relay Header:
          *
-         *    +------+----------+----------+------+
-         *    | ATYP | DST.ADDR | DST.PORT | AUTH |
-         *    +------+----------+----------+------+
-         *    |  1   | Variable |    2     |  16  |
-         *    +------+----------+----------+------+
+         *    +------+----------+----------+----------------+
+         *    | ATYP | DST.ADDR | DST.PORT |    HMAC-SHA1   |
+         *    +------+----------+----------+----------------+
+         *    |  1   | Variable |    2     |      10        |
+         *    +------+----------+----------+----------------+
+         *
+         *    If ATYP & ONETIMEAUTH_FLAG(0x10) == 1, Authentication (HMAC-SHA1) is enabled.
+         *
+         *    The key of HMAC-SHA1 is (IV + KEY) and the input is the whole header.
+         *    The output of HMAC-SHA is truncated to 10 bytes (leftmost bits).
+         */
+
+        /*
+         * Shadowsocks TCP Request's Chunk Authentication (Optional, no hash check for response's payload):
+         *
+         *    +------+-----------+-------------+------+
+         *    | LEN  | HMAC-SHA1 |    DATA     |      ...
+         *    +------+-----------+-------------+------+
+         *    |  2   |    10     |  Variable   |      ...
+         *    +------+-----------+-------------+------+
+         *
+         *    The key of HMAC-SHA1 is (IV + CHUNK ID)
+         *    The output of HMAC-SHA is truncated to 10 bytes (leftmost bits).
          */
 
         int offset = 0;
@@ -640,14 +665,15 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
 
         offset += 2;
 
-        if (auth || (atyp & ONETIMEAUTH_MASK)) {
-            if (ss_onetimeauth_verify(server->buf + offset, server->buf, offset)) {
+        if (auth || (atyp & ONETIMEAUTH_FLAG)) {
+            if (ss_onetimeauth_verify(server->buf + offset, server->buf, offset, server->d_ctx->evp.iv)) {
                 LOGE("authentication error %d", atyp);
                 report_addr(server->fd);
                 close_and_free_server(EV_A_ server);
                 return;
             };
             offset += ONETIMEAUTH_BYTES;
+            server->auth = 1;
         }
 
         if (verbose) {
@@ -657,7 +683,14 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         // XXX: should handle buffer carefully
         if (r > offset) {
             server->buf_len = r - offset;
-            server->buf_idx = offset;
+            memmove(server->buf, server->buf + offset, server->buf_len);
+        }
+
+        if (server->auth && !ss_check_hash(&server->buf, &server->buf_len, server->chunk, server->d_ctx, BUF_SIZE)) {
+            LOGE("hash error");
+            report_addr(server->fd);
+            close_and_free_server(EV_A_ server);
+            return;
         }
 
         if (!need_query) {
@@ -673,8 +706,7 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
 
                 // XXX: should handle buffer carefully
                 if (server->buf_len > 0) {
-                    memcpy(remote->buf, server->buf + server->buf_idx,
-                           server->buf_len);
+                    memcpy(remote->buf, server->buf + server->buf_idx, server->buf_len);
                     remote->buf_len = server->buf_len;
                     remote->buf_idx = 0;
                     server->buf_len = 0;
@@ -1061,6 +1093,9 @@ static struct server * new_server(int fd, struct listen_ctx *listener)
 
     struct server *server;
     server = malloc(sizeof(struct server));
+
+    memset(server, 0, sizeof(struct server));
+
     server->buf = malloc(BUF_SIZE);
     server->recv_ctx = malloc(sizeof(struct server_ctx));
     server->send_ctx = malloc(sizeof(struct server_ctx));
@@ -1089,6 +1124,9 @@ static struct server * new_server(int fd, struct listen_ctx *listener)
     server->buf_idx = 0;
     server->remote = NULL;
 
+    server->chunk = (struct chunk *)malloc(sizeof(struct chunk));
+    memset(server->chunk, 0, sizeof(struct chunk));
+
     cork_dllist_add(&connections, &server->entries);
 
     return server;
@@ -1098,6 +1136,13 @@ static void free_server(struct server *server)
 {
     cork_dllist_remove(&server->entries);
 
+    if (server->chunk != NULL) {
+        if (server->chunk->buf != NULL) {
+            free(server->chunk->buf);
+        }
+        free(server->chunk);
+        server->chunk = NULL;
+    }
     if (server->remote != NULL) {
         server->remote->server = NULL;
     }
@@ -1263,7 +1308,6 @@ int main(int argc, char **argv)
             break;
         case 'A':
             auth = 1;
-            LOGI("onetime authentication enabled");
             break;
         }
     }
@@ -1354,6 +1398,10 @@ int main(int argc, char **argv)
 #endif
     }
 
+    if (auth) {
+        LOGI("onetime authentication enabled");
+    }
+
 #ifdef __MINGW32__
     winsock_init();
 #else
@@ -1427,7 +1475,7 @@ int main(int argc, char **argv)
 
         // Setup UDP
         if (mode != TCP_ONLY) {
-            init_udprelay(server_host[index], server_port, m, atoi(timeout),
+            init_udprelay(server_host[index], server_port, m, auth, atoi(timeout),
                           iface);
         }
 

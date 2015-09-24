@@ -5,15 +5,11 @@
 A ShadowsocksR client for Android4.2+(API Level 17+,and support 64bit cpu), written in Java.
 Compatible Shadowsocks(Shadowsocks-libev) protocol and will support ShadowsocksR protocol in the future.
 
-##Attention
-
-This is a ```TEST VERSION```,may be have a lot of problems.
-
 ##Requisites for compile
 
-JDK 1.7+
-Android SDK 23+
-Android NDK r10e+
+* JDK 1.7+
+* Android SDK 23+
+* Android NDK r10e+
 
 Please use the latest version of Android Studio to reduce problems.
 
@@ -23,7 +19,7 @@ Please use the latest version of Android Studio to reduce problems.
 
 ##Issues
 
-If you have any advices or questions, please submit issue or send [E-mail](mailto:kagayamakaede@gmail.com) to me.
+If you have any advices or questions, You can pull request, submit issue or send [E-mail](mailto:kagayamakaede@gmail.com) to me.
 
 ##Thanks
 

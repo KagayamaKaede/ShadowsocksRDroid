@@ -24,7 +24,7 @@ public class DialogManager
 
     private ProgressDialog pd;
 
-    public void showWaitDialog(Context cxt)
+    public void showConnectDialog(Context cxt)
     {
         pd = new ProgressDialog(cxt);
         pd.setMessage(cxt.getString(R.string.connecting));
@@ -33,7 +33,7 @@ public class DialogManager
         pd.show();
     }
 
-    public void dismissWaitDialog()
+    public void dismissConnectDialog()
     {
         if (pd != null)
         {

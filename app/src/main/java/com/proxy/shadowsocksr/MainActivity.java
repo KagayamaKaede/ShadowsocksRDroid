@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -26,8 +27,10 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.orhanobut.hawk.Hawk;
-import com.proxy.shadowsocksr.etc.SSProfile;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
+import com.proxy.shadowsocksr.items.ConnectProfile;
+import com.proxy.shadowsocksr.items.GlobalProfile;
+import com.proxy.shadowsocksr.items.SSProfile;
 import com.proxy.shadowsocksr.ui.DialogManager;
 import com.proxy.shadowsocksr.util.SSAddressUtil;
 import com.proxy.shadowsocksr.util.ScreenUtil;
@@ -37,14 +40,15 @@ import com.readystatesoftware.systembartint.SystemBarTintManager;
 import net.glxn.qrgen.android.QRCode;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends Activity
         implements View.OnClickListener, AdapterView.OnItemSelectedListener,
         Toolbar.OnMenuItemClickListener, ServiceConnection
 {
+    public final int REQUEST_CODE_CONNECT = 0;
+    public final int REQUEST_CODE_SCAN_QR = 1;
+
     private Toolbar toolbar;
     private Spinner spinner;
     private FloatingActionButton fab;
@@ -63,8 +67,8 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        ((SSRApplication) getApplication()).init();
         setupUI();
-        cfgKitKatTint();
         loadServerList();
 
         if (savedInstanceState == null)
@@ -72,18 +76,27 @@ public class MainActivity extends Activity
             pref = new PrefFragment();
             getFragmentManager().beginTransaction().add(R.id.pref, pref).commit();
         }
-    }
 
-    @Override protected void onResume()
-    {
-        super.onResume();
         bindService(new Intent(this, SSRVPNService.class), this, Context.BIND_AUTO_CREATE);
     }
 
-    @Override protected void onPause()
+    @Override protected void onDestroy()
     {
+        if (ssrs != null)
+        {
+            try
+            {
+                ssrs.unRegisterISSRServiceCallBack(callback);
+            }
+            catch (RemoteException e)
+            {
+                e.printStackTrace();
+            }
+        }
+        ssrs = null;
+        //
         unbindService(this);
-        super.onPause();
+        super.onDestroy();
     }
 
     @Override public void onServiceConnected(ComponentName name, IBinder service)
@@ -93,14 +106,10 @@ public class MainActivity extends Activity
         try
         {
             ssrs.registerISSRServiceCallBack(callback);
-            if (ssrs.status())
-            {
-                switchUI(false);
-            }
+            switchUI(!ssrs.status());
         }
-        catch (RemoteException e)
+        catch (RemoteException ignored)
         {
-            e.printStackTrace();
         }
     }
 
@@ -130,26 +139,23 @@ public class MainActivity extends Activity
             {
                 @Override public void run()
                 {
+                    DialogManager.getInstance().dismissConnectDialog();
                     switch (status)
                     {
                     case Consts.STATUS_CONNECTED:
                         switchUI(false);
-                        DialogManager.getInstance().dismissWaitDialog();
-                        Toast.makeText(MainActivity.this, R.string.connected, Toast.LENGTH_SHORT)
-                             .show();
+                        Toast.makeText(MainActivity.this, R.string.connected,
+                                       Toast.LENGTH_SHORT).show();
                         break;
                     case Consts.STATUS_FAILED:
                         switchUI(true);
-                        DialogManager.getInstance().dismissWaitDialog();
                         Toast.makeText(MainActivity.this, R.string.connect_failed,
-                                       Toast.LENGTH_SHORT)
-                             .show();
+                                       Toast.LENGTH_SHORT).show();
                         break;
                     case Consts.STATUS_DISCONNECTED:
                         switchUI(true);
-                        DialogManager.getInstance().dismissWaitDialog();
-                        Toast.makeText(MainActivity.this, R.string.disconnected, Toast.LENGTH_SHORT)
-                             .show();
+                        Toast.makeText(MainActivity.this, R.string.disconnected,
+                                       Toast.LENGTH_SHORT).show();
                         break;
                     }
                 }
@@ -174,10 +180,7 @@ public class MainActivity extends Activity
         spinner.setOnItemSelectedListener(this);
         //
         fab.setOnClickListener(this);
-    }
-
-    private void cfgKitKatTint()
-    {
+        //
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.KITKAT)
         {//KitKat's StatusBar TintColor
             SystemBarTintManager stm = new SystemBarTintManager(this);
@@ -200,16 +203,11 @@ public class MainActivity extends Activity
         spinner.setSelection(spinnerAdapter.getPosition(cur));
     }
 
-    public void addNewServer(String server, int rmtPort, String method, String pwd)
+    private void addNewServer(String server, int rmtPort, String method, String pwd)
     {
-        Map<String, String> map = new HashMap<>();
         String lbl = "Svr-" + System.currentTimeMillis();
-        map.put("Server", server);
-        map.put("RemotePort", String.valueOf(rmtPort));
-        map.put("CryptMethod", method);
-        map.put("Password", pwd);
-        map.put("LocalPort", String.valueOf(Consts.localPort));
-        Hawk.put(lbl, map);
+        SSProfile newPro = new SSProfile(server, rmtPort, Consts.localPort, method, pwd);
+        Hawk.put(lbl, newPro);
 
         ArrayList<String> lst = Hawk.get("ServerList");
         lst.add(lbl);
@@ -232,20 +230,13 @@ public class MainActivity extends Activity
             pref.reloadPref();
             break;
         case R.id.action_add_server_from_qrcode:
-            //new IntentIntegrator(this).initiateScan();
-            //
-            //            Intent cap = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            //            if (cap.resolveActivity(getPackageManager()) != null)
-            //            {
-            //                startActivityForResult(cap, 1);
-            //            }
-            //
             Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-            List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, 0);
+            List<ResolveInfo> activities = getPackageManager()
+                    .queryIntentActivities(intent, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
             if (activities.size() > 0)
             {
                 intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-                startActivityForResult(intent, 1);
+                startActivityForResult(intent, REQUEST_CODE_SCAN_QR);
             }
             else
             {
@@ -256,10 +247,12 @@ public class MainActivity extends Activity
                         .setPositiveButton(android.R.string.ok,
                                            new DialogInterface.OnClickListener()
                                            {
-                                               @Override public void onClick(DialogInterface dialog,
+                                               @Override public void onClick(
+                                                       DialogInterface dialog,
                                                        int which)
                                                {
-                                                   Intent goToMarket = new Intent(
+                                                   Intent goToMarket
+                                                           = new Intent(
                                                            Intent.ACTION_VIEW)
                                                            .setData(Uri.parse(
                                                                    "market://details?id=com.google.zxing.client.android"));
@@ -300,25 +293,19 @@ public class MainActivity extends Activity
             break;
         case R.id.action_show_current_qrcode:
             String cur = Hawk.get("CurrentServer");
-            HashMap<String, String> curmap = Hawk.get(cur);
-            String b64 = SSAddressUtil.getUtil().generate(new SSProfile(
-                    curmap.get("Server"),
-                    Integer.valueOf(curmap.get("RemotePort")),
-                    curmap.get("CryptMethod"),
-                    curmap.get("Password")
-            ));
+            SSProfile ssp = Hawk.get(cur);
+            String b64 = SSAddressUtil.getUtil().generate(ssp);
             if (b64 != null)
             {
-                int px = ScreenUtil.dp2px(this, 200);
+                int px = ScreenUtil.dp2px(this, 230);
                 Bitmap bm = ((QRCode) QRCode.from(b64).withSize(px, px)).bitmap();
                 ImageView iv = new ImageView(this);
                 iv.setImageBitmap(bm);
-                AlertDialog ad = new AlertDialog.Builder(this)
-                        .setView(iv)
-                        .setPositiveButton(android.R.string.ok, null)
+                new AlertDialog.Builder(this)
+                        .setView(iv).setPositiveButton(android.R.string.ok, null)
                         .show();
-                iv.getLayoutParams().height = ScreenUtil.dp2px(this, 200);
-                iv.getLayoutParams().width = ScreenUtil.dp2px(this, 200);
+                iv.getLayoutParams().height = px;
+                iv.getLayoutParams().width = px;
                 iv.requestLayout();
             }
             break;
@@ -330,6 +317,8 @@ public class MainActivity extends Activity
     {
         if (ssrs == null)
         {
+            Toast.makeText(MainActivity.this, "VPN process not connected", Toast.LENGTH_SHORT)
+                 .show();
             return;
         }
         try
@@ -337,47 +326,58 @@ public class MainActivity extends Activity
             if (ssrs.status())
             {
                 ssrs.stop();
-                switchUI(true);
+                Toast.makeText(MainActivity.this, "Recommended to use the system dialog close VPN",
+                               Toast.LENGTH_SHORT).show();
             }
             else
             {
-                switchUI(false);
                 //START
-                //TODO: Android6 not test vpn.
                 Intent vpn = SSRVPNService.prepare(this);
                 if (vpn != null)
                 {
-                    startActivityForResult(vpn, 0);
+                    startActivityForResult(vpn, REQUEST_CODE_CONNECT);
                 }
                 else
                 {
-                    onActivityResult(0, RESULT_OK, null);
+                    onActivityResult(REQUEST_CODE_CONNECT, RESULT_OK, null);
                 }
             }
         }
         catch (RemoteException e)
         {
+            switchUI(true);
             Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode)
         {
-        case 0:
+        case REQUEST_CODE_CONNECT:
             if (resultCode == RESULT_OK)
             {
-                DialogManager.getInstance().showWaitDialog(this);
+                DialogManager.getInstance().showConnectDialog(this);
                 startService(new Intent(this, SSRVPNService.class));
                 try
                 {
-                    ssrs.start();
+                    String label = Hawk.get("CurrentServer");
+                    SSProfile ssp = Hawk.get(label);
+                    GlobalProfile gp = Hawk.get("GlobalProfile");
+                    List<String> proxyApps = null;
+                    if (!gp.globalProxy)
+                    {
+                        proxyApps = Hawk.get("PerAppProxy");
+                    }
+                    ConnectProfile cp = new ConnectProfile(label, ssp, gp, proxyApps);
+                    ssrs.start(cp);
                 }
                 catch (RemoteException e)
                 {
-                    e.printStackTrace();
+                    DialogManager.getInstance().dismissConnectDialog();
+                    switchUI(true);
+                    Toast.makeText(MainActivity.this, R.string.connect_failed,
+                                   Toast.LENGTH_SHORT).show();
                 }
             }
             else
@@ -385,7 +385,7 @@ public class MainActivity extends Activity
                 switchUI(true);
             }
             break;
-        case 1:
+        case REQUEST_CODE_SCAN_QR:
             if (resultCode == RESULT_OK)
             {
                 String contents = data.getStringExtra("SCAN_RESULT");
@@ -405,77 +405,11 @@ public class MainActivity extends Activity
             }
             else if (resultCode == RESULT_CANCELED)
             {
-                Toast.makeText(MainActivity.this, R.string.add_canceled, Toast.LENGTH_SHORT)
-                     .show();
+                Toast.makeText(MainActivity.this, R.string.add_canceled, Toast.LENGTH_SHORT).show();
                 return;
             }
-            Toast.makeText(MainActivity.this, R.string.add_failed, Toast.LENGTH_SHORT)
-                 .show();
+            Toast.makeText(MainActivity.this, R.string.add_failed, Toast.LENGTH_SHORT).show();
             break;
-        //        case 1:
-        //            if (resultCode == RESULT_OK)
-        //            {
-        //                Bundle extras = data.getExtras();
-        //                Bitmap bmp = (Bitmap) extras.get("data");
-        //
-        //                //
-        //                if (bmp != null)
-        //                {
-        //                    int[] intArray = new int[bmp.getWidth() * bmp.getHeight()];
-        //                    bmp.getPixels(intArray, 0, bmp.getWidth(), 0, 0, bmp.getWidth(),
-        //                                  bmp.getHeight());
-        //
-        //                    LuminanceSource source = new com.google.zxing.RGBLuminanceSource(
-        //                            bmp.getWidth(), bmp.getHeight(), intArray);
-        //                    BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
-        //                    Reader reader = new MultiFormatReader();
-        //                    try
-        //                    {
-        //                        Result result = reader.decode(bitmap);
-        //
-        //                        SSProfile pro = SSAddressUtil.getUtil().parse(result.getText());
-        //                        if (pro != null)
-        //                        {
-        //                            addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
-        //                            loadServerList();
-        //                            pref.reloadPref();
-        //                            Toast.makeText(MainActivity.this, "Add Success", Toast.LENGTH_SHORT)
-        //                                 .show();
-        //                            return;
-        //                        }
-        //
-        //                    }
-        //                    catch (Exception e)
-        //                    {
-        //
-        //                        e.printStackTrace();
-        //                    }
-        //                }
-        //                //
-        //                Toast.makeText(MainActivity.this, "Add Failed", Toast.LENGTH_SHORT)
-        //                     .show();
-        //            }
-        //            else
-        //            {
-        //                Toast.makeText(MainActivity.this, "Add Canceled", Toast.LENGTH_SHORT)
-        //                     .show();
-        //            }
-        //            break;
-        //        default:
-        //            IntentResult scanResult = IntentIntegrator
-        //                    .parseActivityResult(requestCode, resultCode, data);
-        //            if (scanResult != null)
-        //            {
-        //                SSProfile pro = SSAddressUtil.getUtil().parse(scanResult.getContents());
-        //                if (pro != null)
-        //                {
-        //                    addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
-        //                    loadServerList();
-        //                    pref.reloadPref();
-        //                    return;
-        //                }
-        //            }
-        //            Toast.makeText(this, "Nothing...", Toast.LENGTH_SHORT).show();
         }
     }
 
