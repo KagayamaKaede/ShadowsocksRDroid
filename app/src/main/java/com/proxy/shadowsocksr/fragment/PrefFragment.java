@@ -154,10 +154,10 @@ public class PrefFragment extends PreferenceFragment
             ss.server = sp.getString(key, Consts.defaultIP);
             break;
         case "remote_port":
-            ss.remotePort = sp.getInt(key, Consts.remotePort);
+            ss.remotePort = Integer.valueOf(sp.getString(key, String.valueOf(Consts.remotePort)));
             break;
         case "local_port":
-            ss.localPort = sp.getInt(key, Consts.localPort);
+            ss.localPort = Integer.valueOf(sp.getString(key, String.valueOf(Consts.remotePort)));
             break;
         case "crypt_method":
             ss.cryptMethod = sp.getString(key, Consts.defaultMethod);
