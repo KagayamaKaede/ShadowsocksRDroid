@@ -1,3 +1,7 @@
+##1.0.3 Beta Fix
+
++ Fixed port change issue.
+
 ##1.0.3 Beta
 
 + In this version,profile storage mechanism is changed,you need manually clean app's data.
