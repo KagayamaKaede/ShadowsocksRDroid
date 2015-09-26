@@ -1,3 +1,7 @@
+##1.0.3 Beta Fix2
+
++ Fixed dns relay issue.
+
 ##1.0.3 Beta Fix
 
 + Fixed port change issue.

@@ -41,6 +41,7 @@ public class SSRVPNService extends VpnService
 {
     private int VPN_MTU = 1500;
     private String PRIVATE_VLAN = "27.27.27.%s";
+    private String PRIVATE_VLAN6 = "fdfe:dcba:9875::%s";
     private ParcelFileDescriptor conn;
 
     private String session;
@@ -217,7 +218,7 @@ public class SSRVPNService extends VpnService
                 }
                 //
                 startSSRDaemon();
-                if (globalProfile.dnsForward)
+                if (!globalProfile.dnsForward)
                 {
                     startDnsDaemon();
                     startDnsTunnel();
@@ -356,6 +357,7 @@ public class SSRVPNService extends VpnService
     private void startDnsDaemon()
     {
         String pdnsd;
+        //ipv6 config
         if (globalProfile.route.equals("bypass_lan_list"))
         {
             String reject = getResources().getString(R.string.reject);
@@ -383,6 +385,9 @@ public class SSRVPNService extends VpnService
                .setMtu(VPN_MTU)
                .addAddress(String.format(PRIVATE_VLAN, "1"), 24)
                .addDnsServer("8.8.8.8");
+
+        //builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
+        //builder.addRoute("::", 0);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
@@ -445,6 +450,8 @@ public class SSRVPNService extends VpnService
                                    + "--pid %stun2socks-vpn.pid",
                                    String.format(PRIVATE_VLAN, "2"),
                                    ssProfile.localPort, fd, VPN_MTU, Consts.baseDir);
+
+        //cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6,"2");
 
         if (globalProfile.dnsForward)
         {
