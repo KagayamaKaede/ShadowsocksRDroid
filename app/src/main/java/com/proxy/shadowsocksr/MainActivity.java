@@ -10,9 +10,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -35,7 +33,6 @@ import com.proxy.shadowsocksr.ui.DialogManager;
 import com.proxy.shadowsocksr.util.SSAddressUtil;
 import com.proxy.shadowsocksr.util.ScreenUtil;
 import com.proxy.shadowsocksr.util.ShellUtil;
-import com.readystatesoftware.systembartint.SystemBarTintManager;
 
 import net.glxn.qrgen.android.QRCode;
 
@@ -180,14 +177,6 @@ public class MainActivity extends Activity
         spinner.setOnItemSelectedListener(this);
         //
         fab.setOnClickListener(this);
-        //
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.KITKAT)
-        {//KitKat's StatusBar TintColor
-            SystemBarTintManager stm = new SystemBarTintManager(this);
-            stm.setTintColor(Color.parseColor("#1976D2"));
-            stm.setStatusBarTintEnabled(true);
-            stm.setNavigationBarTintEnabled(true);
-        }
     }
 
     public void loadServerList()
