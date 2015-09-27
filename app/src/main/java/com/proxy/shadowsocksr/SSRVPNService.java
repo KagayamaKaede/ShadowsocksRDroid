@@ -386,8 +386,8 @@ public class SSRVPNService extends VpnService
                .addAddress(String.format(PRIVATE_VLAN, "1"), 24)
                .addDnsServer("8.8.8.8");
 
-        //builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
-        //builder.addRoute("::", 0);
+        builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
+        builder.addRoute("::", 0);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
@@ -441,17 +441,17 @@ public class SSRVPNService extends VpnService
         int fd = conn.getFd();
 
         String cmd = String.format(Consts.baseDir +
-                                   "tun2socks --netif-ipaddr %s "
-                                   + "--netif-netmask 255.255.255.0 "
-                                   + "--socks-server-addr 127.0.0.1:%d "
-                                   + "--tunfd %d "
-                                   + "--tunmtu %d "
-                                   + "--loglevel 0 "
-                                   + "--pid %stun2socks-vpn.pid",
+                                   "tun2socks --netif-ipaddr %s"
+                                   + " --netif-netmask 255.255.255.0"
+                                   + " --socks-server-addr 127.0.0.1:%d"
+                                   + " --tunfd %d"
+                                   + " --tunmtu %d"
+                                   + " --loglevel 0"
+                                   + " --pid %stun2socks-vpn.pid",
                                    String.format(PRIVATE_VLAN, "2"),
                                    ssProfile.localPort, fd, VPN_MTU, Consts.baseDir);
 
-        //cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6,"2");
+        cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
 
         if (globalProfile.dnsForward)
         {
@@ -459,8 +459,7 @@ public class SSRVPNService extends VpnService
         }
         else
         {
-            cmd += String.format(" --dnsgw %s:8153",
-                                 String.format(PRIVATE_VLAN, "1"));
+            cmd += String.format(" --dnsgw %s:8153", String.format(PRIVATE_VLAN, "1"));
         }
 
         ShellUtil.runCmd(cmd);
