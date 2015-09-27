@@ -218,7 +218,7 @@
     </string-array>
 
     <!---->
-    <string-array name="chn_route_full">
+    <string-array name="lst_route_full">
         <item>0.0.0.0/8</item>
         <item>1.0.1.0/24</item>
         <item>1.0.2.0/23</item>

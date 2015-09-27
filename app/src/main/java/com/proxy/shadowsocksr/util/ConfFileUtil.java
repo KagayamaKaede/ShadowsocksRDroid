@@ -36,7 +36,7 @@ public class ConfFileUtil
     public static String PDNSdLocal =
             "global {" + Consts.lineSept +
             " perm_cache = 2048;" + Consts.lineSept +
-            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + Consts.lineSept +
+            " cache_dir = \"/data/data/com.proxy.shadowsocksr\";" + Consts.lineSept +
             " server_ip = %s;" + Consts.lineSept +
             " server_port = %d;" + Consts.lineSept +
             " query_method = tcp_only;" + Consts.lineSept +
@@ -51,7 +51,7 @@ public class ConfFileUtil
             " label = \"local\";" + Consts.lineSept +
             " ip = 127.0.0.1;" + Consts.lineSept +
             " port = %d;" + Consts.lineSept +
-            " reject = ::/0;" + Consts.lineSept +
+            " %s" + Consts.lineSept +
             " reject_policy = negate;" + Consts.lineSept +
             " reject_recursively = on;" + Consts.lineSept +
             " timeout = 5;" + Consts.lineSept +
@@ -61,13 +61,13 @@ public class ConfFileUtil
             " reverse=on;" + Consts.lineSept +
             " a=127.0.0.1;" + Consts.lineSept +
             " owner=localhost;" + Consts.lineSept +
-            " soa=localhost,root.localhost,42,86400,900,86400,86400;"+ Consts.lineSept +
+            " soa=localhost,root.localhost,42,86400,900,86400,86400;" + Consts.lineSept +
             "}";
 
     public static String PdNSdByPass =
             "global {" + Consts.lineSept +
             " perm_cache = 2048;" + Consts.lineSept +
-            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + Consts.lineSept +
+            " cache_dir = \"/data/data/com.proxy.shadowsocksr\";" + Consts.lineSept +
             " server_ip = %s;" + Consts.lineSept +
             " server_port = %d;" + Consts.lineSept +
             " query_method = tcp_only;" + Consts.lineSept +
@@ -92,6 +92,7 @@ public class ConfFileUtil
             " ip = 127.0.0.1;" + Consts.lineSept +
             " uptest = none;" + Consts.lineSept +
             " preset = on;" + Consts.lineSept +
+            " port = %d;" + Consts.lineSept +
             " timeout = 5;" + Consts.lineSept +
             "}" + Consts.lineSept +
             "rr {" + Consts.lineSept +
@@ -105,7 +106,7 @@ public class ConfFileUtil
     public static String PdNSdDirect =
             "global {" + Consts.lineSept +
             " perm_cache = 2048;" + Consts.lineSept +
-            " cache_dir = \"/data/data/github.shadowsocksrdroid\";" + Consts.lineSept +
+            " cache_dir = \"/data/data/com.proxy.shadowsocksr\";" + Consts.lineSept +
             " server_ip = %s;" + Consts.lineSept +
             " server_port = %d;" + Consts.lineSept +
             " query_method = tcp_only;" + Consts.lineSept +
@@ -125,13 +126,14 @@ public class ConfFileUtil
             " reject_recursively = on;" + Consts.lineSept +
             " exclude = %s;" + Consts.lineSept +
             " policy = included;" + Consts.lineSept +
+            " uptest = none;" + Consts.lineSept +
             " preset = on;" + Consts.lineSept +
             "}" + Consts.lineSept +
             "server {" + Consts.lineSept +
             " label = \"local-server\";" + Consts.lineSept +
             " ip = 127.0.0.1;" + Consts.lineSept +
             " port = %d;" + Consts.lineSept +
-            " reject = ::/0;" + Consts.lineSept +
+            " %s" + Consts.lineSept +
             " reject_policy = negate;" + Consts.lineSept +
             " reject_recursively = on;" + Consts.lineSept +
             "}" + Consts.lineSept +
@@ -140,7 +142,7 @@ public class ConfFileUtil
             " reverse=on;" + Consts.lineSept +
             " a=127.0.0.1;" + Consts.lineSept +
             " owner=localhost;" + Consts.lineSept +
-            " soa=localhost,root.localhost,42,86400,900,86400,86400;"+ Consts.lineSept +
+            " soa=localhost,root.localhost,42,86400,900,86400,86400;" + Consts.lineSept +
             "}";
 
     public static void writeToFile(String c, File f)

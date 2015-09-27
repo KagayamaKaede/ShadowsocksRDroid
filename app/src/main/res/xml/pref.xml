@@ -33,7 +33,6 @@
             android:summary="@string/crypt_method"
             android:title="@string/crypt_method"/>
         <com.proxy.shadowsocksr.preference.PasswordPreference
-            android:defaultValue="cs7cysc6ts6cstcst"
             android:inputType="textPassword"
             android:key="password"
             android:summary="@string/not_set_yet"
