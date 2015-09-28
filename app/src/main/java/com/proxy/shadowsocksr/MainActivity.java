@@ -207,6 +207,18 @@ public class MainActivity extends Activity
 
     @Override public boolean onMenuItemClick(MenuItem item)
     {
+        try
+        {
+            if (ssrs != null && ssrs.status())
+            {
+                Toast.makeText(MainActivity.this, "Please disconnect first.", Toast.LENGTH_SHORT)
+                     .show();
+                return true;
+            }
+        }
+        catch (RemoteException ignored)
+        {
+        }
         switch (item.getItemId())
         {
         case R.id.action_maunally_add_server:
@@ -419,6 +431,7 @@ public class MainActivity extends Activity
             pref.setPrefEnabled(true);
             spinner.setEnabled(true);
             fab.setImageResource(android.R.drawable.ic_media_play);
+            //
         }
         else
         {

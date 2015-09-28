@@ -11,6 +11,7 @@ public class Consts
     public final static int remotePort = 2333;
     public final static int localPort = 23333;
     //
+    //
     //TODO: should not use hard-coded
     @SuppressLint("SdCardPath") public final static String baseDir
             = "/data/data/com.proxy.shadowsocksr/";

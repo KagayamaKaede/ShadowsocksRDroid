@@ -451,7 +451,7 @@ public class SSRVPNService extends VpnService
                                    String.format(PRIVATE_VLAN, "2"),
                                    ssProfile.localPort, fd, VPN_MTU, Consts.baseDir);
 
-        cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
+       cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
 
         if (globalProfile.dnsForward)
         {

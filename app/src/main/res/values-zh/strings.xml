@@ -15,7 +15,6 @@
     <string name="not_set_yet">尚未设置</string>
     <string name="password">密码</string>
     <string name="per_add_proxy">分应用代理</string>
-    <string name="reject" translatable="false"></string>
     <string name="relay_udp_packet_to_remote_svr">转发UDP包到远程服务器</string>
     <string name="remote_port">远程端口</string>
     <string name="remote_server_port">远程服务器端口</string>

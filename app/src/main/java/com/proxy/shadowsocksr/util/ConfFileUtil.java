@@ -121,7 +121,7 @@ public class ConfFileUtil
             " label = \"china-servers\";" + Consts.lineSept +
             " ip = 114.114.114.114, 112.124.47.27;" + Consts.lineSept +
             " timeout = 4;" + Consts.lineSept +
-            " reject = %s;" + Consts.lineSept + Consts.lineSept +
+            " reject = %s;" + Consts.lineSept +
             " reject_policy = fail;" + Consts.lineSept +
             " reject_recursively = on;" + Consts.lineSept +
             " exclude = %s;" + Consts.lineSept +

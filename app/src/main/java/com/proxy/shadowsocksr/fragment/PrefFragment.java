@@ -124,6 +124,7 @@ public class PrefFragment extends PreferenceFragment
         if (!jump)
         {
             Hawk.put("GlobalProfile", globalProfile);
+            return;
         }
 
         String currentSvr = Hawk.get("CurrentServer");
@@ -178,6 +179,7 @@ public class PrefFragment extends PreferenceFragment
         prefRmtPort.setText(ss.remotePort + "");
         prefMethod.setValue(ss.cryptMethod);
         prefLocPort.setText(ss.localPort + "");
+        prefPwd.setText(ss.passwd);
         //
         globalProfile = Hawk.get("GlobalProfile");
         prefRoute.setValue(globalProfile.route);
