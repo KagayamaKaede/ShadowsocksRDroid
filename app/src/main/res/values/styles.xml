@@ -17,8 +17,11 @@
         <item name="android:windowFullscreen">true</item>
     </style>
 
+    <style name="AppTheme.Spinner" parent="Widget.AppCompat.Light.DropDownItem.Spinner">
+        <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
+    </style>
+
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
-
 </resources>

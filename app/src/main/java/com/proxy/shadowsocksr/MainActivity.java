@@ -9,12 +9,16 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +30,7 @@ import android.widget.Toast;
 
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
+import com.proxy.shadowsocksr.fragment.StatusFragment;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
 import com.proxy.shadowsocksr.items.SSProfile;
@@ -46,8 +51,11 @@ public class MainActivity extends Activity
     public final int REQUEST_CODE_CONNECT = 0;
     public final int REQUEST_CODE_SCAN_QR = 1;
 
+    private ActionBarDrawerToggle abdt;
     private Toolbar toolbar;
     private Spinner spinner;
+    private DrawerLayout drawer;
+    private NavigationView nav;
     private FloatingActionButton fab;
     //
     private ArrayAdapter<String> spinnerAdapter;
@@ -75,6 +83,18 @@ public class MainActivity extends Activity
         }
 
         bindService(new Intent(this, SSRVPNService.class), this, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override protected void onPostCreate(Bundle savedInstanceState)
+    {
+        super.onPostCreate(savedInstanceState);
+        abdt.syncState();
+    }
+
+    @Override public void onConfigurationChanged(Configuration newConfig)
+    {
+        super.onConfigurationChanged(newConfig);
+        abdt.syncState();
     }
 
     @Override protected void onDestroy()
@@ -164,14 +184,48 @@ public class MainActivity extends Activity
     {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         spinner = (Spinner) findViewById(R.id.spinner_nav);
+        drawer = (DrawerLayout) findViewById(R.id.drawer);
+        nav = (NavigationView) findViewById(R.id.nav);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         //
+        toolbar.setTitle(R.string.app_name);
         toolbar.inflateMenu(R.menu.menu_main);
         toolbar.setOnMenuItemClickListener(this);
+        //
+        abdt=new ActionBarDrawerToggle(this,drawer,toolbar,R.string.about,R.string.add_canceled);
+        //
+        drawer.setDrawerListener(abdt);
+        //
+        nav.setCheckedItem(R.id.navigation_item_main);
+        nav.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener()
+        {
+            @Override public boolean onNavigationItemSelected(MenuItem menuItem)
+            {
+                drawer.closeDrawers();
+                switch (menuItem.getItemId())
+                {
+                case R.id.navigation_item_main:
+                    getFragmentManager().beginTransaction().replace(R.id.pref, pref).commit();
+                    break;
+                case R.id.navigation_item_background:
+                    getFragmentManager().beginTransaction().replace(R.id.pref, new StatusFragment())
+                                        .commit();
+                    break;
+                case R.id.navigation_item_about:
+                    Intent about = new Intent(Intent.ACTION_VIEW);
+                    about.setData(Uri.parse("https://github.com/KagayamaKaede/ShadowsocksRDroid"));
+                    startActivity(about);
+                    break;
+                }
+                abdt.syncState();
+                return true;
+            }
+        });
         //
         spinnerItemLst = new ArrayList<>();
         spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
                                             spinnerItemLst);
+        spinnerAdapter.setDropDownViewResource(R.layout.spinner_list_item);
         spinner.setAdapter(spinnerAdapter);
         //
         spinner.setOnItemSelectedListener(this);
@@ -422,6 +476,19 @@ public class MainActivity extends Activity
 
     @Override public void onNothingSelected(AdapterView<?> parent)
     {//Nothing to do
+    }
+
+    @Override public void onBackPressed()
+    {
+        //drawer.isDrawerOpen(nav);
+        if (nav.isShown())
+        {
+            drawer.closeDrawers();
+        }
+        else
+        {
+            super.onBackPressed();
+        }
     }
 
     public void switchUI(boolean enable)
