@@ -30,7 +30,6 @@ import android.widget.Toast;
 
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
-import com.proxy.shadowsocksr.fragment.StatusFragment;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
 import com.proxy.shadowsocksr.items.SSProfile;
@@ -208,8 +207,6 @@ public class MainActivity extends Activity
                     getFragmentManager().beginTransaction().replace(R.id.pref, pref).commit();
                     break;
                 case R.id.navigation_item_background:
-                    getFragmentManager().beginTransaction().replace(R.id.pref, new StatusFragment())
-                                        .commit();
                     break;
                 case R.id.navigation_item_about:
                     Intent about = new Intent(Intent.ACTION_VIEW);

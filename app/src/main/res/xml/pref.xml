@@ -70,15 +70,4 @@
             android:summary="@string/start_ssr_on_boot"
             android:title="@string/auto_connect"/>
     </PreferenceCategory>
-    <PreferenceCategory
-        android:title="@string/etc">
-        <Preference
-            android:key="about"
-            android:summary="@string/direct_to_ssr_page"
-            android:title="@string/about">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://github.com/KagayamaKaede/ShadowsocksRDroid"/>
-        </Preference>
-    </PreferenceCategory>
 </PreferenceScreen>

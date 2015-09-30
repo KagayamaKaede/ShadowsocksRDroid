@@ -384,7 +384,8 @@ public class SSRVPNService extends VpnService
         builder.setSession(session)
                .setMtu(VPN_MTU)
                .addAddress(String.format(PRIVATE_VLAN, "1"), 24)
-               .addDnsServer("8.8.8.8");
+               .addDnsServer("8.8.8.8")
+               .addDnsServer("8.8.4.4");
 
         builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
         builder.addRoute("::", 0);
@@ -451,7 +452,7 @@ public class SSRVPNService extends VpnService
                                    String.format(PRIVATE_VLAN, "2"),
                                    ssProfile.localPort, fd, VPN_MTU, Consts.baseDir);
 
-       cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
+        cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
 
         if (globalProfile.dnsForward)
         {
