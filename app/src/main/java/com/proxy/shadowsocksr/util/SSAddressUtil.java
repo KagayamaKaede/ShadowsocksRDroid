@@ -3,7 +3,7 @@ package com.proxy.shadowsocksr.util;
 import android.util.Base64;
 
 import com.proxy.shadowsocksr.Consts;
-import com.proxy.shadowsocksr.items.SSProfile;
+import com.proxy.shadowsocksr.items.SSRProfile;
 
 public class SSAddressUtil
 {
@@ -22,16 +22,16 @@ public class SSAddressUtil
         return util;
     }
 
-    public String generate(SSProfile cfg)
+    public String generate(SSRProfile cfg)
     {
         String path = String
                 .format("%s:%s@%s:%d", cfg.cryptMethod, cfg.passwd, cfg.server, cfg.remotePort);
         return "ss://" + Base64.encodeToString(path.getBytes(), Base64.NO_PADDING);
     }
 
-    public SSProfile parse(String address)
+    public SSRProfile parse(String address)
     {
-        SSProfile ssp = null;
+        SSRProfile ssp = null;
         try
         {
             //TODO: Why Uri scheme not cache.
@@ -45,13 +45,16 @@ public class SSAddressUtil
                 int methodIdx = path.indexOf(':');
                 int pwdIdx = path.lastIndexOf('@');
                 int hostIdx = path.lastIndexOf(':');
-                ssp = new SSProfile(
+                ssp = new SSRProfile(
                         path.substring(pwdIdx + 1, hostIdx),
                         Integer.valueOf(path.substring(hostIdx + 1)),
                         Consts.localPort,
                         path.substring(0, methodIdx),
-                        path.substring(methodIdx + 1, pwdIdx)
-                );
+                        path.substring(methodIdx + 1, pwdIdx),
+                        false,
+                        Consts.defaultTcpProtocol,
+                        Consts.defaultObfsMethod,
+                        false, false);
             }
         }
         catch (Exception e)

@@ -16,7 +16,7 @@ import android.system.OsConstants;
 
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
-import com.proxy.shadowsocksr.items.SSProfile;
+import com.proxy.shadowsocksr.items.SSRProfile;
 import com.proxy.shadowsocksr.util.ConfFileUtil;
 import com.proxy.shadowsocksr.util.DNSUtil;
 import com.proxy.shadowsocksr.util.InetAddressUtil;
@@ -44,7 +44,7 @@ public class SSRVPNService extends VpnService
     private ParcelFileDescriptor conn;
 
     private String session;
-    private SSProfile ssProfile;
+    private SSRProfile ssrProfile;
     private GlobalProfile globalProfile;
     private List<String> proxyApps;
     private SSRVPNThread vpnThread;
@@ -114,8 +114,9 @@ public class SSRVPNService extends VpnService
         @Override public void start(ConnectProfile cp) throws RemoteException
         {
             session = cp.label;
-            ssProfile = new SSProfile(cp.server, cp.remotePort, cp.localPort, cp.cryptMethod,
-                                      cp.passwd);
+            ssrProfile = new SSRProfile(cp.server, cp.remotePort, cp.localPort, cp.cryptMethod,
+                                        cp.passwd, cp.enableSSR, cp.tcpProtocol, cp.obfsMethod,
+                                        cp.tcpOverUdp, cp.udpOverTcp);
             globalProfile = new GlobalProfile(cp.route, cp.globalProxy, cp.dnsForward,
                                               cp.autoConnect);
             if (!cp.globalProxy)
@@ -194,11 +195,11 @@ public class SSRVPNService extends VpnService
         {
             @Override public void run()
             {
-                if (!InetAddressUtil.isIPv4Address(ssProfile.server) &&
-                    !InetAddressUtil.isIPv6Address(ssProfile.server))
+                if (!InetAddressUtil.isIPv4Address(ssrProfile.server) &&
+                    !InetAddressUtil.isIPv6Address(ssrProfile.server))
                 {
                     DNSUtil du = new DNSUtil();
-                    String ip = du.resolve(ssProfile.server, true);
+                    String ip = du.resolve(ssrProfile.server, true);
                     if (ip == null)
                     {
                         stopRunner();
@@ -211,7 +212,7 @@ public class SSRVPNService extends VpnService
                         }
                         return;
                     }
-                    ssProfile.server = ip;
+                    ssrProfile.server = ip;
                 }
                 //
                 startSSRDaemon();
@@ -303,7 +304,7 @@ public class SSRVPNService extends VpnService
             acl = getResources().getStringArray(R.array.private_route);
             break;
         case "bypass-lan-and-list":
-            acl = getResources().getStringArray(R.array.lst_route_full);
+            acl = getResources().getStringArray(R.array.chn_route_full);
             break;
         }
 
@@ -315,11 +316,11 @@ public class SSRVPNService extends VpnService
         ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
 
         String ssrconf = String.format(ConfFileUtil.SSRConf,
-                                       ssProfile.server,
-                                       ssProfile.remotePort,
-                                       ssProfile.localPort,
-                                       ssProfile.passwd,
-                                       ssProfile.cryptMethod,
+                                       ssrProfile.server,
+                                       ssrProfile.remotePort,
+                                       ssrProfile.localPort,
+                                       ssrProfile.passwd,
+                                       ssrProfile.cryptMethod,
                                        20);
         ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-local-vpn.conf"));
 
@@ -341,15 +342,15 @@ public class SSRVPNService extends VpnService
 
     private void startDnsTunnel()
     {
-        String ssrconf = String.format(ConfFileUtil.SSRConf, ssProfile.server,
-                                       ssProfile.remotePort, 8163, ssProfile.passwd,
-                                       ssProfile.cryptMethod, 10);
+        String ssrconf = String.format(ConfFileUtil.SSRConf, ssrProfile.server,
+                                       ssrProfile.remotePort, 8163, ssrProfile.passwd,
+                                       ssrProfile.cryptMethod, 10);
         ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-tunnel-vpn.conf"));
 
         //AUTH
 
         ShellUtil.runCmd((Consts.baseDir +
-                          "ss-tunnel -V -u -b 127.0.0.1 -t 10 -l 8163 -L 8.8.8.8:53 -c " +
+                          "ss-tunnel -V -u -t 10 -b 127.0.0.1 -l 8163 -L 8.8.8.8:53 -c " +
                           Consts.baseDir + "ss-tunnel-vpn.conf -f " + Consts.baseDir +
                           "ss-tunnel-vpn.pid"));
     }
@@ -364,12 +365,12 @@ public class SSRVPNService extends VpnService
             String blklst = getResources().getString(R.string.black_list);
 
             pdnsd = String.format(ConfFileUtil.PdNSdDirect, "0.0.0.0", 8153,
-                                  Consts.baseDir + "pdnsd-vpn.pid", reject, blklst, 8163, "");//IPV6
+                                  Consts.baseDir + "pdnsd-vpn.pid", reject, blklst, 8163, "reject = ::/0;");//IPV6
         }
         else
         {
             pdnsd = String.format(ConfFileUtil.PDNSdLocal, "0.0.0.0", 8153,
-                                  Consts.baseDir + "pdnsd-vpn.pid", 8163, "");//IPV6
+                                  Consts.baseDir + "pdnsd-vpn.pid", 8163, "reject = ::/0;");//IPV6
         }
 
         ConfFileUtil.writeToFile(pdnsd, new File(Consts.baseDir + "pdnsd-vpn.conf"));
@@ -387,8 +388,10 @@ public class SSRVPNService extends VpnService
                .addDnsServer("8.8.8.8")
                .addDnsServer("8.8.4.4");
 
-        builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
-        builder.addRoute("::", 0);
+        //builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
+        //builder.addRoute("::", 0);
+        //builder.addDnsServer("[2001:4860:4860::8888]");
+        //builder.addDnsServer("[2001:4860:4860::8844]");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
@@ -450,9 +453,9 @@ public class SSRVPNService extends VpnService
                                    + " --loglevel 0"
                                    + " --pid %stun2socks-vpn.pid",
                                    String.format(PRIVATE_VLAN, "2"),
-                                   ssProfile.localPort, fd, VPN_MTU, Consts.baseDir);
+                                   ssrProfile.localPort, fd, VPN_MTU, Consts.baseDir);
 
-        cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
+        //cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
 
         if (globalProfile.dnsForward)
         {

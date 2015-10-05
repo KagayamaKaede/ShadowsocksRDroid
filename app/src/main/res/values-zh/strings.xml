@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ShadowsocksR Droid</string>
+    <string name="app_name">影梭R</string>
     <string name="add_server">手动添加服务器</string>
     <string name="del_current_server">删除当前服务器</string>
     <string name="fresh_dns_cache">刷新DNS缓存(需要root)</string>
@@ -8,7 +8,7 @@
     <string name="auto_connect">自动连接</string>
     <string name="configuration_label">配置名称</string>
     <string name="crypt_method">加密方法</string>
-    <string name="direct_to_ssr_page">打开ShadowsocksR Droid GitHub页面</string>
+    <string name="direct_to_ssr_page">打开 影梭R GitHub页面</string>
     <string name="global_proxy">全局代理</string>
     <string name="local_port">本地端口</string>
     <string name="local_port_to_listen">要监听的本地端口</string>
@@ -22,7 +22,7 @@
     <string name="server_host_name">服务器主机名或IP地址</string>
     <string name="server_name">服务器</string>
     <string name="set_proxy_for_sel_apps">给选中的应用设置代理</string>
-    <string name="start_ssr_on_boot">开机自动启动ShadowsocksR Droid</string>
+    <string name="start_ssr_on_boot">开机自动启动 影梭R</string>
     <string name="udp_relay">UDP转发</string>
     <string name="whether_use_route">是否使用路由</string>
     <string name="all">全局</string>
@@ -46,4 +46,13 @@
     <string name="req_install_qrscan_app">是否安装 条码扫描器？</string>
     <string name="req_install_qrscan_app_msg">我们需要 条码扫描器来扫描二维码，您想要安装它吗？</string>
     <string name="show_qr">显示当前二维码</string>
+    <string name="enable_shadowsocksr_feature">启用 影梭R 功能</string>
+    <string name="enable_tcp_over_udp">启用 TCP over UDP</string>
+    <string name="enable_udp_over_tcp">启用 UDP over TCP</string>
+    <string name="obfs_method">混淆方法</string>
+    <string name="protocol_type">协议类型</string>
+    <string name="ssr_feature_configuration">影梭R 功能配置</string>
+    <string name="ssr_server_feature_support_tip">某些功能需要服务端支持</string>
+    <string name="unchecked_to_use_origin_tcp">取消选中则使用原始TCP</string>
+    <string name="unchecked_to_use_origin_udp">取消选中则使用原始UCP</string>
 </resources>

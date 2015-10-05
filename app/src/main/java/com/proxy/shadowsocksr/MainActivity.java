@@ -32,7 +32,7 @@ import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
-import com.proxy.shadowsocksr.items.SSProfile;
+import com.proxy.shadowsocksr.items.SSRProfile;
 import com.proxy.shadowsocksr.ui.DialogManager;
 import com.proxy.shadowsocksr.util.SSAddressUtil;
 import com.proxy.shadowsocksr.util.ScreenUtil;
@@ -191,7 +191,8 @@ public class MainActivity extends Activity
         toolbar.inflateMenu(R.menu.menu_main);
         toolbar.setOnMenuItemClickListener(this);
         //
-        abdt=new ActionBarDrawerToggle(this,drawer,toolbar,R.string.about,R.string.add_canceled);
+        abdt = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.about,
+                                         R.string.add_canceled);
         //
         drawer.setDrawerListener(abdt);
         //
@@ -246,7 +247,8 @@ public class MainActivity extends Activity
     private void addNewServer(String server, int rmtPort, String method, String pwd)
     {
         String lbl = "Svr-" + System.currentTimeMillis();
-        SSProfile newPro = new SSProfile(server, rmtPort, Consts.localPort, method, pwd);
+        SSRProfile newPro = new SSRProfile(server, rmtPort, Consts.localPort, method, pwd,
+                                           false, "origin", "plain", false, false);
         Hawk.put(lbl, newPro);
 
         ArrayList<String> lst = Hawk.get("ServerList");
@@ -276,7 +278,7 @@ public class MainActivity extends Activity
             addNewServer(
                     Consts.defaultIP,
                     Consts.remotePort,
-                    Consts.defaultMethod,
+                    Consts.defaultCryptMethod,
                     Consts.defaultPassword);
             loadServerList();
             pref.reloadPref();
@@ -326,7 +328,7 @@ public class MainActivity extends Activity
                 addNewServer(
                         Consts.defaultIP,
                         Consts.remotePort,
-                        Consts.defaultMethod,
+                        Consts.defaultCryptMethod,
                         Consts.defaultPassword);
             }
             else
@@ -345,7 +347,7 @@ public class MainActivity extends Activity
             break;
         case R.id.action_show_current_qrcode:
             String cur = Hawk.get("CurrentServer");
-            SSProfile ssp = Hawk.get(cur);
+            SSRProfile ssp = Hawk.get(cur);
             String b64 = SSAddressUtil.getUtil().generate(ssp);
             if (b64 != null)
             {
@@ -414,7 +416,7 @@ public class MainActivity extends Activity
                 try
                 {
                     String label = Hawk.get("CurrentServer");
-                    SSProfile ssp = Hawk.get(label);
+                    SSRProfile ssp = Hawk.get(label);
                     GlobalProfile gp = Hawk.get("GlobalProfile");
                     List<String> proxyApps = null;
                     if (!gp.globalProxy)
@@ -443,7 +445,7 @@ public class MainActivity extends Activity
                 String contents = data.getStringExtra("SCAN_RESULT");
                 if (contents != null)
                 {
-                    SSProfile pro = SSAddressUtil.getUtil().parse(contents);
+                    SSRProfile pro = SSAddressUtil.getUtil().parse(contents);
                     if (pro != null)
                     {
                         addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);

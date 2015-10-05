@@ -14,7 +14,15 @@ public class ConnectProfile implements Parcelable
     public int localPort;
     public String cryptMethod;
     public String passwd;
+    public boolean enableSSR;
     //
+    //SSR
+    public String tcpProtocol;
+    public String obfsMethod;
+    public boolean tcpOverUdp;
+    public boolean udpOverTcp;
+    //
+    //Global
     public String route;
     public boolean globalProxy;
     public boolean dnsForward;
@@ -27,19 +35,26 @@ public class ConnectProfile implements Parcelable
         readFromParcel(in);
     }
 
-    public ConnectProfile(String label,SSProfile ssp,GlobalProfile gp,List<String> lst)
+    public ConnectProfile(String label, SSRProfile ssp, GlobalProfile gp, List<String> lst)
     {
-        this.label=label;
-        server=ssp.server;
-        remotePort=ssp.remotePort;
-        localPort=ssp.localPort;
-        cryptMethod=ssp.cryptMethod;
-        passwd=ssp.passwd;
-        route=gp.route;
-        globalProxy=gp.globalProxy;
-        dnsForward=gp.dnsForward;
-        autoConnect=gp.autoConnect;
-        proxyApps=lst;
+        this.label = label;
+        server = ssp.server;
+        remotePort = ssp.remotePort;
+        localPort = ssp.localPort;
+        cryptMethod = ssp.cryptMethod;
+        passwd = ssp.passwd;
+        enableSSR=ssp.enableSSR;
+        //SSR
+        tcpProtocol = ssp.tcpProtocol;
+        obfsMethod = ssp.obfsMethod;
+        tcpOverUdp = ssp.tcpOverUdp;
+        udpOverTcp = ssp.udpOverTcp;
+        //Global
+        route = gp.route;
+        globalProxy = gp.globalProxy;
+        dnsForward = gp.dnsForward;
+        autoConnect = gp.autoConnect;
+        proxyApps = lst;
     }
 
     public void readFromParcel(Parcel in)
@@ -50,7 +65,13 @@ public class ConnectProfile implements Parcelable
         localPort = in.readInt();
         cryptMethod = in.readString();
         passwd = in.readString();
-        //
+        enableSSR=in.readInt()==1;
+        //SSR
+        tcpProtocol = in.readString();
+        obfsMethod = in.readString();
+        tcpOverUdp = in.readInt() == 1;
+        udpOverTcp = in.readInt() == 1;
+        //Global
         route = in.readString();
         globalProxy = in.readInt() == 1;
         dnsForward = in.readInt() == 1;
@@ -86,6 +107,11 @@ public class ConnectProfile implements Parcelable
         dest.writeInt(localPort);
         dest.writeString(cryptMethod);
         dest.writeString(passwd);
+        dest.writeInt(enableSSR?1:0);
+        dest.writeString(tcpProtocol);
+        dest.writeString(obfsMethod);
+        dest.writeInt(tcpOverUdp?1:0);
+        dest.writeInt(udpOverTcp?1:0);
         dest.writeString(route);
         dest.writeInt(globalProxy ? 1 : 0);
         dest.writeInt(dnsForward ? 1 : 0);

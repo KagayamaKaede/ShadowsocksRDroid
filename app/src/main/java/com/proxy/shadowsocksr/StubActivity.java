@@ -15,7 +15,7 @@ import android.os.RemoteException;
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
-import com.proxy.shadowsocksr.items.SSProfile;
+import com.proxy.shadowsocksr.items.SSRProfile;
 
 import java.util.List;
 
@@ -107,7 +107,7 @@ public class StubActivity extends Activity implements ServiceConnection
             try
             {
                 String label = Hawk.get("CurrentServer");
-                SSProfile ssp = Hawk.get(label);
+                SSRProfile ssp = Hawk.get(label);
                 GlobalProfile gp = Hawk.get("GlobalProfile");
                 List<String> proxyApps = null;
                 if (!gp.globalProxy)

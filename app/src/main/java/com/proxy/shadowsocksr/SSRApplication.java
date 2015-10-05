@@ -6,7 +6,7 @@ import com.orhanobut.hawk.Hawk;
 import com.orhanobut.hawk.HawkBuilder;
 import com.orhanobut.hawk.LogLevel;
 import com.proxy.shadowsocksr.items.GlobalProfile;
-import com.proxy.shadowsocksr.items.SSProfile;
+import com.proxy.shadowsocksr.items.SSRProfile;
 
 import java.util.ArrayList;
 
@@ -29,13 +29,17 @@ public class SSRApplication extends Application
 
         if (isFirstUse)
         {
-            SSProfile dftSSProfile = new SSProfile(
+            SSRProfile dftSSRProfile = new SSRProfile(
                     Consts.defaultIP,
                     Consts.remotePort,
                     Consts.localPort,
-                    Consts.defaultMethod,
-                    Consts.defaultPassword);
-            Hawk.put("Sample", dftSSProfile);
+                    Consts.defaultCryptMethod,
+                    Consts.defaultPassword,
+                    false,
+                    Consts.defaultTcpProtocol,
+                    Consts.defaultObfsMethod,
+                    false,false);
+            Hawk.put("Sample", dftSSRProfile);
 
             ArrayList<String> svrLst = new ArrayList<>();
             svrLst.add("Sample");

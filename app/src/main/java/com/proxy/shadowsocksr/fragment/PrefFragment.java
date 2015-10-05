@@ -11,7 +11,7 @@ import com.proxy.shadowsocksr.Consts;
 import com.proxy.shadowsocksr.MainActivity;
 import com.proxy.shadowsocksr.R;
 import com.proxy.shadowsocksr.items.GlobalProfile;
-import com.proxy.shadowsocksr.items.SSProfile;
+import com.proxy.shadowsocksr.items.SSRProfile;
 import com.proxy.shadowsocksr.preference.PasswordPreference;
 import com.proxy.shadowsocksr.preference.SummaryEditTextPreference;
 import com.proxy.shadowsocksr.preference.SummaryListPreference;
@@ -26,13 +26,18 @@ public class PrefFragment extends PreferenceFragment
     private SummaryEditTextPreference prefSvr;
     private SummaryEditTextPreference prefRmtPort;
     private SummaryEditTextPreference prefLocPort;
-    private SummaryListPreference prefMethod;
+    private SummaryListPreference prefCryptMethod;
     private PasswordPreference prefPwd;
-    //
+    private CheckBoxPreference prefEnableSSR;
+    //SSR
+    private SummaryListPreference prefTcpProto;
+    private SummaryListPreference prefObfsMethod;
+    private CheckBoxPreference prefTcpOverUdp;
+    private CheckBoxPreference prefUdpOverTcp;
+    //Global
     private SummaryListPreference prefRoute;
     private CheckBoxPreference prefGlobal;
-    //
-    private CheckBoxPreference prefUdp;
+    private CheckBoxPreference prefUdpRelay;
     private CheckBoxPreference prefAuto;
 
     private PreferenceManager pm;
@@ -48,11 +53,18 @@ public class PrefFragment extends PreferenceFragment
         prefSvr = (SummaryEditTextPreference) findPreference("server");
         prefRmtPort = (SummaryEditTextPreference) findPreference("remote_port");
         prefLocPort = (SummaryEditTextPreference) findPreference("local_port");
-        prefMethod = (SummaryListPreference) findPreference("crypt_method");
+        prefCryptMethod = (SummaryListPreference) findPreference("crypt_method");
         prefPwd = (PasswordPreference) findPreference("password");
+        prefEnableSSR = (CheckBoxPreference) findPreference("enable_ssr");
+        //SSR
+        prefTcpProto = (SummaryListPreference) findPreference("protocol_type");
+        prefObfsMethod = (SummaryListPreference) findPreference("obfs_method");
+        prefTcpOverUdp = (CheckBoxPreference) findPreference("tcp_over_udp");
+        prefUdpOverTcp = (CheckBoxPreference) findPreference("udp_over_tcp");
+        //Global
         prefRoute = (SummaryListPreference) findPreference("route");
         prefGlobal = (CheckBoxPreference) findPreference("global_proxy");
-        prefUdp = (CheckBoxPreference) findPreference("udp_forwarding");
+        prefUdpRelay = (CheckBoxPreference) findPreference("udp_forwarding");
         prefAuto = (CheckBoxPreference) findPreference("auto_connect");
     }
 
@@ -90,13 +102,20 @@ public class PrefFragment extends PreferenceFragment
         prefSvr.setEnabled(isEnable);
         prefRmtPort.setEnabled(isEnable);
         prefLocPort.setEnabled(isEnable);
-        prefMethod.setEnabled(isEnable);
+        prefCryptMethod.setEnabled(isEnable);
         prefPwd.setEnabled(isEnable);
-        findPreference("per_app_proxy").setEnabled(isEnable);
+        //SSR
+        prefEnableSSR.setEnabled(isEnable);
+        prefTcpProto.setEnabled(isEnable);
+        prefObfsMethod.setEnabled(isEnable);
+        prefTcpOverUdp.setEnabled(isEnable);
+        prefUdpOverTcp.setEnabled(isEnable);
+        //Global
         prefRoute.setEnabled(isEnable);
         prefGlobal.setEnabled(isEnable);
-        prefUdp.setEnabled(isEnable);
+        prefUdpRelay.setEnabled(isEnable);
         prefAuto.setEnabled(isEnable);
+        findPreference("per_app_proxy").setEnabled(isEnable);
     }
 
     private GlobalProfile globalProfile;
@@ -128,7 +147,7 @@ public class PrefFragment extends PreferenceFragment
         }
 
         String currentSvr = Hawk.get("CurrentServer");
-        SSProfile ss = Hawk.get(currentSvr);
+        SSRProfile ss = Hawk.get(currentSvr);
 
         switch (key)
         {
@@ -161,10 +180,25 @@ public class PrefFragment extends PreferenceFragment
             ss.localPort = Integer.valueOf(sp.getString(key, String.valueOf(Consts.remotePort)));
             break;
         case "crypt_method":
-            ss.cryptMethod = sp.getString(key, Consts.defaultMethod);
+            ss.cryptMethod = sp.getString(key, Consts.defaultCryptMethod);
             break;
         case "password":
             ss.passwd = sp.getString(key, Consts.defaultPassword);
+            break;
+        case "enable_ssr":
+            ss.enableSSR = sp.getBoolean(key, false);
+            break;
+        case "protocol_type":
+            ss.tcpProtocol = sp.getString(key, Consts.defaultTcpProtocol);
+            break;
+        case "obfs_method":
+            ss.obfsMethod = sp.getString(key, Consts.defaultObfsMethod);
+            break;
+        case "tcp_over_udp":
+            ss.tcpOverUdp = sp.getBoolean(key, false);
+            break;
+        case "udp_over_tcp":
+            ss.udpOverTcp = sp.getBoolean(key, false);
             break;
         }
         Hawk.put(currentSvr, ss);
@@ -173,18 +207,24 @@ public class PrefFragment extends PreferenceFragment
     private void loadCurrentPref()
     {
         String currentSvr = Hawk.get("CurrentServer");
-        SSProfile ss = Hawk.get(currentSvr);
+        SSRProfile ss = Hawk.get(currentSvr);
         prefLbl.setText(currentSvr);
         prefSvr.setText(ss.server);
         prefRmtPort.setText(ss.remotePort + "");
-        prefMethod.setValue(ss.cryptMethod);
+        prefCryptMethod.setValue(ss.cryptMethod);
         prefLocPort.setText(ss.localPort + "");
         prefPwd.setText(ss.passwd);
-        //
+        prefEnableSSR.setChecked(ss.enableSSR);
+        //SSR
+        prefTcpProto.setValue(ss.tcpProtocol);
+        prefObfsMethod.setValue(ss.obfsMethod);
+        prefTcpOverUdp.setChecked(ss.tcpOverUdp);
+        prefUdpOverTcp.setChecked(ss.udpOverTcp);
+        //Global
         globalProfile = Hawk.get("GlobalProfile");
         prefRoute.setValue(globalProfile.route);
         prefGlobal.setChecked(globalProfile.globalProxy);
-        prefUdp.setChecked(globalProfile.dnsForward);
+        prefUdpRelay.setChecked(globalProfile.dnsForward);
         prefAuto.setChecked(globalProfile.autoConnect);
     }
 

@@ -11,6 +11,7 @@
             android:title="Main"/>
         <item
             android:id="@+id/navigation_item_background"
+            android:enabled="false"
             android:icon="@mipmap/ic_launcher"
             android:title="Background"/>
     </group>
