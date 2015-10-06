@@ -70,7 +70,6 @@ struct remote {
     struct remote_ctx *recv_ctx;
     struct remote_ctx *send_ctx;
     struct server *server;
-    uint32_t counter;
 };
 
 #endif // _LOCAL_H

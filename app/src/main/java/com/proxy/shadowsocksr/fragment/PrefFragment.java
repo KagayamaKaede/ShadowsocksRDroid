@@ -183,7 +183,7 @@ public class PrefFragment extends PreferenceFragment
             ss.cryptMethod = sp.getString(key, Consts.defaultCryptMethod);
             break;
         case "password":
-            ss.passwd = sp.getString(key, Consts.defaultPassword);
+            ss.passwd = sp.getString(key, "");
             break;
         case "enable_ssr":
             ss.enableSSR = sp.getBoolean(key, false);

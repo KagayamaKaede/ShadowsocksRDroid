@@ -30,7 +30,6 @@
 
 #include <openssl/md5.h>
 #include <openssl/rand.h>
-#include <openssl/hmac.h>
 
 #elif defined(USE_CRYPTO_POLARSSL)
 
@@ -68,11 +67,6 @@
 
 #include <sodium.h>
 
-#ifndef __MINGW32__
-#include <arpa/inet.h>
-#endif
-
-#include "hmac-sha1.h"
 #include "cache.h"
 #include "encrypt.h"
 #include "utils.h"
@@ -81,6 +75,7 @@
 
 static uint8_t *enc_table;
 static uint8_t *dec_table;
+static uint8_t auth_key[ONETIMEAUTH_KEYBYTES];
 static uint8_t enc_key[MAX_KEY_LENGTH];
 static int enc_key_len;
 static int enc_iv_len;
@@ -145,6 +140,7 @@ static const char * supported_ciphers_polarssl[CIPHER_NUM] =
 #endif
 
 #ifdef USE_CRYPTO_MBEDTLS
+// FIXME: check it
 static const char * supported_ciphers_mbedtls[CIPHER_NUM] =
 {
     "table",
@@ -351,6 +347,7 @@ int cipher_iv_size(const cipher_kt_t *cipher)
 #if defined(USE_CRYPTO_OPENSSL)
     return EVP_CIPHER_iv_length(cipher);
 #elif defined(USE_CRYPTO_POLARSSL) || defined(USE_CRYPTO_MBEDTLS)
+    //FIXME: check data structure of cipher
     if (cipher == NULL) {
         return 0;
     }
@@ -373,10 +370,11 @@ int cipher_key_size(const cipher_kt_t *cipher)
     }
     return cipher->key_length / 8;
 #elif defined(USE_CRYPTO_MBEDTLS)
+    // FIXME: ditto, cipher data structure
     /*
      * Semi-API changes (technically public, morally private)
      * Renamed a few headers to include _internal in the name. Those headers are
-     * not supposed to be included by users.
+       not supposed to be included by users.
      * Changed md_info_t into an opaque structure (use md_get_xxx() accessors).
      * Changed pk_info_t into an opaque structure.
      * Changed cipher_base_t into an opaque structure.
@@ -490,7 +488,7 @@ int bytes_to_key(const cipher_kt_t *cipher, const digest_type_t *md,
  *
  * Generic message digest context.
 
-   typedef struct {
+typedef struct {
     Information about the associated message digest
     const mbedtls_md_info_t *md_info;
 
@@ -499,15 +497,15 @@ int bytes_to_key(const cipher_kt_t *cipher, const digest_type_t *md,
 
      HMAC part of the context
     void *hmac_ctx;
-   } mbedtls_md_context_t; // mbedtls 2.0.0
+} mbedtls_md_context_t; // mbedtls 2.0.0
 
-   typedef struct {
+typedef struct {
     Information about the associated message digest
     const md_info_t *md_info;
 
     Digest-specific context
     void *md_ctx;
-   } md_context_t; //polarssl 1.3
+} md_context_t; //polarssl 1.3
 
  */
     // NOTE: different struct body, initialize new param hmac 0 to disable HMAC
@@ -528,7 +526,7 @@ int bytes_to_key(const cipher_kt_t *cipher, const digest_type_t *md,
     }
 
     memset(&c, 0, sizeof(mbedtls_md_context_t));
-    // XXX: md_init_ctx superseded by mbedtls_md_setup() in 2.0.0
+    //FIXME: md_init_ctx superseded by mbedtls_md_setup() in 2.0.0
     // new param hmac      0 to save some memory if HMAC will not be used,
     //                     non-zero is HMAC is going to be used with this context.
     if (mbedtls_md_setup(&c, md, 0)) {
@@ -670,7 +668,7 @@ int rand_bytes(uint8_t *output, int len)
     return 1;
 #elif defined(USE_CRYPTO_MBEDTLS)
     static mbedtls_entropy_context ec = {};
-    // XXX: ctr_drbg_context changed, [if defined(MBEDTLS_THREADING_C)    mbedtls_threading_mutex_t mutex;]
+    // FIXME: ctr_drbg_context changed, [if defined(MBEDTLS_THREADING_C)    mbedtls_threading_mutex_t mutex;]
     static mbedtls_ctr_drbg_context cd_ctx = {};
     static unsigned char rand_initialised = 0;
     const size_t blen = min(len, MBEDTLS_CTR_DRBG_MAX_REQUEST);
@@ -711,10 +709,10 @@ int rand_bytes(uint8_t *output, int len)
         }
 #endif
         mbedtls_entropy_init(&ec);
-        // XXX: ctr_drbg_init changed, seems we should initialize it before calling mbedtls_ctr_drbg_seed()
+        // FIXME: ctr_drbg_init changed, seems we should initialize it before calling mbedtls_ctr_drbg_seed()
         mbedtls_ctr_drbg_init(&cd_ctx);
         if (mbedtls_ctr_drbg_seed(&cd_ctx, mbedtls_entropy_func, &ec,
-                                  (const unsigned char *)rand_buffer.buffer, 8) != 0) {
+                          (const unsigned char *)rand_buffer.buffer, 8) != 0) {
             mbedtls_entropy_free(&ec);
             FATAL("mbed TLS: Failed to initialize random generator");
         }
@@ -845,7 +843,7 @@ void cipher_context_init(cipher_ctx_t *ctx, int method, int enc)
         FATAL("Cannot initialize PolarSSL cipher context");
     }
 #elif defined(USE_CRYPTO_MBEDTLS)
-    // XXX: mbedtls_cipher_setup future change
+    // FIXME: mbedtls_cipher_setup future change
     // NOTE:  Currently also clears structure. In future versions you will be required to call
     //        mbedtls_cipher_init() on the structure first.
     //        void mbedtls_cipher_init( mbedtls_cipher_context_t *ctx );
@@ -870,11 +868,12 @@ void cipher_context_set_iv(cipher_ctx_t *ctx, uint8_t *iv, size_t iv_len,
         return;
     }
 
-    if (!enc) {
-        memcpy(ctx->iv, iv, iv_len);
+    if (enc) {
+        rand_bytes(iv, iv_len);
     }
 
     if (enc_method >= SALSA20) {
+        memcpy(ctx->iv, iv, iv_len);
         return;
     }
 
@@ -932,7 +931,7 @@ void cipher_context_set_iv(cipher_ctx_t *ctx, uint8_t *iv, size_t iv_len,
         FATAL("Cannot set key and IV");
     }
 #elif defined(USE_CRYPTO_POLARSSL)
-    // XXX: PolarSSL 1.3.11: cipher_free_ctx deprecated, Use cipher_free() instead.
+    // FIXME: PolarSSL 1.3.11: cipher_free_ctx deprecated, Use cipher_free() instead.
     if (cipher_setkey(evp, true_key, enc_key_len * 8, enc) != 0) {
         cipher_free_ctx(evp);
         FATAL("Cannot set PolarSSL cipher key");
@@ -953,6 +952,7 @@ void cipher_context_set_iv(cipher_ctx_t *ctx, uint8_t *iv, size_t iv_len,
     }
 #endif
 #elif defined(USE_CRYPTO_MBEDTLS)
+    // FIXME: cipher_free_ctx deprecated, Use cipher_free() instead in PolarSSL 1.3.11
     if (mbedtls_cipher_setkey(evp, true_key, enc_key_len * 8, enc) != 0) {
         mbedtls_cipher_free(evp);
         FATAL("Cannot set mbed TLS cipher key");
@@ -1002,76 +1002,47 @@ void cipher_context_release(cipher_ctx_t *ctx)
 #endif
 }
 
-static int cipher_context_update(cipher_ctx_t *ctx, uint8_t *output, size_t *olen,
-                                 const uint8_t *input, size_t ilen)
+static int cipher_context_update(cipher_ctx_t *ctx, uint8_t *output, int *olen,
+                                 const uint8_t *input, int ilen)
 {
 #ifdef USE_CRYPTO_APPLECC
     cipher_cc_t *cc = &ctx->cc;
     if (cc->valid == kCCContextValid) {
         CCCryptorStatus ret;
         ret = CCCryptorUpdate(cc->cryptor, input, ilen, output,
-                              ilen, olen);
+                              ilen, (size_t *)olen);
         return (ret == kCCSuccess) ? 1 : 0;
     }
 #endif
     cipher_evp_t *evp = &ctx->evp;
 #if defined(USE_CRYPTO_OPENSSL)
-    int err = 0, tlen = *olen;
-    err = EVP_CipherUpdate(evp, (uint8_t *)output, &tlen,
-                           (const uint8_t *)input, ilen);
-    *olen = tlen;
-    return err;
+    return EVP_CipherUpdate(evp, (uint8_t *)output, olen,
+                            (const uint8_t *)input, (size_t)ilen);
 #elif defined(USE_CRYPTO_POLARSSL)
-    return !cipher_update(evp, (const uint8_t *)input, ilen,
-                          (uint8_t *)output, olen);
+    return !cipher_update(evp, (const uint8_t *)input, (size_t)ilen,
+                          (uint8_t *)output, (size_t *)olen);
 #elif defined(USE_CRYPTO_MBEDTLS)
-    return !mbedtls_cipher_update(evp, (const uint8_t *)input, ilen,
-                                  (uint8_t *)output, olen);
+    return !mbedtls_cipher_update(evp, (const uint8_t *)input, (size_t)ilen,
+                                  (uint8_t *)output, (size_t *)olen);
 #endif
 }
 
-int ss_onetimeauth(char *auth, char *msg, int msg_len, uint8_t *iv)
-{
-    uint8_t hash[ONETIMEAUTH_BYTES * 2];
-    uint8_t auth_key[MAX_IV_LENGTH + MAX_KEY_LENGTH];
-    memcpy(auth_key, iv, enc_iv_len);
-    memcpy(auth_key + enc_iv_len, enc_key, enc_key_len);
-
-#if defined(USE_CRYPTO_OPENSSL)
-    HMAC(EVP_sha1(), auth_key, enc_iv_len + enc_key_len, (uint8_t *)msg, msg_len, (uint8_t *)hash, NULL);
-#else
-    ss_sha1_hmac(auth_key, enc_iv_len + enc_key_len, (uint8_t *)msg, msg_len, (uint8_t *)hash);
-#endif
-
-    memcpy(auth, hash, ONETIMEAUTH_BYTES);
-
-    return 0;
+int ss_onetimeauth(char *auth, char *msg, int msg_len) {
+    return crypto_onetimeauth((uint8_t *)auth, (uint8_t *)msg, msg_len, auth_key);
 }
 
-int ss_onetimeauth_verify(char *auth, char *msg, int msg_len, uint8_t *iv)
-{
-    uint8_t hash[ONETIMEAUTH_BYTES * 2];
-    uint8_t auth_key[MAX_IV_LENGTH + MAX_KEY_LENGTH];
-    memcpy(auth_key, iv, enc_iv_len);
-    memcpy(auth_key + enc_iv_len, enc_key, enc_key_len);
-
-#if defined(USE_CRYPTO_OPENSSL)
-    HMAC(EVP_sha1(), auth_key, enc_iv_len + enc_key_len, (uint8_t *)msg, msg_len, hash, NULL);
-#else
-    ss_sha1_hmac(auth_key, enc_iv_len + enc_key_len, (uint8_t *)msg, msg_len, hash);
-#endif
-
-    return memcmp(auth, hash, ONETIMEAUTH_BYTES);
+int ss_onetimeauth_verify(char *auth, char *msg, int msg_len) {
+    return crypto_onetimeauth_verify((uint8_t *)auth, (uint8_t *)msg, msg_len, auth_key);
 }
 
-char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method, int auth)
+char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method)
 {
     if (method > TABLE) {
         cipher_ctx_t evp;
         cipher_context_init(&evp, method, 1);
 
-        size_t p_len = *len, c_len = *len;
-        size_t iv_len = enc_iv_len;
+        int p_len = *len, c_len = *len;
+        int iv_len = enc_iv_len;
         int err = 1;
 
         static int tmp_len = 0;
@@ -1084,20 +1055,8 @@ char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method, i
         char *ciphertext = tmp_buf;
 
         uint8_t iv[MAX_IV_LENGTH];
-
-        rand_bytes(iv, iv_len);
         cipher_context_set_iv(&evp, iv, iv_len, 1);
         memcpy(ciphertext, iv, iv_len);
-
-        if (auth) {
-            char hash[ONETIMEAUTH_BYTES * 2];
-            ss_onetimeauth(hash, plaintext, p_len, iv);
-            if (buf_size < ONETIMEAUTH_BYTES + p_len) {
-                plaintext = realloc(plaintext, ONETIMEAUTH_BYTES + p_len);
-            }
-            memcpy(plaintext + p_len, hash, ONETIMEAUTH_BYTES);
-            p_len = c_len = p_len + ONETIMEAUTH_BYTES;
-        }
 
         if (method >= SALSA20) {
             crypto_stream_xor_ic((uint8_t *)(ciphertext + iv_len),
@@ -1123,8 +1082,8 @@ char * ss_encrypt_all(int buf_size, char *plaintext, ssize_t *len, int method, i
 
         cipher_context_release(&evp);
 
-        if (buf_size < iv_len + c_len) {
-            plaintext = realloc(plaintext, iv_len + c_len);
+        if (*len < iv_len + c_len) {
+            plaintext = realloc(plaintext, max(iv_len + c_len, buf_size));
         }
         *len = iv_len + c_len;
         memcpy(plaintext, ciphertext, *len);
@@ -1148,8 +1107,8 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
         static char *tmp_buf = NULL;
 
         int err = 1;
-        size_t iv_len = 0;
-        size_t p_len = *len, c_len = *len;
+        int iv_len = 0;
+        int p_len = *len, c_len = *len;
         if (!ctx->init) {
             iv_len = enc_iv_len;
         }
@@ -1162,8 +1121,9 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
         char *ciphertext = tmp_buf;
 
         if (!ctx->init) {
-            cipher_context_set_iv(&ctx->evp, ctx->evp.iv, iv_len, 1);
-            memcpy(ciphertext, ctx->evp.iv, iv_len);
+            uint8_t iv[MAX_IV_LENGTH];
+            cipher_context_set_iv(&ctx->evp, iv, iv_len, 1);
+            memcpy(ciphertext, iv, iv_len);
             ctx->counter = 0;
             ctx->init = 1;
         }
@@ -1209,8 +1169,8 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
         dump("CIPHER", ciphertext + iv_len, c_len);
 #endif
 
-        if (buf_size < iv_len + c_len) {
-            plaintext = realloc(plaintext, iv_len + c_len);
+        if (*len < iv_len + c_len) {
+            plaintext = realloc(plaintext, max(iv_len + c_len, buf_size));
         }
         *len = iv_len + c_len;
         memcpy(plaintext, ciphertext, *len);
@@ -1226,14 +1186,14 @@ char * ss_encrypt(int buf_size, char *plaintext, ssize_t *len,
     }
 }
 
-char * ss_decrypt_all(int buf_size, char *ciphertext, ssize_t *len, int method, int auth)
+char * ss_decrypt_all(int buf_size, char *ciphertext, ssize_t *len, int method)
 {
     if (method > TABLE) {
         cipher_ctx_t evp;
         cipher_context_init(&evp, method, 0);
-        size_t iv_len = enc_iv_len;
-        size_t c_len = *len, p_len = *len - iv_len;
-        int ret = 1;
+        int iv_len = enc_iv_len;
+        int c_len = *len, p_len = *len - iv_len;
+        int err = 1;
 
         static int tmp_len = 0;
         static char *tmp_buf = NULL;
@@ -1254,19 +1214,12 @@ char * ss_decrypt_all(int buf_size, char *ciphertext, ssize_t *len, int method, 
                                  (uint64_t)(c_len - iv_len),
                                  (const uint8_t *)iv, 0, enc_key, method);
         } else {
-            ret = cipher_context_update(&evp, (uint8_t *)plaintext, &p_len,
+            err = cipher_context_update(&evp, (uint8_t *)plaintext, &p_len,
                                         (const uint8_t *)(ciphertext + iv_len),
                                         c_len - iv_len);
         }
 
-        if (auth || (plaintext[0] & ONETIMEAUTH_FLAG)) {
-            char hash[ONETIMEAUTH_BYTES];
-            memcpy(hash, plaintext + p_len - ONETIMEAUTH_BYTES, ONETIMEAUTH_BYTES);
-            ret = !ss_onetimeauth_verify(hash, plaintext, p_len - ONETIMEAUTH_BYTES, iv);
-            if (ret) p_len -= ONETIMEAUTH_BYTES;
-        }
-
-        if (!ret) {
+        if (!err) {
             free(ciphertext);
             cipher_context_release(&evp);
             return NULL;
@@ -1279,8 +1232,8 @@ char * ss_decrypt_all(int buf_size, char *ciphertext, ssize_t *len, int method, 
 
         cipher_context_release(&evp);
 
-        if (buf_size < p_len) {
-            ciphertext = realloc(ciphertext, p_len);
+        if (*len < p_len) {
+            ciphertext = realloc(ciphertext, max(p_len, buf_size));
         }
         *len = p_len;
         memcpy(ciphertext, plaintext, *len);
@@ -1296,14 +1249,15 @@ char * ss_decrypt_all(int buf_size, char *ciphertext, ssize_t *len, int method, 
     }
 }
 
-char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len, struct enc_ctx *ctx)
+char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len,
+                  struct enc_ctx *ctx)
 {
     if (ctx != NULL) {
         static int tmp_len = 0;
         static char *tmp_buf = NULL;
 
-        size_t c_len = *len, p_len = *len;
-        size_t iv_len = 0;
+        int c_len = *len, p_len = *len;
+        int iv_len = 0;
         int err = 1;
         int buf_len = max(p_len, buf_size);
 
@@ -1341,7 +1295,8 @@ char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len, struct enc_ctx *
                 tmp_buf = plaintext;
             }
             if (padding) {
-                ciphertext = realloc(ciphertext, max(c_len + padding, buf_size));
+                ciphertext =
+                    realloc(ciphertext, max(c_len + padding, buf_size));
                 memmove(ciphertext + iv_len + padding, ciphertext + iv_len,
                         c_len - iv_len);
                 memset(ciphertext + iv_len, 0, padding);
@@ -1372,8 +1327,8 @@ char * ss_decrypt(int buf_size, char *ciphertext, ssize_t *len, struct enc_ctx *
         dump("CIPHER", ciphertext + iv_len, c_len - iv_len);
 #endif
 
-        if (buf_size < p_len) {
-            ciphertext = realloc(ciphertext, p_len);
+        if (*len < p_len) {
+            ciphertext = realloc(ciphertext, max(p_len, buf_size));
         }
         *len = p_len;
         memcpy(ciphertext, plaintext, *len);
@@ -1393,10 +1348,6 @@ void enc_ctx_init(int method, struct enc_ctx *ctx, int enc)
 {
     memset(ctx, 0, sizeof(struct enc_ctx));
     cipher_context_init(&ctx->evp, method, enc);
-
-    if (enc) {
-        rand_bytes(ctx->evp.iv, enc_iv_len);
-    }
 }
 
 void enc_key_init(int method, const char *pass)
@@ -1434,7 +1385,7 @@ void enc_key_init(int method, const char *pass)
         cipher->iv_size = supported_ciphers_iv_size[method];
 #endif
 #if defined(USE_CRYPTO_MBEDTLS)
-        // XXX: key_length changed to key_bitlen in mbed TLS 2.0.0
+        // FIXME: key_length changed to key_bitlen in mbed TLS 2.0.0
         cipher->base = NULL;
         cipher->key_bitlen = supported_ciphers_key_size[method] * 8;
         cipher->iv_size = supported_ciphers_iv_size[method];
@@ -1455,7 +1406,7 @@ void enc_key_init(int method, const char *pass)
             }
 #endif
 #if defined(USE_CRYPTO_MBEDTLS) && defined(USE_CRYPTO_APPLECC)
-            // XXX: key_length changed to key_bitlen in mbed TLS 2.0.0
+            // FIXME: key_length changed to key_bitlen in mbed TLS 2.0.0
             if (supported_ciphers_applecc[method] != kCCAlgorithmInvalid) {
                 cipher_info.base = NULL;
                 cipher_info.key_bitlen = supported_ciphers_key_size[method] * 8;
@@ -1506,105 +1457,7 @@ int enc_init(const char *pass, const char *method)
     } else {
         enc_key_init(m, pass);
     }
+    crypto_generichash(auth_key, ONETIMEAUTH_KEYBYTES, (uint8_t *)pass, strlen(pass), NULL, 0);
     return m;
 }
 
-int ss_check_hash(char **buf_ptr, ssize_t *buf_len, struct chunk *chunk, struct enc_ctx *ctx, int buf_size)
-{
-    int i, j, k;
-    char *buf = *buf_ptr;
-    ssize_t blen = *buf_len;
-    uint32_t cidx = chunk->idx;
-
-    if (chunk->buf == NULL) {
-        chunk->buf = (char *)malloc(buf_size);
-        chunk->len = buf_size - AUTH_BYTES;
-    }
-
-    int size = max(chunk->len + blen, buf_size);
-    if (buf_size < size) {
-        buf = realloc(buf, size);
-    }
-
-    for (i = 0, j = 0, k = 0; i < blen; i++) {
-
-        chunk->buf[cidx++] = buf[k++];
-
-        if (cidx == CLEN_BYTES) {
-            uint16_t clen = ntohs(*((uint16_t *)chunk->buf));
-
-            if (buf_size < clen + AUTH_BYTES) {
-                chunk->buf = realloc(chunk->buf, clen + AUTH_BYTES);
-            }
-            chunk->len = clen;
-        }
-
-        if (cidx == chunk->len + AUTH_BYTES) {
-            // Compare hash
-            uint8_t hash[ONETIMEAUTH_BYTES * 2];
-            uint8_t key[MAX_IV_LENGTH + sizeof(uint32_t)];
-
-            uint32_t c = htonl(chunk->counter);
-            memcpy(key, ctx->evp.iv, enc_iv_len);
-            memcpy(key + enc_iv_len, &c, sizeof(uint32_t));
-#if defined(USE_CRYPTO_OPENSSL)
-            HMAC(EVP_sha1(), key, enc_iv_len + sizeof(uint32_t),
-                    (uint8_t *)chunk->buf + AUTH_BYTES, chunk->len, hash, NULL);
-#else
-            ss_sha1_hmac(key, enc_iv_len + sizeof(uint32_t),
-                    (uint8_t *)chunk->buf + AUTH_BYTES, chunk->len, hash);
-#endif
-
-            if (memcmp(hash, chunk->buf + CLEN_BYTES, ONETIMEAUTH_BYTES) != 0) {
-                *buf_ptr = buf;
-                return 0;
-            }
-
-            // Copy chunk back to buffer
-            memmove(buf + j + chunk->len, buf + k, blen - i - 1);
-            memcpy(buf + j, chunk->buf + AUTH_BYTES, chunk->len);
-
-            // Reset the base offset
-            j += chunk->len;
-            k = j;
-            cidx = 0;
-            chunk->counter++;
-        }
-    }
-
-    *buf_ptr = buf;
-    *buf_len = j;
-    chunk->idx = cidx;
-    return 1;
-}
-
-char *ss_gen_hash(char *buf, ssize_t *buf_len, uint32_t *counter, struct enc_ctx *ctx, int buf_size)
-{
-    ssize_t blen = *buf_len;
-    int size = max(AUTH_BYTES + blen, buf_size);
-
-    if (buf_size < size) {
-        buf = realloc(buf, size);
-    }
-
-    uint16_t chunk_len = htons((uint16_t)blen);
-    uint8_t hash[ONETIMEAUTH_BYTES * 2];
-    uint8_t key[MAX_IV_LENGTH + sizeof(uint32_t)];
-
-    uint32_t c = htonl(*counter);
-    memcpy(key, ctx->evp.iv, enc_iv_len);
-    memcpy(key + enc_iv_len, &c, sizeof(uint32_t));
-#if defined(USE_CRYPTO_OPENSSL)
-    HMAC(EVP_sha1(), key, enc_iv_len + sizeof(uint32_t), (uint8_t *)buf, blen, hash, NULL);
-#else
-    ss_sha1_hmac(key, enc_iv_len + sizeof(uint32_t), (uint8_t *)buf, blen, hash);
-#endif
-
-    memmove(buf + AUTH_BYTES, buf, blen);
-    memcpy(buf + CLEN_BYTES, hash, ONETIMEAUTH_BYTES);
-    memcpy(buf, &chunk_len, CLEN_BYTES);
-
-    *counter = *counter + 1;
-    *buf_len = blen + AUTH_BYTES;
-    return buf;
-}

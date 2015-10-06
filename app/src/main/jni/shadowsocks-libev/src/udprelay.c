@@ -62,7 +62,7 @@
 #include "udprelay.h"
 
 #ifdef UDPRELAY_REMOTE
-#define MAX_UDP_CONN_NUM 512
+#define MAX_UDP_CONN_NUM 1024
 #else
 #define MAX_UDP_CONN_NUM 256
 #endif
@@ -216,17 +216,14 @@ static int construct_udprealy_header(const struct sockaddr_storage *in_addr,
 #endif
 
 static int parse_udprealy_header(const char * buf, const int buf_len,
-                                 int *auth, char *host, char *port,
+                                 char *host, char *port,
                                  struct sockaddr_storage *storage)
 {
 
     const uint8_t atyp = *(uint8_t *)buf;
     int offset = 1;
-
-    if (auth != NULL) *auth |= (atyp & ONETIMEAUTH_FLAG);
-
     // get remote addr and port
-    if ((atyp & ADDRTYPE_MASK) == 1) {
+    if (atyp == 1) {
         // IP V4
         size_t in_addr_len = sizeof(struct in_addr);
         if (buf_len > in_addr_len) {
@@ -242,7 +239,7 @@ static int parse_udprealy_header(const char * buf, const int buf_len,
             }
             offset += in_addr_len;
         }
-    } else if ((atyp & ADDRTYPE_MASK) == 3) {
+    } else if (atyp == 3) {
         // Domain name
         uint8_t name_len = *(uint8_t *)(buf + offset);
         if (name_len < buf_len && name_len < 255 && name_len > 0) {
@@ -267,7 +264,7 @@ static int parse_udprealy_header(const char * buf, const int buf_len,
                 }
             }
         }
-    } else if ((atyp & ADDRTYPE_MASK) == 4) {
+    } else if (atyp == 4) {
         // IP V6
         size_t in6_addr_len = sizeof(struct in6_addr);
         if (buf_len > in6_addr_len) {
@@ -531,7 +528,7 @@ static void remote_timeout_cb(EV_P_ ev_timer *watcher, int revents)
     }
 
     char *key = hash_key(remote_ctx->af, &remote_ctx->src_addr);
-    cache_remove(remote_ctx->server_ctx->conn_cache, key, HASH_KEY_LEN);
+    cache_remove(remote_ctx->server_ctx->conn_cache, key, 32);
 }
 
 #ifdef UDPRELAY_REMOTE
@@ -651,7 +648,7 @@ static void remote_recv_cb(EV_P_ ev_io *w, int revents)
     }
 
 #ifdef UDPRELAY_LOCAL
-    buf = ss_decrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method, 0);
+    buf = ss_decrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method);
     if (buf == NULL) {
         ERROR("[udp] server_ss_decrypt_all");
         goto CLEAN_UP;
@@ -660,14 +657,14 @@ static void remote_recv_cb(EV_P_ ev_io *w, int revents)
 #ifdef UDPRELAY_REDIR
     struct sockaddr_storage dst_addr;
     memset(&dst_addr, 0, sizeof(struct sockaddr_storage));
-    int len = parse_udprealy_header(buf, buf_len, NULL, NULL, NULL, &dst_addr);
+    int len = parse_udprealy_header(buf, buf_len, NULL, NULL, &dst_addr);
 
     if (dst_addr.ss_family != AF_INET && dst_addr.ss_family != AF_INET6) {
         LOGI("[udp] ss-redir does not support domain name");
         goto CLEAN_UP;
     }
 #else
-    int len = parse_udprealy_header(buf, buf_len, NULL, NULL, NULL, NULL);
+    int len = parse_udprealy_header(buf, buf_len, NULL, NULL, NULL);
 #endif
 
     if (len == 0) {
@@ -685,9 +682,7 @@ static void remote_recv_cb(EV_P_ ev_io *w, int revents)
     memmove(buf, buf + len, buf_len);
 #else
     // Construct packet
-    if (BUF_SIZE < buf_len + 3) {
-        buf = realloc(buf, buf_len + 3);
-    }
+    buf = realloc(buf, buf_len + 3);
     memmove(buf + 3, buf, buf_len);
     memset(buf, 0, 3);
     buf_len += 3;
@@ -708,14 +703,12 @@ static void remote_recv_cb(EV_P_ ev_io *w, int revents)
     }
 
     // Construct packet
-    if (BUF_SIZE < buf_len + addr_header_len) {
-        buf = realloc(buf, buf_len + addr_header_len);
-    }
+    buf = realloc(buf, buf_len + addr_header_len);
     memmove(buf + addr_header_len, buf, buf_len);
     memcpy(buf, addr_header, addr_header_len);
     buf_len += addr_header_len;
 
-    buf = ss_encrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method, 0);
+    buf = ss_encrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method);
 #endif
 
     size_t remote_src_addr_len = get_sockaddr_len((struct sockaddr *)&remote_ctx->src_addr);
@@ -833,7 +826,7 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
 
     tx += buf_len;
 
-    buf = ss_decrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method, server_ctx->auth);
+    buf = ss_decrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method);
     if (buf == NULL) {
         ERROR("[udp] server_ss_decrypt_all");
         goto CLEAN_UP;
@@ -869,16 +862,11 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
      * +----+------+------+----------+----------+----------+
      *
      * shadowsocks UDP Request (before encrypted)
-     * +------+----------+----------+----------+-------------+
-     * | ATYP | DST.ADDR | DST.PORT |   DATA   |  HMAC-SHA1  |
-     * +------+----------+----------+----------+-------------+
-     * |  1   | Variable |    2     | Variable |     10      |
-     * +------+----------+----------+----------+-------------+
-     *
-     * If ATYP & ONETIMEAUTH_FLAG(0x10) == 1, Authentication (HMAC-SHA1) is enabled.
-     *
-     * The key of HMAC-SHA1 is (IV + KEY) and the input is the whole packet.
-     * The output of HMAC-SHA is truncated to 10 bytes (leftmost bits).
+     * +------+----------+----------+----------+
+     * | ATYP | DST.ADDR | DST.PORT |   DATA   |
+     * +------+----------+----------+----------+
+     * |  1   | Variable |    2     | Variable |
+     * +------+----------+----------+----------+
      *
      * shadowsocks UDP Response (before encrypted)
      * +------+----------+----------+----------+
@@ -906,9 +894,7 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
     }
 
     // reconstruct the buffer
-    if (BUF_SIZE < buf_len + addr_header_len) {
-        buf = realloc(buf, buf_len + addr_header_len);
-    }
+    buf = realloc(buf, buf_len + addr_header_len);
     memmove(buf + addr_header_len, buf, buf_len);
     memcpy(buf, addr_header, addr_header_len);
     buf_len += addr_header_len;
@@ -964,9 +950,7 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
     addr_header_len += 2;
 
     // reconstruct the buffer
-    if (BUF_SIZE < buf_len + addr_header_len) {
-        buf = realloc(buf, buf_len + addr_header_len);
-    }
+    buf = realloc(buf, buf_len + addr_header_len);
     memmove(buf + addr_header_len, buf, buf_len);
     memcpy(buf, addr_header, addr_header_len);
     buf_len += addr_header_len;
@@ -980,8 +964,8 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
     struct sockaddr_storage dst_addr;
     memset(&dst_addr, 0, sizeof(struct sockaddr_storage));
 
-    int addr_header_len = parse_udprealy_header(buf + offset, buf_len - offset,
-                                                &server_ctx->auth, host, port,
+    int addr_header_len = parse_udprealy_header(buf + offset,
+                                                buf_len - offset, host, port,
                                                 &dst_addr);
     if (addr_header_len == 0) {
         // error in parse header
@@ -1097,11 +1081,7 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         memmove(buf, buf + offset, buf_len);
     }
 
-    if (server_ctx->auth) {
-        buf[0] |= ONETIMEAUTH_FLAG;
-    }
-
-    buf = ss_encrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method, server_ctx->auth);
+    buf = ss_encrypt_all(BUF_SIZE, buf, &buf_len, server_ctx->method);
 
     int s = sendto(remote_ctx->fd, buf, buf_len, 0, remote_addr, remote_addr_len);
 
@@ -1225,7 +1205,7 @@ int init_udprelay(const char *server_host, const char *server_port,
                   const ss_addr_t tunnel_addr,
 #endif
 #endif
-                  int method, int auth, int timeout, const char *iface)
+                  int method, int timeout, const char *iface)
 {
     // Inilitialize ev loop
     struct ev_loop *loop = EV_DEFAULT;
@@ -1248,7 +1228,6 @@ int init_udprelay(const char *server_host, const char *server_port,
 #ifdef UDPRELAY_REMOTE
     server_ctx->loop = loop;
 #endif
-    server_ctx->auth = auth;
     server_ctx->timeout = max(timeout, MIN_UDP_TIMEOUT);
     server_ctx->method = method;
     server_ctx->iface = iface;

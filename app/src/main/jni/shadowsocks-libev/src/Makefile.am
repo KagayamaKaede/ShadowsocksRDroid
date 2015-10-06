@@ -8,7 +8,10 @@ AM_CFLAGS += -I$(top_srcdir)/libipset/include
 AM_CFLAGS += -I$(top_srcdir)/libcork/include
 AM_CFLAGS += -I$(top_srcdir)/libsodium/src/libsodium/include
 
-SS_COMMON_LIBS = $(top_builddir)/libev/libev.la \
+AM_LDFLAGS = -static
+
+SS_COMMON_LIBS = $(PTHREAD_LIBS) \
+				 $(top_builddir)/libev/libev.la \
 				 $(top_builddir)/libipset/libipset.la \
 				 $(top_builddir)/libcork/libcork.la \
 				 $(top_builddir)/libsodium/src/libsodium/libsodium.la \
@@ -27,7 +30,6 @@ ss_local_SOURCES = utils.c \
 				   cache.c \
 				   acl.c \
 				   netutils.c \
-				   hmac-sha1.c \
 				   local.c
 
 ss_tunnel_SOURCES = utils.c \
@@ -37,7 +39,6 @@ ss_tunnel_SOURCES = utils.c \
 					udprelay.c \
 					cache.c \
 					netutils.c \
-					hmac-sha1.c \
 					tunnel.c
 
 ss_server_SOURCES = utils.c \
@@ -49,7 +50,6 @@ ss_server_SOURCES = utils.c \
 					cache.c \
 					acl.c \
 					resolv.c \
-					hmac-sha1.c \
                     server.c
 
 ss_manager_SOURCES = utils.c \
@@ -83,7 +83,6 @@ ss_redir_SOURCES = utils.c \
 				   netutils.c \
 				   cache.c \
 				   udprelay.c \
-				   hmac-sha1.c \
                    redir.c
 ss_redir_CFLAGS = $(AM_CFLAGS) -DUDPRELAY_REDIR -DUDPRELAY_LOCAL
 ss_redir_LDADD = $(SS_COMMON_LIBS)

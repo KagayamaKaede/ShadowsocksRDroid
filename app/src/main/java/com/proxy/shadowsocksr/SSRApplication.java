@@ -25,6 +25,7 @@ public class SSRApplication extends Application
                 .setEncryptionMethod(
                         HawkBuilder.EncryptionMethod.NO_ENCRYPTION)//TODO: VER.2.0 local profile encrypt.
                 .build();
+
         boolean isFirstUse = Hawk.get("FirstUse", true);
 
         if (isFirstUse)
@@ -34,8 +35,7 @@ public class SSRApplication extends Application
                     Consts.remotePort,
                     Consts.localPort,
                     Consts.defaultCryptMethod,
-                    Consts.defaultPassword,
-                    false,
+                    "", false,
                     Consts.defaultTcpProtocol,
                     Consts.defaultObfsMethod,
                     false,false);

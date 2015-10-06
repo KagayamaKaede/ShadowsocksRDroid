@@ -12,7 +12,7 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
-import android.system.OsConstants;
+import android.util.Log;
 
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
@@ -28,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -186,10 +185,10 @@ public class SSRVPNService extends VpnService
 
     private void startRunner()
     {
+        killProcesses();
+        //
         vpnThread = new SSRVPNThread();
         vpnThread.start();
-        //
-        killProcesses();
         //
         new Thread(new Runnable()
         {
@@ -297,31 +296,13 @@ public class SSRVPNService extends VpnService
 
     private void startSSRDaemon()
     {
-        String[] acl = new String[0];
-        switch (globalProfile.route)
-        {
-        case "bypass-lan":
-            acl = getResources().getStringArray(R.array.private_route);
-            break;
-        case "bypass-lan-and-list":
-            acl = getResources().getStringArray(R.array.chn_route_full);
-            break;
-        }
-
-        StringBuilder s = new StringBuilder();
-        for (String a : acl)
-        {
-            s.append(a).append(Consts.lineSept);
-        }
-        ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
-
         String ssrconf = String.format(ConfFileUtil.SSRConf,
                                        ssrProfile.server,
                                        ssrProfile.remotePort,
                                        ssrProfile.localPort,
                                        ssrProfile.passwd,
                                        ssrProfile.cryptMethod,
-                                       20);
+                                       10);
         ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-local-vpn.conf"));
 
         StringBuilder sb = new StringBuilder();
@@ -334,7 +315,25 @@ public class SSRVPNService extends VpnService
 
         if (!globalProfile.route.equals("all"))
         {
-            sb.append(" --acl").append(Consts.baseDir + "acl.list");
+            String[] acl = new String[0];
+            switch (globalProfile.route)
+            {
+            case "bypass-lan":
+                acl = getResources().getStringArray(R.array.private_route);
+                break;
+            case "bypass-lan-and-list":
+                acl = getResources().getStringArray(R.array.chn_route_full);
+                break;
+            }
+
+            StringBuilder s = new StringBuilder();
+            for (String a : acl)
+            {
+                s.append(a).append(Consts.lineSept);
+            }
+            ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
+            //
+            sb.append(" --acl ").append(Consts.baseDir + "acl.list");
         }
 
         ShellUtil.runCmd(sb.toString());
@@ -365,11 +364,12 @@ public class SSRVPNService extends VpnService
             String blklst = getResources().getString(R.string.black_list);
 
             pdnsd = String.format(ConfFileUtil.PdNSdDirect, "0.0.0.0", 8153,
-                                  Consts.baseDir + "pdnsd-vpn.pid", reject, blklst, 8163, "reject = ::/0;");//IPV6
+                                  Consts.baseDir + "pdnsd-vpn.pid", reject, blklst, 8163,
+                                  "reject = ::/0;");//IPV6
         }
         else
         {
-            pdnsd = String.format(ConfFileUtil.PDNSdLocal, "0.0.0.0", 8153,
+            pdnsd = String.format(ConfFileUtil.PdNSdLocal, "0.0.0.0", 8153,
                                   Consts.baseDir + "pdnsd-vpn.pid", 8163, "reject = ::/0;");//IPV6
         }
 
@@ -395,7 +395,7 @@ public class SSRVPNService extends VpnService
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
-            builder.allowFamily(OsConstants.AF_INET6);
+            //builder.allowFamily(OsConstants.AF_INET6);
 
             if (!globalProfile.globalProxy)
             {
@@ -419,9 +419,9 @@ public class SSRVPNService extends VpnService
         else
         {
             String[] privateLst = getResources().getStringArray(R.array.bypass_private_route);
-            for (String p : privateLst)
+            for (String cidr : privateLst)
             {
-                String[] sp = p.split("/");
+                String[] sp = cidr.split("/");
                 builder.addRoute(sp[0], Integer.valueOf(sp[1]));
             }
         }
@@ -471,7 +471,7 @@ public class SSRVPNService extends VpnService
         return fd;
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored") private void killProcesses()
+    private void killProcesses()
     {
         String[] tasks = new String[]{"ss-local", "ss-tunnel", "pdnsd", "tun2socks"};
         List<String> cmds = new ArrayList<>();
@@ -492,13 +492,15 @@ public class SSRVPNService extends VpnService
                 File pidf = new File(Consts.baseDir + t + "-vpn.pid");
                 int pid = new Scanner(pidf).useDelimiter("\\Z").nextInt();
                 android.os.Process.killProcess(pid);
-                pidf.delete();
             }
             catch (Exception ignored)
             {
             }
             cmds.add(String.format("rm -f %s%s-vpn.conf", Consts.baseDir, t));
+            cmds.add(String.format("rm -f %s%s-vpn.pid", Consts.baseDir, t));
         }
+        cmds.add("rm -f " + Consts.baseDir + "protect_path");
+        cmds.add("rm -f " + Consts.baseDir + "sock_path");
         cmdarr = new String[cmds.size()];
         cmds.toArray(cmdarr);
         ShellUtil.runCmd(cmdarr);
@@ -524,11 +526,10 @@ public class SSRVPNService extends VpnService
         volatile private LocalServerSocket lss;
         volatile private boolean isRunning = true;
 
-        @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
+        @Override public void run()
         {
             try
             {
-                new File(Consts.baseDir + "protect_path").delete();
                 LocalSocket ls = new LocalSocket();
                 ls.bind(new LocalSocketAddress(Consts.baseDir + "protect_path",
                                                LocalSocketAddress.Namespace.FILESYSTEM));
@@ -548,7 +549,7 @@ public class SSRVPNService extends VpnService
                     final LocalSocket ls = lss.accept();
                     exec.execute(new Runnable()
                     {
-                        @Override public void run()
+                        @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
                         {
                             try
                             {
@@ -568,29 +569,24 @@ public class SSRVPNService extends VpnService
 
                                     Jni.jniClose(fd);
 
-                                    if (ret)
-                                    {
-                                        os.write(0);
-                                    }
-                                    else
-                                    {
-                                        os.write(1);
-                                    }
+                                    os.write(ret ? 0 : 1);
 
                                     is.close();
                                     os.close();
                                     ls.close();
                                 }
                             }
-                            catch (InvocationTargetException | IOException | IllegalAccessException | NoSuchMethodException e)
+                            catch (Exception e)
                             {
+                                Log.e("EXCE", e.getMessage());
                                 e.printStackTrace();
                             }
                         }
                     });
                 }
-                catch (IOException e)
+                catch (Exception e)
                 {
+                    Log.e("EXCE","OUT");
                     return;
                 }
             }

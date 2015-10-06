@@ -45,7 +45,7 @@
     <string name="add_canceled">Add Canceled</string>
     <string name="add_failed">Add Failed</string>
     <string name="show_qr">Show current QRCode</string>
-    <string name="enable_shadowsocksr_feature">Enable ShadowsocksR Feature</string>
+    <string name="enable_shadowsocksr_feature">Enable ShadowsocksR Feature(Current not support)</string>
     <string name="ssr_feature_configuration">SSR Feature Configuration</string>
     <string name="protocol_type">Protocol Type</string>
     <string name="obfs_method">Obfs Method</string>

@@ -7,9 +7,8 @@ public class Consts
     //Default ss profile
     public final static String defaultIP = "1.2.3.4";
     public final static String defaultCryptMethod = "aes-256-cfb";
-    public final static String defaultPassword = "cs7cysc6ts6cstcst";
     public final static int remotePort = 2333;
-    public final static int localPort = 23333;
+    public final static int localPort = 1093;
     //SSR
     public final static String defaultTcpProtocol="origin";
     public final static String defaultObfsMethod="plain";

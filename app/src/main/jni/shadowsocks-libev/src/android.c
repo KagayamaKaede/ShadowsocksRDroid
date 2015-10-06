@@ -49,7 +49,7 @@ int protect_socket(int fd) {
     int sock;
     struct sockaddr_un addr;
 
-    if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    if ( (sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
         LOGE("[android] socket() failed: %s (socket fd = %d)\n", strerror(errno), sock);
         return -1;
     }
@@ -58,16 +58,16 @@ int protect_socket(int fd) {
     struct timeval tv;
     tv.tv_sec = 1;  /*  0 Secs Timeout */
     tv.tv_usec = 0;  // Not init'ing this can cause strange errors
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof(struct timeval));
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &tv, sizeof(struct timeval));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
 
     const char path[] = "/data/data/com.proxy.shadowsocksr/protect_path";
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
 
-    if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
+    if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         LOGE("[android] connect() failed: %s (socket fd = %d)\n", strerror(errno), sock);
         close(sock);
         return -1;

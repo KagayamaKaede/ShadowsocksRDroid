@@ -248,7 +248,8 @@ public class MainActivity extends Activity
     {
         String lbl = "Svr-" + System.currentTimeMillis();
         SSRProfile newPro = new SSRProfile(server, rmtPort, Consts.localPort, method, pwd,
-                                           false, "origin", "plain", false, false);
+                                           false, Consts.defaultTcpProtocol,
+                                           Consts.defaultObfsMethod, false, false);
         Hawk.put(lbl, newPro);
 
         ArrayList<String> lst = Hawk.get("ServerList");
@@ -275,11 +276,9 @@ public class MainActivity extends Activity
         switch (item.getItemId())
         {
         case R.id.action_maunally_add_server:
-            addNewServer(
-                    Consts.defaultIP,
-                    Consts.remotePort,
-                    Consts.defaultCryptMethod,
-                    Consts.defaultPassword);
+            addNewServer(Consts.defaultIP,
+                         Consts.remotePort,
+                         Consts.defaultCryptMethod, "");
             loadServerList();
             pref.reloadPref();
             break;
@@ -325,11 +324,9 @@ public class MainActivity extends Activity
             //
             if (list.size() == 0)
             {
-                addNewServer(
-                        Consts.defaultIP,
-                        Consts.remotePort,
-                        Consts.defaultCryptMethod,
-                        Consts.defaultPassword);
+                addNewServer(Consts.defaultIP,
+                             Consts.remotePort,
+                             Consts.defaultCryptMethod, "");
             }
             else
             {
@@ -385,7 +382,6 @@ public class MainActivity extends Activity
             }
             else
             {
-                //START
                 Intent vpn = SSRVPNService.prepare(this);
                 if (vpn != null)
                 {
@@ -479,7 +475,6 @@ public class MainActivity extends Activity
 
     @Override public void onBackPressed()
     {
-        //drawer.isDrawerOpen(nav);
         if (nav.isShown())
         {
             drawer.closeDrawers();
@@ -504,6 +499,7 @@ public class MainActivity extends Activity
             pref.setPrefEnabled(false);
             spinner.setEnabled(false);
             fab.setImageResource(android.R.drawable.ic_media_pause);
+            //
         }
     }
 }
