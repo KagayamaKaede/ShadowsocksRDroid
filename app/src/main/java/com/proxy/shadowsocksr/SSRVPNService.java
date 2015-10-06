@@ -122,6 +122,7 @@ public class SSRVPNService extends VpnService
             {
                 proxyApps = cp.proxyApps;
             }
+            //
             checkDaemonFile();
             startRunner();
         }
@@ -190,6 +191,13 @@ public class SSRVPNService extends VpnService
         vpnThread = new SSRVPNThread();
         vpnThread.start();
         //
+        //        Executors.newSingleThreadExecutor().submit(new Runnable()
+        //        {
+        //            @Override public void run()
+        //            {
+        //
+        //            }
+        //        });
         new Thread(new Runnable()
         {
             @Override public void run()
@@ -270,7 +278,6 @@ public class SSRVPNService extends VpnService
             vpnThread.stopThread();
             vpnThread = null;
         }
-
         //reset
         killProcesses();
 
@@ -301,15 +308,12 @@ public class SSRVPNService extends VpnService
                                        ssrProfile.remotePort,
                                        ssrProfile.localPort,
                                        ssrProfile.passwd,
-                                       ssrProfile.cryptMethod,
-                                       10);
+                                       ssrProfile.cryptMethod, 10);
         ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-local-vpn.conf"));
 
         StringBuilder sb = new StringBuilder();
-        sb.append(
-                Consts.baseDir + "ss-local -V -u -b 127.0.0.1 -t 600 -c " + Consts.baseDir +
-                "ss-local-vpn.conf -f " + Consts.baseDir +
-                "ss-local-vpn.pid");
+        sb.append(Consts.baseDir + "ss-local -V -u -b 127.0.0.1 -t 600 -c " + Consts.baseDir +
+                  "ss-local-vpn.conf -f " + Consts.baseDir + "ss-local-vpn.pid");
 
         //AUTH
 
@@ -530,13 +534,14 @@ public class SSRVPNService extends VpnService
         {
             try
             {
-                LocalSocket ls = new LocalSocket();
-                ls.bind(new LocalSocketAddress(Consts.baseDir + "protect_path",
-                                               LocalSocketAddress.Namespace.FILESYSTEM));
-                lss = new LocalServerSocket(ls.getFileDescriptor());
+                LocalSocket stk = new LocalSocket();
+                stk.bind(new LocalSocketAddress(Consts.baseDir + "protect_path",
+                                                LocalSocketAddress.Namespace.FILESYSTEM));
+                lss = new LocalServerSocket(stk.getFileDescriptor());
             }
             catch (IOException e)
             {
+                Log.e("EXCE-BIND ERR", e.getMessage());
                 return;
             }
 
@@ -547,6 +552,7 @@ public class SSRVPNService extends VpnService
                 try
                 {
                     final LocalSocket ls = lss.accept();
+
                     exec.execute(new Runnable()
                     {
                         @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
@@ -560,10 +566,10 @@ public class SSRVPNService extends VpnService
 
                                 FileDescriptor[] fds = ls.getAncillaryFileDescriptors();
 
-                                if (fds.length > 0)
+                                if (fds!=null && fds.length > 0)
                                 {
-                                    Method getInt = FileDescriptor.class
-                                            .getDeclaredMethod("getInt$");
+                                    Method getInt = FileDescriptor.class.getDeclaredMethod(
+                                            "getInt$");
                                     Integer fd = (Integer) getInt.invoke(fds[0]);
                                     boolean ret = protect(fd);
 
@@ -573,20 +579,25 @@ public class SSRVPNService extends VpnService
 
                                     is.close();
                                     os.close();
-                                    ls.close();
                                 }
                             }
                             catch (Exception e)
                             {
-                                Log.e("EXCE", e.getMessage());
-                                e.printStackTrace();
+                                Log.e("EXCE-internal", e.getMessage());
+                            }
+                            try
+                            {
+                                ls.close();
+                            }
+                            catch (IOException ignored)
+                            {
                             }
                         }
                     });
                 }
                 catch (Exception e)
                 {
-                    Log.e("EXCE","OUT");
+                    Log.e("EXCE-accept", e.getMessage());
                     return;
                 }
             }
@@ -607,7 +618,7 @@ public class SSRVPNService extends VpnService
             }
         }
 
-        private void stopThread()
+        public void stopThread()
         {
             isRunning = false;
             closeServerSocket();
