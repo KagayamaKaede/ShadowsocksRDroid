@@ -374,6 +374,7 @@ public class MainActivity extends Activity
         }
         try
         {
+            fab.setEnabled(false);
             if (ssrs.status())
             {
                 ssrs.stop();
@@ -501,5 +502,6 @@ public class MainActivity extends Activity
             fab.setImageResource(android.R.drawable.ic_media_pause);
             //
         }
+        fab.setEnabled(true);
     }
 }

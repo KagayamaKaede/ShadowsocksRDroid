@@ -184,7 +184,12 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         }
     }
 
+    if (auth) {
+        remote->buf = ss_gen_crc(remote->buf, &r, remote->crc_buf, &remote->crc_idx, BUF_SIZE);
+    }
+
     remote->buf = ss_encrypt(BUF_SIZE, remote->buf, &r, server->e_ctx);
+
     if (remote->buf == NULL) {
         LOGE("invalid password or cipher");
         close_and_free_remote(EV_A_ remote);
@@ -193,6 +198,7 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
     }
 
     int s = send(remote->fd, remote->buf, r, 0);
+
     if (s == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // no data, wait for send
@@ -371,7 +377,7 @@ static void remote_send_cb(EV_P_ ev_io *w, int revents)
 
             if (auth) {
                 ss_addr_to_send[0] |= ONETIMEAUTH_FLAG;
-                ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len);
+                ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len, server->e_ctx);
                 addr_len += ONETIMEAUTH_BYTES;
             }
 
@@ -444,6 +450,9 @@ static struct remote * new_remote(int fd, int timeout)
 {
     struct remote *remote;
     remote = malloc(sizeof(struct remote));
+
+    memset(remote, 0, sizeof(struct remote));
+
     remote->buf = malloc(BUF_SIZE);
     remote->recv_ctx = malloc(sizeof(struct remote_ctx));
     remote->send_ctx = malloc(sizeof(struct remote_ctx));
@@ -669,7 +678,6 @@ int main(int argc, char **argv)
             break;
         case 'A':
             auth = 1;
-            LOGI("onetime authentication enabled");
             break;
         }
     }
@@ -776,6 +784,10 @@ int main(int argc, char **argv)
 
         ev_io_init(&listen_ctx.io, accept_cb, listenfd, EV_READ);
         ev_io_start(loop, &listen_ctx.io);
+    }
+
+    if (auth) {
+        LOGI("onetime authentication enabled");
     }
 
     // Setup UDP

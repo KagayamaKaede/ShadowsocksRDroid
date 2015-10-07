@@ -244,6 +244,10 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
                 return;
             }
 
+            if (remote->send_ctx->connected && auth) {
+                remote->buf = ss_gen_crc(remote->buf, &r, remote->crc_buf, &remote->crc_idx, BUF_SIZE);
+            }
+
             // insert shadowsocks header
             if (!remote->direct) {
                 remote->buf = ss_encrypt(BUF_SIZE, remote->buf, &r,
@@ -473,11 +477,16 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
                 if (!remote->direct) {
                     if (auth) {
                         ss_addr_to_send[0] |= ONETIMEAUTH_FLAG;
-                        ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len);
+                        ss_onetimeauth(ss_addr_to_send + addr_len, ss_addr_to_send, addr_len, server->e_ctx);
                         addr_len += ONETIMEAUTH_BYTES;
                     }
 
                     memcpy(remote->buf, ss_addr_to_send, addr_len);
+
+                    if (auth) {
+                        buf = ss_gen_crc(buf, &r, remote->crc_buf, &remote->crc_idx, BUF_SIZE);
+                    }
+
                     if (r > 0) {
                         memcpy(remote->buf + addr_len, buf, r);
                     }
@@ -989,7 +998,6 @@ int main(int argc, char **argv)
             break;
         case 'A':
             auth = 1;
-            LOGI("onetime authentication enabled");
             break;
 #ifdef ANDROID
         case 'V':
@@ -1137,6 +1145,10 @@ int main(int argc, char **argv)
 
     ev_io_init(&listen_ctx.io, accept_cb, listenfd, EV_READ);
     ev_io_start(loop, &listen_ctx.io);
+
+    if (auth) {
+        LOGI("onetime authentication enabled");
+    }
 
     // Setup UDP
     if (mode != TCP_ONLY) {

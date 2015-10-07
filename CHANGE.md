@@ -1,3 +1,12 @@
+##1.0.5 Beta
+
++ Fixed "Connection refused" error when fast stop and start vpn.
++ change ss-libev version
+
+##1.0.4 Beta
+
++ Add SSR UI.
+
 ##1.0.3 Beta Fix2
 
 + Fixed dns relay issue.

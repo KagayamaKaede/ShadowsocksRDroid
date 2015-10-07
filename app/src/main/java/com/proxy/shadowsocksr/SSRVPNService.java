@@ -61,22 +61,6 @@ public class SSRVPNService extends VpnService
 
     @Override public void onRevoke()
     {
-        if (vpnThread != null)
-        {
-            vpnThread.stopThread();
-            vpnThread = null;
-        }
-
-        isVPNConnected = false;
-
-        try
-        {
-            callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
-        }
-        catch (RemoteException ignored)
-        {
-        }
-
         stopRunner();
     }
 
@@ -129,7 +113,14 @@ public class SSRVPNService extends VpnService
 
         @Override public void stop() throws RemoteException
         {
-            onRevoke();
+            stopRunner();
+            try
+            {
+                callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
+            }
+            catch (RemoteException ignored)
+            {
+            }
         }
     }
 
@@ -477,14 +468,15 @@ public class SSRVPNService extends VpnService
 
     private void killProcesses()
     {
-        String[] tasks = new String[]{"ss-local", "ss-tunnel", "pdnsd", "tun2socks"};
+        final String[] tasks = new String[]{"ss-local", "ss-tunnel", "pdnsd", "tun2socks"};
         List<String> cmds = new ArrayList<>();
+        String[] cmdarr;
 
         for (String task : tasks)
         {
             cmds.add(String.format("chmod 666 %s%s-vpn.pid", Consts.baseDir, task));
         }
-        String[] cmdarr = new String[cmds.size()];
+        cmdarr = new String[cmds.size()];
         cmds.toArray(cmdarr);
         ShellUtil.runCmd(cmdarr);
         cmds.clear();
@@ -503,8 +495,6 @@ public class SSRVPNService extends VpnService
             cmds.add(String.format("rm -f %s%s-vpn.conf", Consts.baseDir, t));
             cmds.add(String.format("rm -f %s%s-vpn.pid", Consts.baseDir, t));
         }
-        cmds.add("rm -f " + Consts.baseDir + "protect_path");
-        cmds.add("rm -f " + Consts.baseDir + "sock_path");
         cmdarr = new String[cmds.size()];
         cmds.toArray(cmdarr);
         ShellUtil.runCmd(cmdarr);
@@ -525,13 +515,30 @@ public class SSRVPNService extends VpnService
     //        return a == 10 || (a == 192 && b == 168) || (a == 172 && b >= 16 && b < 32);
     //    }
 
+    private void rebootThread()
+    {//May be accept() throw exception
+        if (vpnThread != null)
+        {
+            vpnThread.stopThread();
+        }
+        vpnThread = new SSRVPNThread();
+        vpnThread.start();
+    }
+
     class SSRVPNThread extends Thread
     {
         volatile private LocalServerSocket lss;
         volatile private boolean isRunning = true;
 
-        @Override public void run()
+        @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
         {
+            try
+            {
+                new File(Consts.baseDir + "protect_path").delete();
+            }
+            catch (Exception ignored)
+            {}
+
             try
             {
                 LocalSocket stk = new LocalSocket();
@@ -541,7 +548,6 @@ public class SSRVPNService extends VpnService
             }
             catch (IOException e)
             {
-                Log.e("EXCE-BIND ERR", e.getMessage());
                 return;
             }
 
@@ -552,7 +558,6 @@ public class SSRVPNService extends VpnService
                 try
                 {
                     final LocalSocket ls = lss.accept();
-
                     exec.execute(new Runnable()
                     {
                         @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
@@ -563,10 +568,9 @@ public class SSRVPNService extends VpnService
                                 OutputStream os = ls.getOutputStream();
 
                                 is.read();
-
                                 FileDescriptor[] fds = ls.getAncillaryFileDescriptors();
 
-                                if (fds!=null && fds.length > 0)
+                                if (fds != null && fds.length > 0)
                                 {
                                     Method getInt = FileDescriptor.class.getDeclaredMethod(
                                             "getInt$");
@@ -581,9 +585,8 @@ public class SSRVPNService extends VpnService
                                     os.close();
                                 }
                             }
-                            catch (Exception e)
+                            catch (Exception ignored)
                             {
-                                Log.e("EXCE-internal", e.getMessage());
                             }
                             try
                             {
@@ -598,6 +601,7 @@ public class SSRVPNService extends VpnService
                 catch (Exception e)
                 {
                     Log.e("EXCE-accept", e.getMessage());
+                    rebootThread();
                     return;
                 }
             }

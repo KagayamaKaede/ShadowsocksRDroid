@@ -495,6 +495,14 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
 
     // handshake and transmit data
     if (server->stage == 5) {
+        if (server->auth
+                && !ss_check_crc(remote->buf, &r, server->crc_buf, &server->crc_idx)) {
+            LOGE("crc error");
+            report_addr(server->fd);
+            close_and_free_server(EV_A_ server);
+            close_and_free_remote(EV_A_ remote);
+            return;
+        }
         int s = send(remote->fd, remote->buf, r, 0);
         if (s == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -521,11 +529,23 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         /*
          * Shadowsocks TCP Relay Protocol:
          *
-         *    +------+----------+----------+------+
-         *    | ATYP | DST.ADDR | DST.PORT | AUTH |
-         *    +------+----------+----------+------+
-         *    |  1   | Variable |    2     |  16  |
-         *    +------+----------+----------+------+
+         *    +------+----------+----------+-----------------+
+         *    | ATYP | DST.ADDR | DST.PORT | AUTH (Optional) |
+         *    +------+----------+----------+-----------------+
+         *    |  1   | Variable |    2     |       16        |
+         *    +------+----------+----------+-----------------+
+         *
+         *    If ATYP & ONETIMEAUTH_FLAG(0x10) == 1, AUTH and CRC are enabled.
+         */
+
+        /*
+         * Shadowsocks TCP Request Payload CRC (Optional, no CRC for response's payload):
+         *
+         *    +------+-------+------+-------+------+
+         *    | DATA | CRC16 | DATA | CRC16 |     ...
+         *    +------+-------+------+-------+------+
+         *    | 128  |   2   | 128  |   2   |     ...
+         *    +------+-------+------+-------+------+
          */
 
         int offset = 0;
@@ -640,14 +660,15 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
 
         offset += 2;
 
-        if (auth || (atyp & ONETIMEAUTH_MASK)) {
-            if (ss_onetimeauth_verify(server->buf + offset, server->buf, offset)) {
+        if (auth || (atyp & ONETIMEAUTH_FLAG)) {
+            if (ss_onetimeauth_verify(server->buf + offset, server->buf, offset, server->d_ctx)) {
                 LOGE("authentication error %d", atyp);
                 report_addr(server->fd);
                 close_and_free_server(EV_A_ server);
                 return;
             };
             offset += ONETIMEAUTH_BYTES;
+            server->auth = 1;
         }
 
         if (verbose) {
@@ -658,6 +679,14 @@ static void server_recv_cb(EV_P_ ev_io *w, int revents)
         if (r > offset) {
             server->buf_len = r - offset;
             server->buf_idx = offset;
+        }
+
+        if (server->auth
+                && !ss_check_crc(server->buf + server->buf_idx, &server->buf_len, server->crc_buf, &server->crc_idx)) {
+            LOGE("crc error");
+            report_addr(server->fd);
+            close_and_free_server(EV_A_ server);
+            return;
         }
 
         if (!need_query) {
@@ -1061,6 +1090,9 @@ static struct server * new_server(int fd, struct listen_ctx *listener)
 
     struct server *server;
     server = malloc(sizeof(struct server));
+
+    memset(server, 0, sizeof(struct server));
+
     server->buf = malloc(BUF_SIZE);
     server->recv_ctx = malloc(sizeof(struct server_ctx));
     server->send_ctx = malloc(sizeof(struct server_ctx));
@@ -1263,7 +1295,6 @@ int main(int argc, char **argv)
             break;
         case 'A':
             auth = 1;
-            LOGI("onetime authentication enabled");
             break;
         }
     }
@@ -1438,6 +1469,10 @@ int main(int argc, char **argv)
     if (manager_address != NULL) {
         ev_timer_init(&stat_update_watcher, stat_update_cb, UPDATE_INTERVAL, UPDATE_INTERVAL);
         ev_timer_start(EV_DEFAULT, &stat_update_watcher);
+    }
+
+    if (auth) {
+        LOGI("onetime authentication enabled");
     }
 
     if (mode != TCP_ONLY) {
