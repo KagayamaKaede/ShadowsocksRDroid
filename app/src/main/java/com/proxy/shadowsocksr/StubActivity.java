@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 
@@ -24,11 +23,6 @@ public class StubActivity extends Activity implements ServiceConnection
     private BroadcastReceiver receiver;
 
     private ISSRService ssrs;
-
-    @Override protected void onCreate(Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override protected void onResume()
     {
@@ -101,7 +95,6 @@ public class StubActivity extends Activity implements ServiceConnection
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 0 && resultCode == RESULT_OK)
         {
             try

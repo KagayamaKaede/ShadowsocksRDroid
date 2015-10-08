@@ -5,13 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.orhanobut.hawk.Hawk;
+import com.proxy.shadowsocksr.items.GlobalProfile;
 
 public class SSRBootReceiver extends BroadcastReceiver
 {
     @Override public void onReceive(Context context, Intent intent)
     {
-        boolean isBoot = Hawk.get("AutoConnect");
-        if (isBoot)
+        ((SSRApplication) context.getApplicationContext()).init();
+        GlobalProfile globalProfile = Hawk.get("GlobalProfile");
+        if (globalProfile.autoConnect)
         {
             Intent run = new Intent(context, StubActivity.class);
             run.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
