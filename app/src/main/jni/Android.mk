@@ -61,7 +61,7 @@ SODIUM_SOURCE := $(crypto_aead_src) $(crypto_auth_src) $(crypto_box_src) \
 	$(crypto_stream_src) $(crypto_verify_src) $(randombytes_src) $(sodium_src)
 
 LOCAL_MODULE := sodium
-LOCAL_CFLAGS += -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/include \
+LOCAL_CFLAGS += -pie -fPIE -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/include \
 				-I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/include/sodium \
 				-DPACKAGE_NAME=\"libsodium\" -DPACKAGE_TARNAME=\"libsodium\" \
 				-DPACKAGE_VERSION=\"1.0.1\" -DPACKAGE_STRING=\"libsodium\ 1.0.1\" \
@@ -78,6 +78,8 @@ LOCAL_CFLAGS += -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/in
 				-DHAVE_SYS_MMAN_H=1 -DNATIVE_LITTLE_ENDIAN=1 \
 				-DHAVE_WEAK_SYMBOLS=1 -DHAVE_ARC4RANDOM=1 -DHAVE_ARC4RANDOM_BUF=1 \
 				-DHAVE_MLOCK=1 -DHAVE_MPROTECT=1 -DHAVE_POSIX_MEMALIGN=1
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_SRC_FILES := $(addprefix shadowsocks-libev/libsodium/src/libsodium/,$(SODIUM_SOURCE))
 
@@ -104,9 +106,11 @@ LIBEVENT_SOURCES := \
 
 LOCAL_MODULE := event
 LOCAL_SRC_FILES := $(addprefix libevent/, $(LIBEVENT_SOURCES))
-LOCAL_CFLAGS := -O2 -I$(LOCAL_PATH)/libevent \
+LOCAL_CFLAGS := -pie -fPIE -O2 -I$(LOCAL_PATH)/libevent \
 	-I$(LOCAL_PATH)/libevent/include \
 	-I$(LOCAL_PATH)/openssl/include
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -119,7 +123,9 @@ include $(CLEAR_VARS)
 ANCILLARY_SOURCE := fd_recv.c fd_send.c
 
 LOCAL_MODULE := libancillary
-LOCAL_CFLAGS += -O2 -I$(LOCAL_PATH)/libancillary
+LOCAL_CFLAGS += -pie -fPIE -O2 -I$(LOCAL_PATH)/libancillary
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_SRC_FILES := $(addprefix libancillary/, $(ANCILLARY_SOURCE))
 
@@ -141,8 +147,10 @@ set_src = set/allocation.c set/inspection.c set/ipv4_set.c set/ipv6_set.c \
 IPSET_SOURCE := general.c $(bdd_src) $(map_src) $(set_src)
 
 LOCAL_MODULE := libipset
-LOCAL_CFLAGS += -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libipset/include \
+LOCAL_CFLAGS += -pie -fPIE -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libipset/include \
 				-I$(LOCAL_PATH)/shadowsocks-libev/libcork/include
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_SRC_FILES := $(addprefix shadowsocks-libev/libipset/,$(IPSET_SOURCE))
 
@@ -168,8 +176,10 @@ pthreads_src := pthreads/thread.c
 CORK_SOURCE := $(cli_src) $(core_src) $(ds_src) $(posix_src) $(pthreads_src)
 
 LOCAL_MODULE := libcork
-LOCAL_CFLAGS += -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libcork/include \
+LOCAL_CFLAGS += -pie -fPIE -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libcork/include \
 				-DCORK_API=CORK_LOCAL
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_SRC_FILES := $(addprefix shadowsocks-libev/libcork/,$(CORK_SOURCE))
 
@@ -187,8 +197,10 @@ UDNS_SOURCES := udns_dn.c udns_dntosp.c udns_parse.c udns_resolver.c udns_init.c
 	udns_rr_srv.c udns_rr_naptr.c udns_codes.c udns_jran.c
 
 LOCAL_MODULE := libudns
-LOCAL_CFLAGS += -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libudns \
+LOCAL_CFLAGS += -pie -fPIE -O2 -I$(LOCAL_PATH)/shadowsocks-libev/libudns \
 				-DHAVE_DECL_INET_NTOP
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_SRC_FILES := $(addprefix shadowsocks-libev/libudns/,$(UDNS_SOURCES))
 
@@ -201,10 +213,12 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libev
-LOCAL_CFLAGS += -O2 -DNDEBUG -DHAVE_CONFIG_H
+LOCAL_CFLAGS += -pie -fPIE -O2 -DNDEBUG -DHAVE_CONFIG_H
 LOCAL_SRC_FILES := \
 	libev/ev.c \
-	libev/event.c 
+	libev/event.c
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -223,9 +237,11 @@ LOCAL_STATIC_LIBRARIES := libevent
 
 LOCAL_MODULE := redsocks
 LOCAL_SRC_FILES := $(addprefix redsocks/, $(REDSOCKS_SOURCES)) 
-LOCAL_CFLAGS := -O2 -std=gnu99 -I$(LOCAL_PATH)/redsocks \
+LOCAL_CFLAGS := -pie -fPIE -O2 -std=gnu99 -I$(LOCAL_PATH)/redsocks \
 	-I$(LOCAL_PATH)/libevent/include \
 	-I$(LOCAL_PATH)/libevent
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 include $(BUILD_EXECUTABLE)
 
@@ -239,7 +255,9 @@ PDNSD_SOURCES  := $(wildcard $(LOCAL_PATH)/pdnsd/src/*.c)
 
 LOCAL_MODULE    := pdnsd
 LOCAL_SRC_FILES := $(PDNSD_SOURCES:$(LOCAL_PATH)/%=%)
-LOCAL_CFLAGS    := -Wall -O2 -I$(LOCAL_PATH)/pdnsd
+LOCAL_CFLAGS    := -pie -fPIE -Wall -O2 -I$(LOCAL_PATH)/pdnsd
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 include $(BUILD_EXECUTABLE)
 
@@ -253,7 +271,7 @@ SHADOWSOCKS_SOURCES := local.c cache.c udprelay.c encrypt.c utils.c netutils.c j
 
 LOCAL_MODULE    := ss-local
 LOCAL_SRC_FILES := $(addprefix shadowsocks-libev/src/, $(SHADOWSOCKS_SOURCES))
-LOCAL_CFLAGS    := -Wall -O2 -fno-strict-aliasing -DUDPRELAY_LOCAL \
+LOCAL_CFLAGS    := -pie -fPIE -Wall -O2 -fno-strict-aliasing -DUDPRELAY_LOCAL \
 					-DUSE_CRYPTO_OPENSSL -DANDROID -DHAVE_CONFIG_H \
 					-I$(LOCAL_PATH)/libev \
 					-I$(LOCAL_PATH)/libancillary \
@@ -263,6 +281,8 @@ LOCAL_CFLAGS    := -Wall -O2 -fno-strict-aliasing -DUDPRELAY_LOCAL \
 					-I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/include \
 					-I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/include/sodium \
 					-I$(LOCAL_PATH)/shadowsocks-libev/libipset/include
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_STATIC_LIBRARIES := libev libcrypto libipset libcork libudns libsodium libancillary
 
@@ -280,7 +300,7 @@ SHADOWSOCKS_SOURCES := tunnel.c cache.c udprelay.c encrypt.c utils.c netutils.c 
 
 LOCAL_MODULE    := ss-tunnel
 LOCAL_SRC_FILES := $(addprefix shadowsocks-libev/src/, $(SHADOWSOCKS_SOURCES))
-LOCAL_CFLAGS    := -Wall -O2 -fno-strict-aliasing -DUDPRELAY_LOCAL -DUDPRELAY_TUNNEL \
+LOCAL_CFLAGS    := -pie -fPIE -Wall -O2 -fno-strict-aliasing -DUDPRELAY_LOCAL -DUDPRELAY_TUNNEL \
 					-DUSE_CRYPTO_OPENSSL -DANDROID -DHAVE_CONFIG_H -DSSTUNNEL_JNI \
 					-I$(LOCAL_PATH)/libev \
 					-I$(LOCAL_PATH)/libancillary \
@@ -288,7 +308,9 @@ LOCAL_CFLAGS    := -Wall -O2 -fno-strict-aliasing -DUDPRELAY_LOCAL -DUDPRELAY_TU
 					-I$(LOCAL_PATH)/shadowsocks-libev/libcork/include \
 					-I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/include \
 					-I$(LOCAL_PATH)/shadowsocks-libev/libsodium/src/libsodium/include/sodium \
-					-I$(LOCAL_PATH)/openssl/include 
+					-I$(LOCAL_PATH)/openssl/include
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_STATIC_LIBRARIES := libev libcrypto libsodium libcork libudns libancillary
 
@@ -320,12 +342,14 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_CFLAGS := -std=gnu99
+LOCAL_CFLAGS := -std=gnu99 -pie -fPIE
 LOCAL_CFLAGS += -DBADVPN_THREADWORK_USE_PTHREAD -DBADVPN_LINUX -DBADVPN_BREACTOR_BADVPN -D_GNU_SOURCE
 LOCAL_CFLAGS += -DBADVPN_USE_SELFPIPE -DBADVPN_USE_EPOLL
 LOCAL_CFLAGS += -DBADVPN_LITTLE_ENDIAN -DBADVPN_THREAD_SAFE
 LOCAL_CFLAGS += -DNDEBUG -DANDROID
 # LOCAL_CFLAGS += -DTUN2SOCKS_JNI
+
+LOCAL_LDFLAGS += -pie -fPIE
 
 LOCAL_STATIC_LIBRARIES := libancillary
 
