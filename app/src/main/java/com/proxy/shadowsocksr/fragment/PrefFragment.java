@@ -18,7 +18,6 @@ import com.proxy.shadowsocksr.preference.SummaryListPreference;
 
 import java.util.ArrayList;
 
-
 public class PrefFragment extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener
 {

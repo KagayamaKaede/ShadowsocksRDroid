@@ -2,7 +2,7 @@
 
 [English version introduction](https://github.com/KagayamaKaede/ShadowsocksRDroid)
 
-这是一个用Java编写的ShadowSocksR安卓客户端，支持安卓4.2+，支持64位CPU机型。
+这是一个用Java编写的ShadowSocksR安卓客户端，支持安卓4.0+，支持64位CPU机型。
 兼容Shadowsocks(Shadowsocks-libev)协议，在未来会加入对ShadowsocksR协议的支持。
 
 ##编译准备

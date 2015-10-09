@@ -338,7 +338,6 @@ public class MainActivity extends Activity
             pref.reloadPref();
             break;
         case R.id.action_fresh_dns_cache:
-            //TODO: Android6 not test
             ShellUtil.runRootCmd(
                     new String[]{"ndc resolver flushdefaultif", "ndc resolver flushif wlan0"});
             break;
@@ -378,8 +377,6 @@ public class MainActivity extends Activity
             if (ssrs.status())
             {
                 ssrs.stop();
-                Toast.makeText(MainActivity.this, "Recommended to use the system dialog close VPN",
-                               Toast.LENGTH_SHORT).show();
             }
             else
             {

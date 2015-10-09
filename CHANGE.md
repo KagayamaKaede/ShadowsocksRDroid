@@ -1,3 +1,9 @@
+##1.0.6 Beta
+
++ Fixed auto connect ANR when device startup.
++ Support Android4.0.0+(Api14+), but recommended use Android4.4+(Api19+).
++ Fixed preference dependency bug.
+
 ##1.0.5 Beta
 
 + Fixed "Connection refused" error when fast stop and start vpn.
