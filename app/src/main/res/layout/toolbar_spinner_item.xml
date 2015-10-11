@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/text1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:drawablePadding="8dp"
+    android:drawableRight="@mipmap/spinner_triangle"
+    android:drawableEnd="@mipmap/spinner_triangle"
+    android:textColor="#ffffffff"
+    android:textStyle="bold"/>

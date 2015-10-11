@@ -1,3 +1,7 @@
+##1.0.7 Beta
+
++ Optimized UI.
+
 ##1.0.6 Beta
 
 + Fixed auto connect ANR when device startup.

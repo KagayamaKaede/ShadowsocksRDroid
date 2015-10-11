@@ -35,7 +35,6 @@
 * pdnsd: [GPLv3](https://github.com/shadowsocks/shadowsocks-android/blob/master/src/main/jni/pdnsd/COPYING)
 * libev: [GPLv2](https://github.com/shadowsocks/shadowsocks-android/blob/master/src/main/jni/libev/LICENSE)
 * libevent: [BSD](https://github.com/shadowsocks/shadowsocks-android/blob/master/src/main/jni/libevent/LICENSE)
-* SystemBarTint: [ApacheV2](https://github.com/jgilfelt/SystemBarTint)
 * Hawk: [ApacheV2](https://github.com/orhanobut/hawk/blob/master/LICENSE)
 * libsuperuser: [ApacheV2](https://github.com/Chainfire/libsuperuser/blob/master/LICENSE)
 

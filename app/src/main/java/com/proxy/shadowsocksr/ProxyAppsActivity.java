@@ -27,7 +27,7 @@ public class ProxyAppsActivity extends Activity implements AppsAdapter.OnItemCli
     @Override protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_choose_app_to_proxy);
+        setContentView(R.layout.activity_proxy_apps);
         rvApps = (RecyclerView) findViewById(R.id.rv_proxy_apps);
         rvApps.setLayoutManager(new LinearLayoutManager(this));
         rvApps.setHasFixedSize(true);

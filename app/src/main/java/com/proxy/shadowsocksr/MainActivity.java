@@ -23,12 +23,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.orhanobut.hawk.Hawk;
+import com.proxy.shadowsocksr.adapter.ToolbarSpinnerAdapter;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
@@ -57,7 +57,7 @@ public class MainActivity extends Activity
     private NavigationView nav;
     private FloatingActionButton fab;
     //
-    private ArrayAdapter<String> spinnerAdapter;
+    private ToolbarSpinnerAdapter tsAdapter;
     private List<String> spinnerItemLst;
     //
     private PrefFragment pref;
@@ -221,10 +221,8 @@ public class MainActivity extends Activity
         });
         //
         spinnerItemLst = new ArrayList<>();
-        spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
-                                            spinnerItemLst);
-        spinnerAdapter.setDropDownViewResource(R.layout.spinner_list_item);
-        spinner.setAdapter(spinnerAdapter);
+        tsAdapter = new ToolbarSpinnerAdapter(spinnerItemLst);
+        spinner.setAdapter(tsAdapter);
         //
         spinner.setOnItemSelectedListener(this);
         //
@@ -239,9 +237,9 @@ public class MainActivity extends Activity
         {
             spinnerItemLst.add(svr);
         }
-        spinnerAdapter.notifyDataSetChanged();
+        tsAdapter.notifyDataSetChanged();
         String cur = Hawk.get("CurrentServer");
-        spinner.setSelection(spinnerAdapter.getPosition(cur));
+        spinner.setSelection(tsAdapter.getPosition(cur));
     }
 
     private void addNewServer(String server, int rmtPort, String method, String pwd)

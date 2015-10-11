@@ -20,9 +20,9 @@ import java.util.List;
 
 public class StubActivity extends Activity implements ServiceConnection
 {
-    private BroadcastReceiver receiver;
+    private BroadcastReceiver receiver=null;
 
-    private ISSRService ssrs;
+    private ISSRService ssrs=null;
 
     @Override protected void onResume()
     {
