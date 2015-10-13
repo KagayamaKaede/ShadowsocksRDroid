@@ -3,8 +3,6 @@ package com.proxy.shadowsocksr.ui;
 import android.app.ProgressDialog;
 import android.content.Context;
 
-import com.proxy.shadowsocksr.R;
-
 public class DialogManager
 {
     private DialogManager()
@@ -24,16 +22,16 @@ public class DialogManager
 
     private ProgressDialog pd;
 
-    public void showConnectDialog(Context cxt)
+    public void showTipDialog(Context cxt, int resid)
     {
         pd = new ProgressDialog(cxt);
-        pd.setMessage(cxt.getString(R.string.connecting));
+        pd.setMessage(cxt.getString(resid));
         pd.setIndeterminate(true);
         pd.setCancelable(false);
         pd.show();
     }
 
-    public void dismissConnectDialog()
+    public void dismissTipDialog()
     {
         if (pd != null)
         {

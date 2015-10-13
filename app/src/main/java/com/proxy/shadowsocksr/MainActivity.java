@@ -155,7 +155,7 @@ public class MainActivity extends Activity
             {
                 @Override public void run()
                 {
-                    DialogManager.getInstance().dismissConnectDialog();
+                    DialogManager.getInstance().dismissTipDialog();
                     switch (status)
                     {
                     case Consts.STATUS_CONNECTED:
@@ -374,6 +374,7 @@ public class MainActivity extends Activity
             fab.setEnabled(false);
             if (ssrs.status())
             {
+                DialogManager.getInstance().showTipDialog(this, R.string.disconnecting);
                 ssrs.stop();
             }
             else
@@ -403,7 +404,7 @@ public class MainActivity extends Activity
         case REQUEST_CODE_CONNECT:
             if (resultCode == RESULT_OK)
             {
-                DialogManager.getInstance().showConnectDialog(this);
+                DialogManager.getInstance().showTipDialog(this, R.string.connecting);
                 startService(new Intent(this, SSRVPNService.class));
                 try
                 {
@@ -420,7 +421,7 @@ public class MainActivity extends Activity
                 }
                 catch (RemoteException e)
                 {
-                    DialogManager.getInstance().dismissConnectDialog();
+                    DialogManager.getInstance().dismissTipDialog();
                     switchUI(true);
                     Toast.makeText(MainActivity.this, R.string.connect_failed,
                                    Toast.LENGTH_SHORT).show();

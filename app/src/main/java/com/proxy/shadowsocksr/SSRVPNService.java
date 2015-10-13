@@ -71,6 +71,7 @@ public class SSRVPNService extends VpnService
         {   //if user use system dialog close vpn,onRevoke will not called
             if (code == IBinder.LAST_CALL_TRANSACTION)
             {
+                onRevoke();
                 try
                 {
                     callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
@@ -78,7 +79,6 @@ public class SSRVPNService extends VpnService
                 catch (RemoteException ignored)
                 {
                 }
-                onRevoke();
                 return true;
             }
             return super.onTransact(code, data, reply, flags);
