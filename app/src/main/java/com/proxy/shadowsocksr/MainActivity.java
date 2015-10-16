@@ -1,6 +1,5 @@
 package com.proxy.shadowsocksr;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,7 +18,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -43,9 +44,8 @@ import net.glxn.qrgen.android.QRCode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity
-        implements View.OnClickListener, AdapterView.OnItemSelectedListener,
-        Toolbar.OnMenuItemClickListener, ServiceConnection
+public class MainActivity extends AppCompatActivity
+        implements View.OnClickListener, AdapterView.OnItemSelectedListener, ServiceConnection
 {
     public final int REQUEST_CODE_CONNECT = 0;
     public final int REQUEST_CODE_SCAN_QR = 1;
@@ -188,8 +188,7 @@ public class MainActivity extends Activity
         fab = (FloatingActionButton) findViewById(R.id.fab);
         //
         toolbar.setTitle(R.string.app_name);
-        toolbar.inflateMenu(R.menu.menu_main);
-        toolbar.setOnMenuItemClickListener(this);
+        setSupportActionBar(toolbar);
         //
         abdt = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.about,
                                          R.string.add_canceled);
@@ -227,6 +226,7 @@ public class MainActivity extends Activity
         spinner.setOnItemSelectedListener(this);
         //
         fab.setOnClickListener(this);
+        //
     }
 
     public void loadServerList()
@@ -257,7 +257,119 @@ public class MainActivity extends Activity
         Hawk.put("CurrentServer", lbl);
     }
 
-    @Override public boolean onMenuItemClick(MenuItem item)
+//    @Override public boolean onMenuItemClick(MenuItem item)
+//    {
+//        try
+//        {
+//            if (ssrs != null && ssrs.status())
+//            {
+//                Toast.makeText(MainActivity.this, "Please disconnect first.", Toast.LENGTH_SHORT)
+//                     .show();
+//                return true;
+//            }
+//        }
+//        catch (RemoteException ignored)
+//        {
+//        }
+//        switch (item.getItemId())
+//        {
+//        case R.id.action_maunally_add_server:
+//            addNewServer(Consts.defaultIP,
+//                         Consts.remotePort,
+//                         Consts.defaultCryptMethod, "");
+//            loadServerList();
+//            pref.reloadPref();
+//            break;
+//        case R.id.action_add_server_from_qrcode:
+//            Intent intent = new Intent("com.google.zxing.client.android.SCAN");
+//            List<ResolveInfo> activities = getPackageManager()
+//                    .queryIntentActivities(intent, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
+//            if (activities.size() > 0)
+//            {
+//                intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+//                startActivityForResult(intent, REQUEST_CODE_SCAN_QR);
+//            }
+//            else
+//            {
+//                new AlertDialog.Builder(this)
+//                        .setTitle(R.string.req_install_qrscan_app)
+//                        .setMessage(
+//                                R.string.req_install_qrscan_app_msg)
+//                        .setPositiveButton(android.R.string.ok,
+//                                           new DialogInterface.OnClickListener()
+//                                           {
+//                                               @Override public void onClick(
+//                                                       DialogInterface dialog,
+//                                                       int which)
+//                                               {
+//                                                   Intent goToMarket
+//                                                           = new Intent(
+//                                                           Intent.ACTION_VIEW)
+//                                                           .setData(Uri.parse(
+//                                                                   "market://details?id=com.google.zxing.client.android"));
+//                                                   startActivity(goToMarket);
+//                                               }
+//                                           })
+//                        .setNegativeButton(android.R.string.cancel, null)
+//                        .show();
+//            }
+//            break;
+//        case R.id.action_del_server:
+//            ArrayList<String> list = Hawk.get("ServerList");
+//            String del = Hawk.get("CurrentServer");
+//            list.remove(del);
+//            Hawk.put("ServerList", list);
+//            //
+//            if (list.size() == 0)
+//            {
+//                addNewServer(Consts.defaultIP,
+//                             Consts.remotePort,
+//                             Consts.defaultCryptMethod, "");
+//            }
+//            else
+//            {
+//                Hawk.put("CurrentServer", list.get(list.size() - 1));
+//            }
+//            Hawk.remove(del);
+//            //
+//            loadServerList();
+//            pref.reloadPref();
+//            break;
+//        case R.id.action_fresh_dns_cache:
+//            ShellUtil.runRootCmd(
+//                    new String[]{"ndc resolver flushdefaultif", "ndc resolver flushif wlan0"});
+//            break;
+//        case R.id.action_show_current_qrcode:
+//            String cur = Hawk.get("CurrentServer");
+//            SSRProfile ssp = Hawk.get(cur);
+//            String b64 = SSAddressUtil.getUtil().generate(ssp);
+//            if (b64 != null)
+//            {
+//                int px = ScreenUtil.dp2px(this, 230);
+//                Bitmap bm = ((QRCode) QRCode.from(b64).withSize(px, px)).bitmap();
+//                ImageView iv = new ImageView(this);
+//                iv.setImageBitmap(bm);
+//                new AlertDialog.Builder(this)
+//                        .setView(iv).setPositiveButton(android.R.string.ok, null)
+//                        .show();
+//                iv.getLayoutParams().height = px;
+//                iv.getLayoutParams().width = px;
+//                iv.requestLayout();
+//            }
+//            break;
+//        }
+//        return true;
+//    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
     {
         try
         {

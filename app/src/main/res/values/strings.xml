@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ShadowsocksR Droid</string>
+    <string name="app_name">ShadowsocksR</string>
     <string name="fresh_dns_cache">Fresh DNS Cache(need root)</string>
     <string name="add_server">Manually Add Server</string>
     <string name="del_current_server">Delete Current Server</string>
@@ -18,7 +18,7 @@
     <string name="route">Route</string>
     <string name="global_proxy">Global Proxy</string>
     <string name="set_proxy_for_sel_apps">Set proxy for selected apps</string>
-    <string name="per_add_proxy">Per App Proxy</string>
+    <string name="per_app_proxy">Per App Proxy</string>
     <string name="relay_udp_packet_to_remote_svr">Forward UDP packets to remote server</string>
     <string name="udp_relay">UDP Forwarding</string>
     <string name="start_ssr_on_boot">Enable ShadowsocksR Droid on startup</string>

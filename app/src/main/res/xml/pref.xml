@@ -96,7 +96,7 @@
             android:dependency="global_proxy"
             android:key="per_app_proxy"
             android:summary="@string/set_proxy_for_sel_apps"
-            android:title="@string/per_add_proxy">
+            android:title="@string/per_app_proxy">
             <intent
                 android:targetClass="com.proxy.shadowsocksr.ProxyAppsActivity"
                 android:targetPackage="com.proxy.shadowsocksr"/>
