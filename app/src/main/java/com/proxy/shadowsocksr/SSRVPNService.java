@@ -14,6 +14,8 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.proxy.shadowsocksr.impl.SSRLocal;
+import com.proxy.shadowsocksr.impl.UDPRelayServer;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
 import com.proxy.shadowsocksr.items.SSRProfile;
@@ -29,13 +31,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.net.DatagramSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class SSRVPNService extends VpnService
+public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectSocketListener,
+        UDPRelayServer.OnNeedProtectDatagramListener
 {
     private int VPN_MTU = 1500;
     private String PRIVATE_VLAN = "27.27.27.%s";
@@ -53,6 +58,10 @@ public class SSRVPNService extends VpnService
     private ISSRServiceCallback callback = null;
 
     private SSRService binder = new SSRService();
+
+    private SSRLocal local;
+
+    private UDPRelayServer udprs;
 
     @Override public IBinder onBind(Intent intent)
     {
@@ -131,9 +140,28 @@ public class SSRVPNService extends VpnService
         }
     }
 
+    @Override public boolean onNeedProtect(Socket socket)
+    {
+        boolean p = protect(socket);
+        if (p)
+        {
+            Log.e("EXC", "PROTECTED");
+        }
+        else
+        {
+            Log.e("EXC", "PROTECT FAILED");
+        }
+        return p;
+    }
+
+    @Override public boolean onNeedProtect(DatagramSocket udps)
+    {
+        return protect(udps);
+    }
+
     public void checkDaemonFile()
     {
-        for (String fn : new String[]{"pdnsd", "redsocks", "ss-local", "ss-tunnel", "tun2socks"})
+        for (String fn : new String[]{"pdnsd", "redsocks", "ss-tunnel", "tun2socks"})
         {
             File f = new File(Consts.baseDir + fn);
             if (f.exists())
@@ -186,16 +214,8 @@ public class SSRVPNService extends VpnService
     {
         killProcesses();
         //
-        vpnThread = new SSRVPNThread();
-        vpnThread.start();
-        //
-        //        Executors.newSingleThreadExecutor().submit(new Runnable()
-        //        {
-        //            @Override public void run()
-        //            {
-        //
-        //            }
-        //        });
+        //vpnThread = new SSRVPNThread();
+        //vpnThread.start();
         new Thread(new Runnable()
         {
             @Override public void run()
@@ -277,6 +297,7 @@ public class SSRVPNService extends VpnService
             vpnThread = null;
         }
         //reset
+
         killProcesses();
 
         //close conn
@@ -301,44 +322,48 @@ public class SSRVPNService extends VpnService
 
     private void startSSRDaemon()
     {
-        String ssrconf = String.format(ConfFileUtil.SSRConf,
-                                       ssrProfile.server,
-                                       ssrProfile.remotePort,
-                                       ssrProfile.localPort,
-                                       ssrProfile.passwd,
-                                       ssrProfile.cryptMethod, 10);
-        ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-local-vpn.conf"));
+//        local = new SSRLocal("127.0.0.1", ssrProfile.server,
+//                             ssrProfile.remotePort,
+//                             ssrProfile.localPort,
+//                             ssrProfile.passwd,
+//                             ssrProfile.cryptMethod);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(Consts.baseDir + "ss-local -V -u -b 127.0.0.1 -t 600 -c " + Consts.baseDir +
-                  "ss-local-vpn.conf -f " + Consts.baseDir + "ss-local-vpn.pid");
+        //        if (!globalProfile.route.equals("all"))
+        //        {
+        //            String[] acl = new String[0];
+        //            switch (globalProfile.route)
+        //            {
+        //            case "bypass-lan":
+        //                acl = getResources().getStringArray(R.array.private_route);
+        //                break;
+        //            case "bypass-lan-and-list":
+        //                acl = getResources().getStringArray(R.array.chn_route_full);
+        //                break;
+        //            }
+        //
+        //            StringBuilder s = new StringBuilder();
+        //            for (String a : acl)
+        //            {
+        //                s.append(a).append(Consts.lineSept);
+        //            }
+        //            ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
+        //            //
+        //            //sb.append(" --acl ").append(Consts.baseDir + "acl.list");
+        //        }
 
-        //AUTH
 
-        if (!globalProfile.route.equals("all"))
+//        local.setOnNeedProtectSocketListener(this);
+//        local.start();
+//        Log.e("EXC", "STARTED");
+
+        if (globalProfile.dnsForward)
         {
-            String[] acl = new String[0];
-            switch (globalProfile.route)
-            {
-            case "bypass-lan":
-                acl = getResources().getStringArray(R.array.private_route);
-                break;
-            case "bypass-lan-and-list":
-                acl = getResources().getStringArray(R.array.chn_route_full);
-                break;
-            }
-
-            StringBuilder s = new StringBuilder();
-            for (String a : acl)
-            {
-                s.append(a).append(Consts.lineSept);
-            }
-            ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
-            //
-            sb.append(" --acl ").append(Consts.baseDir + "acl.list");
+            udprs = new UDPRelayServer(ssrProfile.server, "127.0.0.1", ssrProfile.remotePort,
+                                       ssrProfile.localPort, ssrProfile.cryptMethod,
+                                       ssrProfile.passwd);
+            udprs.setOnNeedProtectDatagramListener(this);
+            udprs.start();
         }
-
-        ShellUtil.runCmd(sb.toString());
     }
 
     private void startDnsTunnel()
@@ -397,8 +422,6 @@ public class SSRVPNService extends VpnService
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
-            //builder.allowFamily(OsConstants.AF_INET6);
-
             if (!globalProfile.globalProxy)
             {
                 for (String pkg : proxyApps)
@@ -475,7 +498,12 @@ public class SSRVPNService extends VpnService
 
     private void killProcesses()
     {
-        final String[] tasks = new String[]{"ss-local", "ss-tunnel", "pdnsd", "tun2socks"};
+        if (local != null)
+        {
+            local.stopSSRLocal();
+            local = null;
+        }
+        final String[] tasks = new String[]{"ss-tunnel", "pdnsd", "tun2socks"};
         List<String> cmds = new ArrayList<>();
         String[] cmdarr;
 
@@ -507,21 +535,6 @@ public class SSRVPNService extends VpnService
         ShellUtil.runCmd(cmdarr);
     }
 
-    //    private boolean isByPass(SubnetUtils net)
-    //    {
-    //        return net.getInfo().isInRange(cfg.server);
-    //    }
-    //
-    //    private boolean isPrivateA(int a)
-    //    {
-    //        return a == 10 || a == 192 || a == 172;
-    //    }
-    //
-    //    private boolean isPrivateB(int a, int b)
-    //    {
-    //        return a == 10 || (a == 192 && b == 168) || (a == 172 && b >= 16 && b < 32);
-    //    }
-
     private void rebootThread()
     {//May be accept() throw exception
         if (vpnThread != null)
@@ -544,7 +557,8 @@ public class SSRVPNService extends VpnService
                 new File(Consts.baseDir + "protect_path").delete();
             }
             catch (Exception ignored)
-            {}
+            {
+            }
 
             try
             {
