@@ -37,6 +37,8 @@ If you have any advices or questions, You can pull request, submit issue or send
 * libevent: [BSD](https://github.com/shadowsocks/shadowsocks-android/blob/master/src/main/jni/libevent/LICENSE)
 * Hawk: [ApacheV2](https://github.com/orhanobut/hawk/blob/master/LICENSE)
 * libsuperuser: [ApacheV2](https://github.com/Chainfire/libsuperuser/blob/master/LICENSE)
+* dnsjava: [BSD](https://github.com/dnsjava/dnsjava/blob/master/LICENSE)
+* Bouncy Castle: [MIT & BC](https://bouncycastle.org/license.html)
 
 ##License
 
