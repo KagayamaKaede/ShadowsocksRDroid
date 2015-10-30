@@ -15,10 +15,10 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.SSRLocal;
-import com.proxy.shadowsocksr.impl.SSRTunnelWithDNS;
+import com.proxy.shadowsocksr.impl.SSRTunnel;
 import com.proxy.shadowsocksr.impl.UDPRelayServer;
-import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener;
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
+import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
 import com.proxy.shadowsocksr.items.SSRProfile;
@@ -63,7 +63,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private SSRService binder = new SSRService();
 
     private SSRLocal local;
-    private SSRTunnelWithDNS tunnel;
+    private SSRTunnel tunnel;
 
     private UDPRelayServer udprs;
 
@@ -237,7 +237,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                 startSSRDaemon();
                 if (!globalProfile.dnsForward)
                 {
-                    //startDnsTunnel();
+                    startDnsTunnel();
                     startDnsDaemon();
                 }
                 //
@@ -354,18 +354,8 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
 
     private void startDnsTunnel()
     {
-        tunnel = new SSRTunnelWithDNS(ssrProfile.server, "127.0.0.1", "8.8.8.8", ssrProfile.remotePort,
-                               8163, 53, ssrProfile.passwd, ssrProfile.cryptMethod);
-
-        //        String ssrconf = String.format(ConfFileUtil.SSRConf, ssrProfile.server,
-        //                                       ssrProfile.remotePort, 8163, ssrProfile.passwd,
-        //                                       ssrProfile.cryptMethod, 10);
-        //        ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-tunnel-vpn.conf"));
-        //
-        //        ShellUtil.runCmd((Consts.baseDir +
-        //                          "ss-tunnel -V -u -t 10 -b 127.0.0.1 -l 8163 -L 8.8.8.8:53 -c " +
-        //                          Consts.baseDir + "ss-tunnel-vpn.conf -f " + Consts.baseDir +
-        //                          "ss-tunnel-vpn.pid"));
+        tunnel = new SSRTunnel(ssrProfile.server, "127.0.0.1", "8.8.8.8", ssrProfile.remotePort,
+                               8163, 53, ssrProfile.cryptMethod, ssrProfile.passwd);
 
         tunnel.setOnNeedProtectUDPListener(this);
         tunnel.start();
