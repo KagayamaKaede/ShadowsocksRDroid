@@ -50,7 +50,7 @@ public final class Utils
         StringBuilder sb=new StringBuilder();
         for (byte b:bytes)
         {
-            sb.append(String.format("%x ",b));
+            sb.append(String.format("%02X ",b));
         }
         Log.e(tag,sb.toString());
     }
@@ -62,7 +62,7 @@ public final class Utils
         int cnt=bb.limit();
         for(;st<cnt;st++)
         {
-            sb.append(String.format("%x ",bb.get(st)));
+            sb.append(String.format("%02X ",bb.get(st)));
         }
         Log.e(tag,sb.toString());
     }

@@ -15,7 +15,10 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.SSRLocal;
+import com.proxy.shadowsocksr.impl.SSRTunnelWithDNS;
 import com.proxy.shadowsocksr.impl.UDPRelayServer;
+import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener;
+import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
 import com.proxy.shadowsocksr.items.ConnectProfile;
 import com.proxy.shadowsocksr.items.GlobalProfile;
 import com.proxy.shadowsocksr.items.SSRProfile;
@@ -39,8 +42,8 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectSocketListener,
-        UDPRelayServer.OnNeedProtectDatagramListener
+public class SSRVPNService extends VpnService implements OnNeedProtectTCPListener,
+        OnNeedProtectUDPListener
 {
     private int VPN_MTU = 1500;
     private String PRIVATE_VLAN = "27.27.27.%s";
@@ -60,6 +63,7 @@ public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectS
     private SSRService binder = new SSRService();
 
     private SSRLocal local;
+    private SSRTunnelWithDNS tunnel;
 
     private UDPRelayServer udprs;
 
@@ -140,28 +144,19 @@ public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectS
         }
     }
 
-    @Override public boolean onNeedProtect(Socket socket)
+    @Override public boolean onNeedProtectTCP(Socket socket)
     {
-        boolean p = protect(socket);
-        if (p)
-        {
-            Log.e("EXC", "PROTECTED");
-        }
-        else
-        {
-            Log.e("EXC", "PROTECT FAILED");
-        }
-        return p;
+        return protect(socket);
     }
 
-    @Override public boolean onNeedProtect(DatagramSocket udps)
+    @Override public boolean onNeedProtectUDP(DatagramSocket udps)
     {
         return protect(udps);
     }
 
     public void checkDaemonFile()
     {
-        for (String fn : new String[]{"pdnsd", "redsocks", "ss-tunnel", "tun2socks"})
+        for (String fn : new String[]{"pdnsd", "redsocks", "tun2socks"})
         {
             File f = new File(Consts.baseDir + fn);
             if (f.exists())
@@ -177,7 +172,6 @@ public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectS
                 ShellUtil.runCmd("chmod 755 " + f.getAbsolutePath());
             }
         }
-
     }
 
     private void copyDaemonBin(String file, File out)
@@ -243,8 +237,8 @@ public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectS
                 startSSRDaemon();
                 if (!globalProfile.dnsForward)
                 {
+                    //startDnsTunnel();
                     startDnsDaemon();
-                    startDnsTunnel();
                 }
                 //
                 int fd = startVpn();
@@ -322,12 +316,13 @@ public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectS
 
     private void startSSRDaemon()
     {
-//        local = new SSRLocal("127.0.0.1", ssrProfile.server,
-//                             ssrProfile.remotePort,
-//                             ssrProfile.localPort,
-//                             ssrProfile.passwd,
-//                             ssrProfile.cryptMethod);
+        local = new SSRLocal("127.0.0.1", ssrProfile.server,
+                             ssrProfile.remotePort,
+                             ssrProfile.localPort,
+                             ssrProfile.passwd,
+                             ssrProfile.cryptMethod);
 
+        //TODO
         //        if (!globalProfile.route.equals("all"))
         //        {
         //            String[] acl = new String[0];
@@ -340,45 +335,40 @@ public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectS
         //                acl = getResources().getStringArray(R.array.chn_route_full);
         //                break;
         //            }
-        //
-        //            StringBuilder s = new StringBuilder();
-        //            for (String a : acl)
-        //            {
-        //                s.append(a).append(Consts.lineSept);
-        //            }
-        //            ConfFileUtil.writeToFile(s.toString(), new File(Consts.baseDir + "acl.list"));
-        //            //
-        //            //sb.append(" --acl ").append(Consts.baseDir + "acl.list");
+        //            List<String> aclList = Arrays.asList(acl);
         //        }
 
-
-//        local.setOnNeedProtectSocketListener(this);
-//        local.start();
-//        Log.e("EXC", "STARTED");
+        local.setOnNeedProtectTCPListener(this);
+        local.start();
+        Log.e("EXC", "STARTED");
 
         if (globalProfile.dnsForward)
         {
             udprs = new UDPRelayServer(ssrProfile.server, "127.0.0.1", ssrProfile.remotePort,
                                        ssrProfile.localPort, ssrProfile.cryptMethod,
                                        ssrProfile.passwd);
-            udprs.setOnNeedProtectDatagramListener(this);
+            udprs.setOnNeedProtectUDPListener(this);
             udprs.start();
         }
     }
 
     private void startDnsTunnel()
     {
-        String ssrconf = String.format(ConfFileUtil.SSRConf, ssrProfile.server,
-                                       ssrProfile.remotePort, 8163, ssrProfile.passwd,
-                                       ssrProfile.cryptMethod, 10);
-        ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-tunnel-vpn.conf"));
+        tunnel = new SSRTunnelWithDNS(ssrProfile.server, "127.0.0.1", "8.8.8.8", ssrProfile.remotePort,
+                               8163, 53, ssrProfile.passwd, ssrProfile.cryptMethod);
 
-        //AUTH
+        //        String ssrconf = String.format(ConfFileUtil.SSRConf, ssrProfile.server,
+        //                                       ssrProfile.remotePort, 8163, ssrProfile.passwd,
+        //                                       ssrProfile.cryptMethod, 10);
+        //        ConfFileUtil.writeToFile(ssrconf, new File(Consts.baseDir + "ss-tunnel-vpn.conf"));
+        //
+        //        ShellUtil.runCmd((Consts.baseDir +
+        //                          "ss-tunnel -V -u -t 10 -b 127.0.0.1 -l 8163 -L 8.8.8.8:53 -c " +
+        //                          Consts.baseDir + "ss-tunnel-vpn.conf -f " + Consts.baseDir +
+        //                          "ss-tunnel-vpn.pid"));
 
-        ShellUtil.runCmd((Consts.baseDir +
-                          "ss-tunnel -V -u -t 10 -b 127.0.0.1 -l 8163 -L 8.8.8.8:53 -c " +
-                          Consts.baseDir + "ss-tunnel-vpn.conf -f " + Consts.baseDir +
-                          "ss-tunnel-vpn.pid"));
+        tunnel.setOnNeedProtectUDPListener(this);
+        tunnel.start();
     }
 
     private void startDnsDaemon()
@@ -503,7 +493,7 @@ public class SSRVPNService extends VpnService implements SSRLocal.OnNeedProtectS
             local.stopSSRLocal();
             local = null;
         }
-        final String[] tasks = new String[]{"ss-tunnel", "pdnsd", "tun2socks"};
+        final String[] tasks = new String[]{"pdnsd", "redsocks", "tun2socks"};
         List<String> cmds = new ArrayList<>();
         String[] cmdarr;
 

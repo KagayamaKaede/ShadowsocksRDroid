@@ -5,6 +5,9 @@ import android.util.LruCache;
 
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener;
 
+import org.xbill.DNS.Message;
+import org.xbill.DNS.SimpleResolver;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -13,7 +16,7 @@ import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class UDPRelayServer extends Thread
+public class SSRTunnelWithDNS extends Thread
 {
     private DatagramChannel udpServer;
     private InetSocketAddress isaLocal;
@@ -22,8 +25,10 @@ public class UDPRelayServer extends Thread
 
     private String remoteIP;
     private String localIP;
+    private String dnsIP;
     private int remotePort;
     private int localPort;
+    private int dnsPort;
 
     private final int ivLen;
 
@@ -33,13 +38,17 @@ public class UDPRelayServer extends Thread
 
     private OnNeedProtectUDPListener onNeedProtectUDPListener;
 
-    public UDPRelayServer(String remoteIP, String localIP, int remotePort, int localPort,
-            String cryptMethod, String pwd)
+    public SSRTunnelWithDNS(String rmtIP, String locIP, String dnsIP, int rmtPort, int locPort,
+            int dnsPort,
+            String pwd,
+            String cryptMethod)
     {
-        this.remoteIP = remoteIP;
-        this.localIP = localIP;
-        this.remotePort = remotePort;
-        this.localPort = localPort;
+        this.remoteIP = rmtIP;
+        this.localIP = locIP;
+        this.dnsIP = dnsIP;
+        this.remotePort = rmtPort;
+        this.localPort = locPort;
+        this.dnsPort = dnsPort;
         cache = new LruCache<>(100); //may be should bigger...
         crypto = new UDPEncryptor(pwd, cryptMethod);
         ivLen = crypto.getIVLen();
@@ -80,24 +89,22 @@ public class UDPRelayServer extends Thread
                 //
                 buf.flip();
                 int rcnt = buf.limit();
-                if (rcnt < ivLen + 8)
+                if (rcnt < 12)
                 {
                     Log.e("EXC", "LOCAL RECV SMALL PKG");
                     buf.clear();
                     continue;
                 }
                 //
-                if (!(buf.get() == 0 && //RSV
-                      buf.get() == 0 && //RSV
-                      buf.get() == 0))  //FRAG
-                {
-                    Log.e("EXC", "LOCAL RECV NOT SOCKS5 UDP PKG");
-                    buf.clear();
-                    continue;
-                }
-                //
-                byte[] dataLocalIn = new byte[rcnt - 3];
+                byte[] dataLocalIn = new byte[rcnt];
                 buf.get(dataLocalIn);
+                //
+                Message msg=new Message(dataLocalIn);
+                SimpleResolver sr=new SimpleResolver("127.0.0.1");
+                sr.setPort(1093);
+                msg=sr.send(msg);
+
+                //
                 byte[] dataRemoteOut = crypto.encrypt(dataLocalIn);
                 //
                 UDPRemoteDataHandler handler = cache.get(localAddress);

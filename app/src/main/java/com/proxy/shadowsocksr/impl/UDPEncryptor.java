@@ -23,6 +23,11 @@ public class UDPEncryptor
         crypto = CryptoChooser.getMatchCrypto(cryptMethod, key);
     }
 
+    public int getIVLen()
+    {
+        return cryptMethodInfo[1];
+    }
+
     public byte[] encrypt(byte[] buf)
     {
         byte[] iv = Utils.randomBytes(cryptMethodInfo[1]);

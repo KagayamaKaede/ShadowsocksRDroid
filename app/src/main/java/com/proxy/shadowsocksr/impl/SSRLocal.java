@@ -3,10 +3,10 @@ package com.proxy.shadowsocksr.impl;
 import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.crypto.Utils;
+import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -32,7 +32,7 @@ public class SSRLocal extends Thread
 
     private ExecutorService exec;
 
-    private OnNeedProtectSocketListener onNeedProtectSocketListener;
+    private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
     public SSRLocal(String locIP, String rmtIP, int rmtPort, int locPort, String pwd,
             String cryptMethod)
@@ -45,10 +45,10 @@ public class SSRLocal extends Thread
         this.cryptMethod = cryptMethod;
     }
 
-    public void setOnNeedProtectSocketListener(
-            OnNeedProtectSocketListener onNeedProtectSocketListener)
+    public void setOnNeedProtectTCPListener(
+            OnNeedProtectTCPListener onNeedProtectTCPListener)
     {
-        this.onNeedProtectSocketListener = onNeedProtectSocketListener;
+        this.onNeedProtectTCPListener = onNeedProtectTCPListener;
     }
 
     class ChannelAttach
@@ -269,7 +269,7 @@ public class SSRLocal extends Thread
         attach.remoteSkt.configureBlocking(true);
         attach.remoteSkt.socket().setReuseAddress(true);
         attach.remoteSkt.socket().setTcpNoDelay(true);
-        boolean success = onNeedProtectSocketListener.onNeedProtect(attach.remoteSkt.socket());
+        boolean success = onNeedProtectTCPListener.onNeedProtectTCP(attach.remoteSkt.socket());
         if (!success)
         {
             return false;
@@ -368,10 +368,5 @@ public class SSRLocal extends Thread
             }
             cleanSession(attach);
         }
-    }
-
-    public interface OnNeedProtectSocketListener
-    {
-        boolean onNeedProtect(Socket socket);
     }
 }
