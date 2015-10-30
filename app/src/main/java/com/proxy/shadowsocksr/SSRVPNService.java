@@ -3,9 +3,6 @@ package com.proxy.shadowsocksr;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.net.LocalServerSocket;
-import android.net.LocalSocket;
-import android.net.LocalSocketAddress;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.IBinder;
@@ -28,19 +25,14 @@ import com.proxy.shadowsocksr.util.InetAddressUtil;
 import com.proxy.shadowsocksr.util.ShellUtil;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.net.DatagramSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class SSRVPNService extends VpnService implements OnNeedProtectTCPListener,
         OnNeedProtectUDPListener
@@ -54,7 +46,6 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private SSRProfile ssrProfile;
     private GlobalProfile globalProfile;
     private List<String> proxyApps;
-    private SSRVPNThread vpnThread;
 
     private volatile boolean isVPNConnected = false;
 
@@ -178,7 +169,8 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     {
         AssetManager am = getAssets();
         String abi = Jni.getABI();
-        byte[] buf = new byte[4096];
+        byte[] buf
+                = new byte[4096];//most tf card have 16k or 32k logic unit size, may be 32k buffer is better
         try
         {
             boolean create = out.createNewFile();
@@ -208,8 +200,6 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     {
         killProcesses();
         //
-        //vpnThread = new SSRVPNThread();
-        //vpnThread.start();
         new Thread(new Runnable()
         {
             @Override public void run()
@@ -285,11 +275,6 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private void stopRunner()
     {
         isVPNConnected = false;
-        if (vpnThread != null)
-        {
-            vpnThread.stopThread();
-            vpnThread = null;
-        }
         //reset
 
         killProcesses();
@@ -483,6 +468,19 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
             local.stopSSRLocal();
             local = null;
         }
+
+        if (tunnel != null)
+        {
+            tunnel.stopTunnel();
+            tunnel = null;
+        }
+
+        if (udprs != null)
+        {
+            udprs.stopUDPRelayServer();
+            udprs = null;
+        }
+
         final String[] tasks = new String[]{"pdnsd", "redsocks", "tun2socks"};
         List<String> cmds = new ArrayList<>();
         String[] cmdarr;
@@ -513,120 +511,5 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
         cmdarr = new String[cmds.size()];
         cmds.toArray(cmdarr);
         ShellUtil.runCmd(cmdarr);
-    }
-
-    private void rebootThread()
-    {//May be accept() throw exception
-        if (vpnThread != null)
-        {
-            vpnThread.stopThread();
-        }
-        vpnThread = new SSRVPNThread();
-        vpnThread.start();
-    }
-
-    class SSRVPNThread extends Thread
-    {
-        volatile private LocalServerSocket lss;
-        volatile private boolean isRunning = true;
-
-        @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
-        {
-            try
-            {
-                new File(Consts.baseDir + "protect_path").delete();
-            }
-            catch (Exception ignored)
-            {
-            }
-
-            try
-            {
-                LocalSocket stk = new LocalSocket();
-                stk.bind(new LocalSocketAddress(Consts.baseDir + "protect_path",
-                                                LocalSocketAddress.Namespace.FILESYSTEM));
-                lss = new LocalServerSocket(stk.getFileDescriptor());
-            }
-            catch (IOException e)
-            {
-                return;
-            }
-
-            ExecutorService exec = Executors.newFixedThreadPool(4);
-
-            while (isRunning)
-            {
-                try
-                {
-                    final LocalSocket ls = lss.accept();
-                    exec.execute(new Runnable()
-                    {
-                        @SuppressWarnings("ResultOfMethodCallIgnored") @Override public void run()
-                        {
-                            try
-                            {
-                                InputStream is = ls.getInputStream();
-                                OutputStream os = ls.getOutputStream();
-
-                                is.read();
-                                FileDescriptor[] fds = ls.getAncillaryFileDescriptors();
-
-                                if (fds != null && fds.length > 0)
-                                {
-                                    Method getInt = FileDescriptor.class.getDeclaredMethod(
-                                            "getInt$");
-                                    Integer fd = (Integer) getInt.invoke(fds[0]);
-                                    boolean ret = protect(fd);
-
-                                    Jni.jniClose(fd);
-
-                                    os.write(ret ? 0 : 1);
-
-                                    is.close();
-                                    os.close();
-                                }
-                            }
-                            catch (Exception ignored)
-                            {
-                            }
-                            try
-                            {
-                                ls.close();
-                            }
-                            catch (IOException ignored)
-                            {
-                            }
-                        }
-                    });
-                }
-                catch (Exception e)
-                {
-                    Log.e("EXCE-accept", e.getMessage());
-                    rebootThread();
-                    return;
-                }
-            }
-        }
-
-        private void closeServerSocket()
-        {
-            if (lss != null)
-            {
-                try
-                {
-                    lss.close();
-                }
-                catch (IOException ignored)
-                {
-                }
-                lss = null;
-            }
-        }
-
-        public void stopThread()
-        {
-            isRunning = false;
-            closeServerSocket();
-        }
     }
 }

@@ -28,6 +28,7 @@ public class UDPRelayServer extends Thread
     private final int ivLen;
 
     private ExecutorService exec;
+    private volatile boolean isRunning = true;
 
     private LruCache<SocketAddress, UDPRemoteDataHandler> cache;
 
@@ -51,6 +52,26 @@ public class UDPRelayServer extends Thread
         this.onNeedProtectUDPListener = onNeedProtectUDPListener;
     }
 
+    public void stopUDPRelayServer()
+    {
+        isRunning = false;
+        //
+        try
+        {
+            udpServer.socket().close();
+            udpServer.close();
+        }
+        catch (Exception ignored)
+        {
+        }
+        while (cache.size() > 0)
+        {
+            cache.evictAll();
+        }
+        udpServer = null;
+        exec.shutdown();
+    }
+
     @Override public void run()
     {
         isaLocal = new InetSocketAddress(localIP, localPort);
@@ -71,7 +92,7 @@ public class UDPRelayServer extends Thread
 
         ByteBuffer buf = ByteBuffer.allocate(1500);
 
-        while (true)
+        while (isRunning)
         {
             try
             {
@@ -161,7 +182,7 @@ public class UDPRelayServer extends Thread
 
         @Override public void run()
         {
-            while (true)
+            while (isRunning)
             {
                 try
                 {

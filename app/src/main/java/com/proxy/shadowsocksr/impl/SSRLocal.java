@@ -28,7 +28,7 @@ public class SSRLocal extends Thread
     private int locPort;
 
     private SelectionKey sscSK;
-    private boolean isRunning = true;
+    private volatile boolean isRunning = true;
 
     private ExecutorService exec;
 
@@ -91,9 +91,12 @@ public class SSRLocal extends Thread
                 }
             }
         }
-        catch (IOException e)
+        catch (Exception e)
         {
-            Log.e("EXC", e.getMessage());
+            Log.e("EXC", "tcp server err: "+e.getMessage());
+        }
+        finally
+        {
             stopSSRLocal();
         }
     }
@@ -109,7 +112,7 @@ public class SSRLocal extends Thread
 
         private void handleData() throws Exception
         {
-            while (true)
+            while (isRunning)
             {
                 if (!checkSessionAlive(attach))
                 {
@@ -314,10 +317,11 @@ public class SSRLocal extends Thread
             selector.wakeup();
             selector.close();
         }
-        catch (IOException e)
+        catch (Exception e)
         {
             Log.e("EXC", e.getMessage());
         }
+        exec.shutdown();
         selector = null;
         ssc = null;
     }
@@ -333,7 +337,7 @@ public class SSRLocal extends Thread
 
         @Override public void run()
         {
-            while (true)
+            while (isRunning)
             {
                 try
                 {

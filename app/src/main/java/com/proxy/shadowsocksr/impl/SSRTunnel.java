@@ -3,7 +3,6 @@ package com.proxy.shadowsocksr.impl;
 import android.util.Log;
 import android.util.LruCache;
 
-import com.proxy.shadowsocksr.impl.crypto.Utils;
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener;
 
 import java.io.IOException;
@@ -32,6 +31,7 @@ public class SSRTunnel extends Thread
     private final int ivLen;
 
     private ExecutorService exec;
+    private volatile boolean isRunning = true;
 
     private LruCache<SocketAddress, UDPRemoteDataHandler> cache;
 
@@ -54,13 +54,31 @@ public class SSRTunnel extends Thread
         dnsIp[1] = (byte) Character.getNumericValue(spt[1].charAt(0));
         dnsIp[2] = (byte) Character.getNumericValue(spt[2].charAt(0));
         dnsIp[3] = (byte) Character.getNumericValue(spt[3].charAt(0));
-        Log.e("EXC", "tunnel init");
     }
 
     public void setOnNeedProtectUDPListener(
             OnNeedProtectUDPListener onNeedProtectUDPListener)
     {
         this.onNeedProtectUDPListener = onNeedProtectUDPListener;
+    }
+
+    public void stopTunnel()
+    {
+        isRunning = false;
+        try
+        {
+            udpServer.socket().close();
+            udpServer.close();
+        }
+        catch (Exception ignored)
+        {
+        }
+        while (cache.size() > 0)
+        {
+            cache.evictAll();
+        }
+        udpServer = null;
+        exec.shutdown();
     }
 
     @Override public void run()
@@ -83,14 +101,11 @@ public class SSRTunnel extends Thread
 
         ByteBuffer buf = ByteBuffer.allocate(1500);
 
-        while (true)
+        while (isRunning)
         {
             try
             {
-                Log.e("EXC", "tunnel");
                 SocketAddress localAddress = udpServer.receive(buf);
-                //
-                Log.e("EXC", "DNS");
                 //
                 buf.flip();
                 int rcnt = buf.limit();
@@ -114,14 +129,13 @@ public class SSRTunnel extends Thread
                 dataRemoteOut[6] = (byte) (dnsPort & 0xFF);
                 System.arraycopy(dataLocalIn, 0, dataRemoteOut, 7, dataLocalIn.length);
                 //
-                Utils.bytesHexDmp("DNS LOCAL", dataRemoteOut);
+                //Utils.bytesHexDmp("DNS LOCAL", dataRemoteOut);
                 //
                 dataRemoteOut = crypto.encrypt(dataRemoteOut);
                 //
                 UDPRemoteDataHandler handler = cache.get(localAddress);
                 if (handler == null)
                 {
-                    Log.e("EXC", "CACHE MISS");
                     DatagramChannel remoteChannel = DatagramChannel.open();
                     remoteChannel.configureBlocking(true);
                     remoteChannel.connect(isaRemote);
@@ -140,10 +154,6 @@ public class SSRTunnel extends Thread
                         continue;
                     }
                 }
-                else
-                {
-                    Log.e("EXC", "CACHE HIT");
-                }
                 handler.remoteChannel.write(ByteBuffer.wrap(dataRemoteOut));
                 //
                 buf.clear();
@@ -153,7 +163,7 @@ public class SSRTunnel extends Thread
                 Log.e("EXC", "UDPRealyServer EXEC !");
                 try
                 {
-                    udpServer.socket().close();//reinit
+                    udpServer.socket().close();
                     udpServer.close();
                     udpServer = DatagramChannel.open();
                     udpServer.configureBlocking(true);
@@ -161,7 +171,7 @@ public class SSRTunnel extends Thread
                 }
                 catch (Exception ex)
                 {
-                    Log.e("EXC", "UDPRealyServer Init Failed!");
+                    Log.e("EXC", "UDPRealyServer Restart Failed!");
                     return;
                 }
             }
@@ -184,7 +194,7 @@ public class SSRTunnel extends Thread
 
         @Override public void run()
         {
-            while (true)
+            while (isRunning)
             {
                 try
                 {
@@ -200,7 +210,7 @@ public class SSRTunnel extends Thread
                     dataRemoteIn = crypto.decrypt(dataRemoteIn);
                     byte[] dataLocalOut = new byte[dataRemoteIn.length -
                                                    7];//may be server return ipv6?
-                    Utils.bytesHexDmp("DNS REMOTE", dataRemoteIn);
+                    //Utils.bytesHexDmp("DNS REMOTE", dataRemoteIn);
                     System.arraycopy(dataRemoteIn, 7, dataLocalOut, 0, dataLocalOut.length);
                     udpServer.send(ByteBuffer.wrap(dataLocalOut), localAddress);
                     //
@@ -208,7 +218,7 @@ public class SSRTunnel extends Thread
                 }
                 catch (IOException e)
                 {
-                    Log.e("EXC", "UDP REMOTE EXC: " + e.getMessage());
+                    Log.e("EXC", "UDP REMOTE EXC");
                     cache.remove(localAddress);
                     try
                     {
