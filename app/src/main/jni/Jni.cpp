@@ -68,17 +68,10 @@ jint Java_com_proxy_shadowsocksr_Jni_sendFd
     return 0;
 }
 
-void Java_com_proxy_shadowsocksr_Jni_jniClose
-        (JNIEnv *env, jobject thiz, jint fd) {
-    close(fd);
-}
-
 /////////////////////////////////////////
 static const char *classPathName = "com/proxy/shadowsocksr/Jni";
 
 static JNINativeMethod method_table[] = {
-        {"jniClose", "(I)V",
-                (void *) Java_com_proxy_shadowsocksr_Jni_jniClose},
         {"sendFd",   "(I)I",
                 (void *) Java_com_proxy_shadowsocksr_Jni_sendFd},
         {"exec",     "(Ljava/lang/String;)V",

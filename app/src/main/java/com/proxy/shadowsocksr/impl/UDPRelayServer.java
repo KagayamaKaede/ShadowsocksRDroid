@@ -11,7 +11,9 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class UDPRelayServer extends Thread
 {
@@ -64,7 +66,7 @@ public class UDPRelayServer extends Thread
         catch (Exception ignored)
         {
         }
-        while (cache.size() > 0)
+        if (cache.size() > 0)
         {
             cache.evictAll();
         }
@@ -77,7 +79,9 @@ public class UDPRelayServer extends Thread
         isaLocal = new InetSocketAddress(localIP, localPort);
         isaRemote = new InetSocketAddress(remoteIP, remotePort);
 
-        exec = Executors.newCachedThreadPool();
+        exec = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
+                                      300L, TimeUnit.SECONDS,
+                                      new SynchronousQueue<Runnable>());
         try
         {
             udpServer = DatagramChannel.open();
@@ -101,10 +105,10 @@ public class UDPRelayServer extends Thread
                 //
                 buf.flip();
                 int rcnt = buf.limit();
-                if (rcnt < ivLen + 8)
+                if (rcnt < 8)
                 {
                     Log.e("EXC", "LOCAL RECV SMALL PKG");
-                    buf.clear();
+                    buf.clear();//not response small package
                     continue;
                 }
                 //
@@ -151,7 +155,7 @@ public class UDPRelayServer extends Thread
                 Log.e("EXC", "UDPRealyServer EXEC !");
                 try
                 {
-                    udpServer.socket().close();//reinit
+                    udpServer.socket().close();
                     udpServer.close();
                     udpServer = DatagramChannel.open();
                     udpServer.configureBlocking(true);
@@ -159,7 +163,7 @@ public class UDPRelayServer extends Thread
                 }
                 catch (Exception ex)
                 {
-                    Log.e("EXC", "UDPRealyServer Init Failed!");
+                    Log.e("EXC", "UDPRealyServer Restart Failed!");
                     return;
                 }
             }
@@ -189,7 +193,7 @@ public class UDPRelayServer extends Thread
                     int rcnt = remoteChannel.read(remoteReadBuf);
                     if (rcnt < ivLen + 8)
                     {
-                        remoteReadBuf.clear();//just drop
+                        remoteReadBuf.clear();//not response small package, just drop.
                         continue;
                     }
                     remoteReadBuf.flip();
@@ -202,7 +206,7 @@ public class UDPRelayServer extends Thread
                     //
                     remoteReadBuf.clear();
                 }
-                catch (IOException e)
+                catch (Exception e)
                 {
                     Log.e("EXC", "UDP REMOTE EXC: " + e.getMessage());
                     cache.remove(localAddress);
@@ -210,9 +214,8 @@ public class UDPRelayServer extends Thread
                     {
                         remoteChannel.close();
                     }
-                    catch (IOException e1)
+                    catch (IOException ignored)
                     {
-                        e1.printStackTrace();
                     }
                     remoteChannel = null;
                     break;

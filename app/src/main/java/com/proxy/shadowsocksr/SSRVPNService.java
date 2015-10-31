@@ -9,7 +9,6 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
-import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.SSRLocal;
 import com.proxy.shadowsocksr.impl.SSRTunnel;
@@ -31,6 +30,7 @@ import java.io.InputStream;
 import java.net.DatagramSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -53,10 +53,9 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
 
     private SSRService binder = new SSRService();
 
-    private SSRLocal local;
-    private SSRTunnel tunnel;
-
-    private UDPRelayServer udprs;
+    private SSRLocal local = null;
+    private SSRTunnel tunnel = null;
+    private UDPRelayServer udprs = null;
 
     @Override public IBinder onBind(Intent intent)
     {
@@ -170,7 +169,8 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
         AssetManager am = getAssets();
         String abi = Jni.getABI();
         byte[] buf
-                = new byte[4096];//most tf card have 16k or 32k logic unit size, may be 32k buffer is better
+                = new byte[1024 *
+                           32];//most tf card have 16k or 32k logic unit size, may be 32k buffer is better
         try
         {
             boolean create = out.createNewFile();
@@ -241,9 +241,8 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                         {
                             Thread.sleep(1000 * tries);
                         }
-                        catch (InterruptedException e)
+                        catch (InterruptedException ignored)
                         {
-                            e.printStackTrace();
                         }
                         if (Jni.sendFd(fd) != -1)
                         {
@@ -275,8 +274,8 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private void stopRunner()
     {
         isVPNConnected = false;
-        //reset
 
+        //reset
         killProcesses();
 
         //close conn
@@ -301,31 +300,30 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
 
     private void startSSRDaemon()
     {
+        List<String> aclList = new ArrayList<>();
+        if (!globalProfile.route.equals("all"))
+        {
+            switch (globalProfile.route)
+            {
+            case "bypass-lan":
+                aclList = Arrays.asList(
+                        getResources().getStringArray(R.array.private_route));
+                break;
+            case "bypass-lan-and-list":
+                aclList = Arrays.asList(getResources().getStringArray(R.array.chn_route_full));
+                break;
+            }
+        }
+
         local = new SSRLocal("127.0.0.1", ssrProfile.server,
                              ssrProfile.remotePort,
                              ssrProfile.localPort,
                              ssrProfile.passwd,
-                             ssrProfile.cryptMethod);
-
-        //TODO
-        //        if (!globalProfile.route.equals("all"))
-        //        {
-        //            String[] acl = new String[0];
-        //            switch (globalProfile.route)
-        //            {
-        //            case "bypass-lan":
-        //                acl = getResources().getStringArray(R.array.private_route);
-        //                break;
-        //            case "bypass-lan-and-list":
-        //                acl = getResources().getStringArray(R.array.chn_route_full);
-        //                break;
-        //            }
-        //            List<String> aclList = Arrays.asList(acl);
-        //        }
+                             ssrProfile.cryptMethod,
+                             aclList);
 
         local.setOnNeedProtectTCPListener(this);
         local.start();
-        Log.e("EXC", "STARTED");
 
         if (globalProfile.dnsForward)
         {

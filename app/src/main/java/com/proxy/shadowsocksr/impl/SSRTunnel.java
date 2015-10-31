@@ -5,13 +5,14 @@ import android.util.LruCache;
 
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class SSRTunnel extends Thread
 {
@@ -73,7 +74,7 @@ public class SSRTunnel extends Thread
         catch (Exception ignored)
         {
         }
-        while (cache.size() > 0)
+        if (cache.size() > 0)
         {
             cache.evictAll();
         }
@@ -86,7 +87,9 @@ public class SSRTunnel extends Thread
         isaLocal = new InetSocketAddress(localIP, localPort);
         isaRemote = new InetSocketAddress(remoteIP, remotePort);
 
-        exec = Executors.newCachedThreadPool();
+        exec = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
+                                        300L, TimeUnit.SECONDS,
+                                        new SynchronousQueue<Runnable>());
         try
         {
             udpServer = DatagramChannel.open();
@@ -112,7 +115,7 @@ public class SSRTunnel extends Thread
                 if (rcnt < 12)//DNS datagram min size should be ?
                 {
                     Log.e("EXC", "LOCAL RECV SMALL PKG");
-                    buf.clear();
+                    buf.clear();//not response small package
                     continue;
                 }
                 //
@@ -216,7 +219,7 @@ public class SSRTunnel extends Thread
                     //
                     remoteReadBuf.clear();
                 }
-                catch (IOException e)
+                catch (Exception e)
                 {
                     Log.e("EXC", "UDP REMOTE EXC");
                     cache.remove(localAddress);
@@ -224,7 +227,7 @@ public class SSRTunnel extends Thread
                     {
                         remoteChannel.close();
                     }
-                    catch (IOException e1)
+                    catch (Exception e1)
                     {
                         e1.printStackTrace();
                     }

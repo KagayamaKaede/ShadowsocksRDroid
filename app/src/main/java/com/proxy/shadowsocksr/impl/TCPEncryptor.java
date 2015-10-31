@@ -72,6 +72,10 @@ public class TCPEncryptor
         }
         if (ivNotRecv)
         {
+            if (buf.length < eIV.length + 1)
+            {
+                return new byte[1];//TODO
+            }
             byte[] div = Arrays.copyOfRange(buf, 0, eIV.length);
             byte[] data = Arrays.copyOfRange(buf, eIV.length, buf.length);
             crypto.updateDecryptIV(div);

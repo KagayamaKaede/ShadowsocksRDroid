@@ -1,3 +1,9 @@
+##1.0.8 Beta
+
++ Replace ss-local and ss-tunnel to java-impl. (TEST STAGE)
++ Temporarily remove the routing function. (I not write this function yet)
++ May be contains bug.
+
 ##1.0.7 Beta
 
 + Optimized UI.

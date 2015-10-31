@@ -5,21 +5,19 @@ import android.util.Log;
 import com.proxy.shadowsocksr.impl.crypto.Utils;
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class SSRLocal extends Thread
 {
     private ServerSocketChannel ssc;
-    private Selector selector;
     private String locIP;
     private String rmtIP;
     private String pwd;
@@ -27,15 +25,16 @@ public class SSRLocal extends Thread
     private int rmtPort;
     private int locPort;
 
-    private SelectionKey sscSK;
     private volatile boolean isRunning = true;
 
     private ExecutorService exec;
 
     private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
+    private List<String> aclList;
+
     public SSRLocal(String locIP, String rmtIP, int rmtPort, int locPort, String pwd,
-            String cryptMethod)
+            String cryptMethod, List<String> aclList)
     {
         this.locIP = locIP;
         this.rmtIP = rmtIP;
@@ -43,6 +42,7 @@ public class SSRLocal extends Thread
         this.locPort = locPort;
         this.pwd = pwd;
         this.cryptMethod = cryptMethod;
+        this.aclList = aclList;
     }
 
     public void setOnNeedProtectTCPListener(
@@ -58,42 +58,32 @@ public class SSRLocal extends Thread
         public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
+        public boolean isDirect = false;//bypass acl list
     }
 
     @Override public void run()
     {
-        exec = Executors.newCachedThreadPool();
+        exec = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
+                                      300L, TimeUnit.SECONDS,
+                                      new SynchronousQueue<Runnable>());
         try
         {
             ssc = ServerSocketChannel.open();
-            ssc.configureBlocking(false);
+            ssc.configureBlocking(true);
             ssc.socket().bind(new InetSocketAddress(locIP, locPort));
-            selector = Selector.open();
-            sscSK=ssc.register(selector, SelectionKey.OP_ACCEPT);
             while (isRunning)
             {
-                selector.select();
-                Iterator iter = selector.selectedKeys().iterator();
-                while (iter.hasNext())
-                {
-                    Log.e("EXC", "Accept");
-                    SelectionKey sk = (SelectionKey) iter.next();
-                    iter.remove();
-                    if (sk.isValid() && sk.isAcceptable())
-                    {
-                        ChannelAttach attach = new ChannelAttach();
-                        attach.localSkt = ssc.accept();
-                        attach.localSkt.configureBlocking(true);
-                        attach.localSkt.socket().setTcpNoDelay(true);
-                        attach.localSkt.socket().setReuseAddress(true);
-                        exec.submit(new LocalSocketHandler(attach));
-                    }
-                }
+                ChannelAttach attach = new ChannelAttach();
+                attach.localSkt = ssc.accept();
+                attach.localSkt.configureBlocking(true);
+                attach.localSkt.socket().setTcpNoDelay(true);
+                attach.localSkt.socket().setReuseAddress(true);
+                exec.submit(new LocalSocketHandler(attach));
             }
         }
         catch (Exception e)
         {
-            Log.e("EXC", "tcp server err: "+e.getMessage());
+            Log.e("EXC", "tcp server err: " + e.getMessage());
         }
         finally
         {
@@ -112,6 +102,79 @@ public class SSRLocal extends Thread
 
         private void handleData() throws Exception
         {
+            //ACL Check
+            if (aclList.size() != 0)
+            {
+                int cnt = attach.localSkt.read(attach.localReadBuf);
+                if (cnt < 5)
+                {
+                    return;
+                }
+                attach.localReadBuf.flip();
+                byte atype = attach.localReadBuf.get();
+                short port;
+                if (atype == 0x01)
+                {
+                    Log.e("EXC", "IPV4");
+                    byte[] ip = new byte[4];
+                    attach.localReadBuf.get(ip);
+                    String v4 = AddressUtils.ipv4BytesToIp(ip);
+                    port = attach.localReadBuf.getShort();
+                    //
+                    if (AddressUtils.checkInCIDRRange(v4, aclList))
+                    {
+                        Log.e("EXC", "IN");
+                        attach.isDirect = true;
+                        if (!prepareRemote(attach, v4, port))
+                        {
+                            return;
+                        }
+                        attach.localReadBuf.clear();
+                    }
+                    else
+                    {
+                        Log.e("EXC",v4);
+                        Log.e("EXC", "NOT IN");
+                        if (!prepareRemote(attach, rmtIP, rmtPort))
+                        {
+                            return;
+                        }
+                        attach.localReadBuf.position(cnt);
+                        attach.localReadBuf.limit(attach.localReadBuf.capacity());
+                    }
+
+                }
+                else if (atype == 0x04)
+                {
+                    Log.e("EXC", "IPV6");
+                    //byte[] ip = new byte[16];
+                    //attach.localReadBuf.get(ip);
+                    //long v6 = AddressUtils.ipv4BytesToInt(ip);
+                    port = attach.localReadBuf.getShort();
+                    //TODO
+                }
+                else
+                {
+                    Log.e("EXC", "DOMAIN");
+                    if (!prepareRemote(attach, rmtIP, rmtPort))
+                    {
+                        return;
+                    }
+                    attach.localReadBuf.position(cnt);
+                    attach.localReadBuf.limit(attach.localReadBuf.capacity());
+                }
+            }
+            else
+            {
+                //Global mode.
+                if (!prepareRemote(attach, rmtIP, rmtPort))
+                {
+                    return;
+                }
+            }
+            //
+            new Thread(new RemoteSocketHandler(attach)).start();
+            //
             while (isRunning)
             {
                 if (!checkSessionAlive(attach))
@@ -126,9 +189,14 @@ public class SSRLocal extends Thread
                 }
                 Log.e("EXC", "READ LOC CNT: " + rcnt);
                 attach.localReadBuf.flip();
-                byte[] recv = new byte[attach.localReadBuf.limit()];
+                byte[] recv = new byte[attach.localReadBuf.limit()];//size must be limit, not rcnt.
                 attach.localReadBuf.get(recv);
-                recv = attach.crypto.encrypt(recv);
+
+                if (!attach.isDirect)
+                {
+                    recv = attach.crypto.encrypt(recv);
+                }
+
                 int wcnt = attach.remoteSkt.write(ByteBuffer.wrap(recv));
                 if (wcnt != recv.length)
                 {
@@ -157,8 +225,6 @@ public class SSRLocal extends Thread
                     return;
                 }
                 Log.e("EXC", "CMD OK");
-
-                new Thread(new RemoteSocketHandler(attach)).start();
                 handleData();
             }
             catch (Exception e)
@@ -178,7 +244,7 @@ public class SSRLocal extends Thread
             return false;
         }
         attach.localReadBuf.flip();
-        Utils.bufHexDmp("AUTH",attach.localReadBuf.duplicate());
+        Utils.bufHexDmp("AUTH", attach.localReadBuf.duplicate());
         if (attach.localReadBuf.get() != 0x05)//Socks Version
         {
             return false;
@@ -206,7 +272,7 @@ public class SSRLocal extends Thread
         }
         attach.localReadBuf.clear();
         int wcnt = attach.localSkt.write(ByteBuffer.wrap(resp));
-        return wcnt == 2;
+        return wcnt == 2 && resp[1] == 0x00;
     }
 
     private boolean processCMD(final ChannelAttach attach) throws Exception
@@ -258,7 +324,7 @@ public class SSRLocal extends Thread
             int writecnt = attach.localSkt.write(
                     ByteBuffer.wrap(new byte[]{0x5, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}));
             attach.localReadBuf.clear();
-            return writecnt == 10 && readyRemote(attach);
+            return writecnt == 10;
         case 0x02:
             //May be need reply 0x07(Cmd Not Support)
         default:
@@ -266,7 +332,8 @@ public class SSRLocal extends Thread
         }
     }
 
-    private boolean readyRemote(ChannelAttach attach) throws Exception
+    private boolean prepareRemote(ChannelAttach attach, String remoteIP, int remotePort)
+    throws Exception
     {
         attach.remoteSkt = SocketChannel.open();
         attach.remoteSkt.configureBlocking(true);
@@ -277,7 +344,7 @@ public class SSRLocal extends Thread
         {
             return false;
         }
-        attach.remoteSkt.connect(new InetSocketAddress(rmtIP, rmtPort));
+        attach.remoteSkt.connect(new InetSocketAddress(remoteIP, remotePort));
         return attach.remoteSkt.isConnected();
     }
 
@@ -312,17 +379,13 @@ public class SSRLocal extends Thread
         isRunning = false;
         try
         {
-            sscSK.cancel();
             ssc.close();
-            selector.wakeup();
-            selector.close();
         }
         catch (Exception e)
         {
             Log.e("EXC", e.getMessage());
         }
         exec.shutdown();
-        selector = null;
         ssc = null;
     }
 
@@ -341,10 +404,9 @@ public class SSRLocal extends Thread
             {
                 try
                 {
-                    Log.e("EXC", "HANDLE REMOTE");
                     if (!checkSessionAlive(attach))
                     {
-                        Log.e("EXC","REMOTE DEAD");
+                        Log.e("EXC", "DEAD");
                         break;
                     }
                     int rcnt = attach.remoteSkt.read(attach.remoteReadBuf);
@@ -356,8 +418,11 @@ public class SSRLocal extends Thread
                     attach.remoteReadBuf.flip();
                     byte[] recv = new byte[attach.remoteReadBuf.limit()];
                     attach.remoteReadBuf.get(recv);
-                    recv = attach.crypto.decrypt(recv);
-                    Utils.bytesHexDmp("remote read", recv);
+                    if (!attach.isDirect)
+                    {
+                        recv = attach.crypto.decrypt(recv);
+                    }
+                    //Utils.bytesHexDmp("remote read", recv);
                     int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
                     if (wcnt != recv.length)
                     {
@@ -365,7 +430,7 @@ public class SSRLocal extends Thread
                     }
                     attach.remoteReadBuf.clear();
                 }
-                catch (IOException e)
+                catch (Exception e)
                 {
                     Log.e("EXC", "REMOTE EXEC");
                 }
