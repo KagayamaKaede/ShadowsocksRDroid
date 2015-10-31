@@ -3,7 +3,15 @@
 [中文版本介绍](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/Readme.cn.md)
 
 A ShadowsocksR client for Android4.0+(API Level 14+,and support 64bit cpu), written in Java.
-Compatible Shadowsocks(Shadowsocks-libev) protocol and will support ShadowsocksR protocol in the future.
+Compatible Shadowsocks protocol and will support ShadowsocksR protocol in the future.
+
+##Plans
+
+* Full java implementation of Shadowsocks.
+* Improve the material design UI.
+* Improve performance, reduce memory and battery usage.
+* Fix bug.
+* Wait breakwa11 complete ShadowsocksR Protocol Specification, then began to write java implementation of ShadowsocksR.
 
 ##Requisites for compile
 
