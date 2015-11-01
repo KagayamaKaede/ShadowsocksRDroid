@@ -35,6 +35,7 @@ public class PrefFragment extends PreferenceFragment
     private CheckBoxPreference prefUdpOverTcp;
     //Global
     private SummaryListPreference prefRoute;
+    private CheckBoxPreference prefIPv6;
     private CheckBoxPreference prefGlobal;
     private CheckBoxPreference prefUdpRelay;
     private CheckBoxPreference prefAuto;
@@ -62,6 +63,7 @@ public class PrefFragment extends PreferenceFragment
         prefUdpOverTcp = (CheckBoxPreference) findPreference("udp_over_tcp");
         //Global
         prefRoute = (SummaryListPreference) findPreference("route");
+        prefIPv6 = (CheckBoxPreference) findPreference("ipv6_route");
         prefGlobal = (CheckBoxPreference) findPreference("global_proxy");
         prefUdpRelay = (CheckBoxPreference) findPreference("udp_forwarding");
         prefAuto = (CheckBoxPreference) findPreference("auto_connect");
@@ -111,6 +113,7 @@ public class PrefFragment extends PreferenceFragment
         prefUdpOverTcp.setEnabled(isEnable);
         //Global
         prefRoute.setEnabled(isEnable);
+        prefIPv6.setEnabled(isEnable);
         prefGlobal.setEnabled(isEnable);
         prefUdpRelay.setEnabled(isEnable);
         prefAuto.setEnabled(isEnable);
@@ -126,6 +129,9 @@ public class PrefFragment extends PreferenceFragment
         {
         case "route":
             globalProfile.route = sp.getString(key, "bypass-lan");
+            break;
+        case "ipv6_route":
+            globalProfile.ipv6Route = sp.getBoolean("ipv6_route", false);
             break;
         case "global_proxy":
             globalProfile.globalProxy = sp.getBoolean(key, false);
@@ -222,6 +228,7 @@ public class PrefFragment extends PreferenceFragment
         //Global
         globalProfile = Hawk.get("GlobalProfile");
         prefRoute.setValue(globalProfile.route);
+        prefIPv6.setChecked(globalProfile.ipv6Route);
         prefGlobal.setChecked(globalProfile.globalProxy);
         prefUdpRelay.setChecked(globalProfile.dnsForward);
         prefAuto.setChecked(globalProfile.autoConnect);

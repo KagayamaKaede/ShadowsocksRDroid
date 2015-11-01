@@ -75,12 +75,15 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
             if (code == IBinder.LAST_CALL_TRANSACTION)
             {
                 onRevoke();
-                try
+                if (callback != null)
                 {
-                    callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
-                }
-                catch (RemoteException ignored)
-                {
+                    try
+                    {
+                        callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
+                    }
+                    catch (RemoteException ignored)
+                    {
+                    }
                 }
                 return true;
             }
@@ -110,7 +113,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
             ssrProfile = new SSRProfile(cp.server, cp.remotePort, cp.localPort, cp.cryptMethod,
                                         cp.passwd, cp.enableSSR, cp.tcpProtocol, cp.obfsMethod,
                                         cp.tcpOverUdp, cp.udpOverTcp);
-            globalProfile = new GlobalProfile(cp.route, cp.globalProxy, cp.dnsForward,
+            globalProfile = new GlobalProfile(cp.route, cp.ipv6Route, cp.globalProxy, cp.dnsForward,
                                               cp.autoConnect);
             if (!cp.globalProxy)
             {
@@ -355,12 +358,13 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
 
             pdnsd = String.format(ConfFileUtil.PdNSdDirect, "0.0.0.0", 8153,
                                   Consts.baseDir + "pdnsd-vpn.pid", reject, blklst, 8163,
-                                  "reject = ::/0;");//IPV6
+                                  globalProfile.ipv6Route ? "" : "reject = ::/0;");//IPV6
         }
         else
         {
             pdnsd = String.format(ConfFileUtil.PdNSdLocal, "0.0.0.0", 8153,
-                                  Consts.baseDir + "pdnsd-vpn.pid", 8163, "reject = ::/0;");//IPV6
+                                  Consts.baseDir + "pdnsd-vpn.pid", 8163,
+                                  globalProfile.ipv6Route ? "" : "reject = ::/0;");//IPV6
         }
 
         ConfFileUtil.writeToFile(pdnsd, new File(Consts.baseDir + "pdnsd-vpn.conf"));
@@ -378,8 +382,8 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                .addDnsServer("8.8.8.8")
                .addDnsServer("8.8.4.4");
 
-        //builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
-        //builder.addRoute("::", 0);
+        builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
+        builder.addRoute("::", 0);
         //builder.addDnsServer("[2001:4860:4860::8888]");
         //builder.addDnsServer("[2001:4860:4860::8844]");
 
@@ -443,7 +447,10 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                                    String.format(PRIVATE_VLAN, "2"),
                                    ssrProfile.localPort, fd, VPN_MTU, Consts.baseDir);
 
-        //cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
+        if(globalProfile.ipv6Route)
+        {
+            cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
+        }
 
         if (globalProfile.dnsForward)
         {

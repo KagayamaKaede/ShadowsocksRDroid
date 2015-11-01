@@ -33,11 +33,11 @@ public class SSRApplication extends Application
         LeakCanary.install(this);
 
         //
-        int curVewsionCode = -1;
+        int curVersionCode = -1;
         try
         {
             PackageInfo pi = getPackageManager().getPackageInfo(getPackageName(), 0);
-            curVewsionCode = pi.versionCode;
+            curVersionCode = pi.versionCode;
         }
         catch (PackageManager.NameNotFoundException ignored)
         {
@@ -67,16 +67,16 @@ public class SSRApplication extends Application
 
             Hawk.put("PerAppProxy", new ArrayList<>());
 
-            GlobalProfile global = new GlobalProfile("bypass-lan", true, true, false);
+            GlobalProfile global = new GlobalProfile("bypass-lan", false, true, true, false);
             Hawk.put("GlobalProfile", global);
 
             Hawk.put("FirstUse", false);
-            Hawk.put("VersionCode", curVewsionCode);
+            Hawk.put("VersionCode", curVersionCode);
         }
         else
         {
             int old = Hawk.get("VersionCode", -1);
-            upgradeProfile(old, curVewsionCode);
+            upgradeProfile(old, curVersionCode);
         }
     }
 
