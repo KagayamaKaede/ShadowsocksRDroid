@@ -43,9 +43,19 @@ public final class AddressUtils
                 .append(bytes[3] & 0xFF).toString();
     }
 
-    public static boolean checkInCIDRRange(String ip, List<String> cidrs)
+    public static int ipv4BytesToInt(byte[] bytes)
+    {
+        int addr = bytes[3] & 0xFF;
+        addr |= ((bytes[2] << 8) & 0xFF00);
+        addr |= ((bytes[1] << 16) & 0xFF0000);
+        addr |= ((bytes[0] << 24) & 0xFF000000);
+        return addr;
+    }
+
+    public static boolean checkInCIDRRange(int ip, List<String> cidrs)
     {
         Matcher matcher;
+        //long time = System.currentTimeMillis();
         for (String cidr : cidrs)
         {
             int netmask = 0;
@@ -70,31 +80,21 @@ public final class AddressUtils
 
                 network = (address & netmask);
                 broadcast = network | ~(netmask);
-
-                int ipaddr = 0;
-                matcher = addressPattern.matcher(ip);
-                if (matcher.matches())
+                //
+                long addLong = ip & UNSIGNED_INT_MASK;
+                long lowLong =
+                        ((broadcast & UNSIGNED_INT_MASK) - (network & UNSIGNED_INT_MASK) > 1 ?
+                         network + 1 : 0) & UNSIGNED_INT_MASK;
+                long highLong =
+                        ((broadcast & UNSIGNED_INT_MASK) - (network & UNSIGNED_INT_MASK) > 1 ?
+                         broadcast - 1 : 0) & UNSIGNED_INT_MASK;
+                if (addLong >= lowLong && addLong <= highLong)
                 {
-                    for (int i = 1; i <= 4; ++i)
-                    {
-                        int n = Integer.parseInt(matcher.group(i));
-                        ipaddr |= ((n & 0xff) << 8 * (4 - i));
-                    }
-                    //
-                    long addLong = ipaddr & UNSIGNED_INT_MASK;
-                    long lowLong =
-                            ((broadcast & UNSIGNED_INT_MASK) - (network & UNSIGNED_INT_MASK) > 1 ?
-                             network + 1 : 0) & UNSIGNED_INT_MASK;
-                    long highLong =
-                            ((broadcast & UNSIGNED_INT_MASK) - (network & UNSIGNED_INT_MASK) > 1 ?
-                             broadcast - 1 : 0) & UNSIGNED_INT_MASK;
-                    if (addLong >= lowLong && addLong <= highLong)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
         }
+        //Log.e("EXC", "CIDR full check need time: " + (System.currentTimeMillis() - time));
         return false;
     }
 }
