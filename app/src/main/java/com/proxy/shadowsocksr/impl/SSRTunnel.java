@@ -46,7 +46,7 @@ public class SSRTunnel extends Thread
         this.remotePort = remotePort;
         this.localPort = localPort;
         this.dnsPort = dnsPort;
-        cache = new LruCache<>(100); //may be should bigger...
+        cache = new LruCache<>(128);
         crypto = new UDPEncryptor(pwd, cryptMethod);
         ivLen = crypto.getIVLen();
         //
@@ -88,8 +88,8 @@ public class SSRTunnel extends Thread
         isaRemote = new InetSocketAddress(remoteIP, remotePort);
 
         exec = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
-                                        300L, TimeUnit.SECONDS,
-                                        new SynchronousQueue<Runnable>());
+                                      300L, TimeUnit.SECONDS,
+                                      new SynchronousQueue<Runnable>());
         try
         {
             udpServer = DatagramChannel.open();
@@ -104,9 +104,9 @@ public class SSRTunnel extends Thread
 
         ByteBuffer buf = ByteBuffer.allocate(1500);
 
-        while (isRunning)
+        try
         {
-            try
+            while (isRunning)
             {
                 SocketAddress localAddress = udpServer.receive(buf);
                 //
@@ -161,23 +161,10 @@ public class SSRTunnel extends Thread
                 //
                 buf.clear();
             }
-            catch (Exception e)
-            {
-                Log.e("EXC", "UDPRealyServer EXEC !");
-                try
-                {
-                    udpServer.socket().close();
-                    udpServer.close();
-                    udpServer = DatagramChannel.open();
-                    udpServer.configureBlocking(true);
-                    udpServer.socket().bind(isaLocal);
-                }
-                catch (Exception ex)
-                {
-                    Log.e("EXC", "UDPRealyServer Restart Failed!");
-                    return;
-                }
-            }
+        }
+        catch (Exception e)
+        {
+            Log.e("EXC", "UDPRealyServer EXEC :" + e.getMessage());
         }
     }
 
@@ -197,9 +184,9 @@ public class SSRTunnel extends Thread
 
         @Override public void run()
         {
-            while (isRunning)
+            try
             {
-                try
+                while (isRunning)
                 {
                     int rcnt = remoteChannel.read(remoteReadBuf);
                     if (rcnt < ivLen + 12)
@@ -219,21 +206,20 @@ public class SSRTunnel extends Thread
                     //
                     remoteReadBuf.clear();
                 }
-                catch (Exception e)
+            }
+            catch (Exception e)
+            {
+                Log.e("EXC", "UDP REMOTE EXC");
+                cache.remove(localAddress);
+                try
                 {
-                    Log.e("EXC", "UDP REMOTE EXC");
-                    cache.remove(localAddress);
-                    try
-                    {
-                        remoteChannel.close();
-                    }
-                    catch (Exception e1)
-                    {
-                        e1.printStackTrace();
-                    }
-                    remoteChannel = null;
-                    break;
+                    remoteChannel.close();
                 }
+                catch (Exception e1)
+                {
+                    e1.printStackTrace();
+                }
+                remoteChannel = null;
             }
         }
     }

@@ -2,7 +2,6 @@ package com.proxy.shadowsocksr.impl;
 
 import android.util.Log;
 
-import com.proxy.shadowsocksr.impl.crypto.Utils;
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
 
 import java.net.InetSocketAddress;
@@ -11,9 +10,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 
 public class SSRLocal extends Thread
 {
@@ -53,19 +50,18 @@ public class SSRLocal extends Thread
 
     class ChannelAttach
     {
-        public ByteBuffer localReadBuf = ByteBuffer.allocate(8192);
-        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8192);
+        public ByteBuffer localReadBuf = ByteBuffer.allocate(8224);
+        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8224);
         public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
-        public boolean isDirect = false;//bypass acl list
+        public volatile boolean isDirect = false;//bypass acl list
     }
 
     @Override public void run()
     {
-        exec = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
-                                      300L, TimeUnit.SECONDS,
-                                      new SynchronousQueue<Runnable>());
+        exec = Executors.newCachedThreadPool();
+        //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
         try
         {
             ssc = ServerSocketChannel.open();
@@ -118,14 +114,13 @@ public class SSRLocal extends Thread
                     Log.e("EXC", "IPV4");
                     byte[] ip = new byte[4];
                     attach.localReadBuf.get(ip);
-                    String v4 = AddressUtils.ipv4BytesToIp(ip);
                     port = attach.localReadBuf.getShort();
-                    //
-                    if (AddressUtils.checkInCIDRRange(v4, aclList))
+                    // TODO need optimize cidr check speed.
+                    if (AddressUtils.checkInCIDRRange(AddressUtils.ipv4BytesToInt(ip), aclList))
                     {
                         Log.e("EXC", "IN");
                         attach.isDirect = true;
-                        if (!prepareRemote(attach, v4, port))
+                        if (!prepareRemote(attach, AddressUtils.ipv4BytesToIp(ip), port))
                         {
                             return;
                         }
@@ -133,7 +128,6 @@ public class SSRLocal extends Thread
                     }
                     else
                     {
-                        Log.e("EXC",v4);
                         Log.e("EXC", "NOT IN");
                         if (!prepareRemote(attach, rmtIP, rmtPort))
                         {
@@ -147,11 +141,14 @@ public class SSRLocal extends Thread
                 else if (atype == 0x04)
                 {
                     Log.e("EXC", "IPV6");
-                    //byte[] ip = new byte[16];
-                    //attach.localReadBuf.get(ip);
-                    //long v6 = AddressUtils.ipv4BytesToInt(ip);
-                    port = attach.localReadBuf.getShort();
-                    //TODO
+                    if (!prepareRemote(attach, rmtIP, rmtPort))
+                    {
+                        return;
+                    }
+                    attach.localReadBuf.position(cnt);
+                    attach.localReadBuf.limit(attach.localReadBuf.capacity());
+                    //TODO: not ipv6 list yet, but may be bypass loopback ::1, cidr fc00::/7,
+                    //TODO  and... how to process ipv6 cidr.
                 }
                 else
                 {
@@ -244,18 +241,15 @@ public class SSRLocal extends Thread
             return false;
         }
         attach.localReadBuf.flip();
-        Utils.bufHexDmp("AUTH", attach.localReadBuf.duplicate());
+        //Utils.bufHexDmp("AUTH", attach.localReadBuf.duplicate());
         if (attach.localReadBuf.get() != 0x05)//Socks Version
         {
             return false;
         }
 
         int methodCnt = attach.localReadBuf.get();
-        if (attach.localReadBuf.limit() - attach.localReadBuf.position() < methodCnt)
-        {
-            return false;
-        }
-        else if (attach.localReadBuf.limit() - attach.localReadBuf.position() > methodCnt)
+        if (attach.localReadBuf.limit() - attach.localReadBuf.position() < methodCnt ||
+            attach.localReadBuf.limit() - attach.localReadBuf.position() > methodCnt)
         {
             return false;
         }
@@ -285,7 +279,7 @@ public class SSRLocal extends Thread
         }
 
         attach.localReadBuf.flip();
-        Utils.bufHexDmp("CMD", attach.localReadBuf.duplicate());
+        //Utils.bufHexDmp("CMD", attach.localReadBuf.duplicate());
         if (attach.localReadBuf.get() != 0x05)//Socks Version
         {
             return false;
@@ -299,6 +293,12 @@ public class SSRLocal extends Thread
 
         switch (cmd)
         {
+        case 0x01:
+            //Response CMD
+            int writecnt = attach.localSkt.write(
+                    ByteBuffer.wrap(new byte[]{0x5, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}));
+            attach.localReadBuf.clear();
+            return writecnt == 10;
         case 0x03:
             Log.e("EXC", "UDP ASSOC");
             InetSocketAddress isa =
@@ -319,12 +319,6 @@ public class SSRLocal extends Thread
             respb[respb.length - 2] = (byte) ((locPort >> 8) & 0xFF);
             int wcnt = attach.localSkt.write(ByteBuffer.wrap(respb));
             return wcnt == respb.length;
-        case 0x01:
-            //Response CMD
-            int writecnt = attach.localSkt.write(
-                    ByteBuffer.wrap(new byte[]{0x5, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}));
-            attach.localReadBuf.clear();
-            return writecnt == 10;
         case 0x02:
             //May be need reply 0x07(Cmd Not Support)
         default:
@@ -400,9 +394,9 @@ public class SSRLocal extends Thread
 
         @Override public void run()
         {
-            while (isRunning)
+            try
             {
-                try
+                while (isRunning)
                 {
                     if (!checkSessionAlive(attach))
                     {
@@ -416,7 +410,7 @@ public class SSRLocal extends Thread
                     }
                     Log.e("EXC", "READ RMT CNT: " + rcnt);
                     attach.remoteReadBuf.flip();
-                    byte[] recv = new byte[attach.remoteReadBuf.limit()];
+                    byte[] recv = new byte[rcnt];
                     attach.remoteReadBuf.get(recv);
                     if (!attach.isDirect)
                     {
@@ -430,10 +424,10 @@ public class SSRLocal extends Thread
                     }
                     attach.remoteReadBuf.clear();
                 }
-                catch (Exception e)
-                {
-                    Log.e("EXC", "REMOTE EXEC");
-                }
+            }
+            catch (Exception e)
+            {
+                Log.e("EXC", "REMOTE EXEC");
             }
             cleanSession(attach);
         }

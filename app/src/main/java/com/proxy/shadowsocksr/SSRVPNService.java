@@ -98,7 +98,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
             callback = cb;
         }
 
-        @Override public void unRegisterISSRServiceCallBack(ISSRServiceCallback cb)
+        @Override public void unRegisterISSRServiceCallBack()
         throws RemoteException
         {
             callback = null;

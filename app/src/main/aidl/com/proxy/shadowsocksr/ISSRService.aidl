@@ -8,7 +8,7 @@ interface ISSRService
     boolean status();
 
     oneway void registerISSRServiceCallBack(ISSRServiceCallback cb);
-    oneway void unRegisterISSRServiceCallBack(ISSRServiceCallback cb);
+    oneway void unRegisterISSRServiceCallBack();
 
     oneway void start(in ConnectProfile cp);
     oneway void stop();

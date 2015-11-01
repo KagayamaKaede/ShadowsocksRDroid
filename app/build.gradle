@@ -127,4 +127,6 @@ dependencies {
     compile files('libs/org.xbill.dns_2.1.7.jar')
     //Crypto
     compile 'com.madgag.spongycastle:core:1.53.0.0'
+    //mem leak check
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3'
 }

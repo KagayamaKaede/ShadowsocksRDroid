@@ -11,9 +11,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 
 public class UDPRelayServer extends Thread
 {
@@ -48,8 +46,7 @@ public class UDPRelayServer extends Thread
         ivLen = crypto.getIVLen();
     }
 
-    public void setOnNeedProtectUDPListener(
-            OnNeedProtectUDPListener onNeedProtectUDPListener)
+    public void setOnNeedProtectUDPListener(OnNeedProtectUDPListener onNeedProtectUDPListener)
     {
         this.onNeedProtectUDPListener = onNeedProtectUDPListener;
     }
@@ -79,9 +76,8 @@ public class UDPRelayServer extends Thread
         isaLocal = new InetSocketAddress(localIP, localPort);
         isaRemote = new InetSocketAddress(remoteIP, remotePort);
 
-        exec = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
-                                      300L, TimeUnit.SECONDS,
-                                      new SynchronousQueue<Runnable>());
+        exec = Executors.newCachedThreadPool();
+        //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
         try
         {
             udpServer = DatagramChannel.open();
@@ -96,12 +92,11 @@ public class UDPRelayServer extends Thread
 
         ByteBuffer buf = ByteBuffer.allocate(1500);
 
-        while (isRunning)
+        try
         {
-            try
+            while (isRunning)
             {
                 SocketAddress localAddress = udpServer.receive(buf);
-                //
                 //
                 buf.flip();
                 int rcnt = buf.limit();
@@ -150,23 +145,10 @@ public class UDPRelayServer extends Thread
                 //
                 buf.clear();
             }
-            catch (Exception e)
-            {
-                Log.e("EXC", "UDPRealyServer EXEC !");
-                try
-                {
-                    udpServer.socket().close();
-                    udpServer.close();
-                    udpServer = DatagramChannel.open();
-                    udpServer.configureBlocking(true);
-                    udpServer.socket().bind(isaLocal);
-                }
-                catch (Exception ex)
-                {
-                    Log.e("EXC", "UDPRealyServer Restart Failed!");
-                    return;
-                }
-            }
+        }
+        catch (Exception e)
+        {
+            Log.e("EXC", "UDPRealyServer EXEC: " + e.getMessage());
         }
     }
 
@@ -186,9 +168,9 @@ public class UDPRelayServer extends Thread
 
         @Override public void run()
         {
-            while (isRunning)
+            try
             {
-                try
+                while (isRunning)
                 {
                     int rcnt = remoteChannel.read(remoteReadBuf);
                     if (rcnt < ivLen + 8)
@@ -206,20 +188,19 @@ public class UDPRelayServer extends Thread
                     //
                     remoteReadBuf.clear();
                 }
-                catch (Exception e)
+            }
+            catch (Exception e)
+            {
+                Log.e("EXC", "UDP REMOTE EXC: " + e.getMessage());
+                cache.remove(localAddress);
+                try
                 {
-                    Log.e("EXC", "UDP REMOTE EXC: " + e.getMessage());
-                    cache.remove(localAddress);
-                    try
-                    {
-                        remoteChannel.close();
-                    }
-                    catch (IOException ignored)
-                    {
-                    }
-                    remoteChannel = null;
-                    break;
+                    remoteChannel.close();
                 }
+                catch (IOException ignored)
+                {
+                }
+                remoteChannel = null;
             }
         }
     }

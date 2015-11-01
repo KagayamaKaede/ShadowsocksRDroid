@@ -101,8 +101,8 @@
 }
 
 # LeakCanary
-#-keep class org.eclipse.mat.** { *; }
-#-keep class com.squareup.leakcanary.** { *; }
+-keep class org.eclipse.mat.** { *; }
+-keep class com.squareup.leakcanary.** { *; }
 
 # class$ methods are inserted by some compilers to implement .class construct,
 -keepclassmembernames class * {

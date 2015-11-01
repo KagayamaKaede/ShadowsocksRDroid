@@ -10,6 +10,7 @@ import com.orhanobut.hawk.HawkBuilder;
 import com.orhanobut.hawk.LogLevel;
 import com.proxy.shadowsocksr.items.GlobalProfile;
 import com.proxy.shadowsocksr.items.SSRProfile;
+import com.squareup.leakcanary.LeakCanary;
 
 import java.util.ArrayList;
 
@@ -28,6 +29,8 @@ public class SSRApplication extends Application
                 .setEncryptionMethod(
                         HawkBuilder.EncryptionMethod.NO_ENCRYPTION)//TODO: VER.2.0 local profile encrypt.
                 .build();
+
+        LeakCanary.install(this);
 
         //
         int curVewsionCode = -1;
