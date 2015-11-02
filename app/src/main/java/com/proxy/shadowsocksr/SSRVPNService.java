@@ -127,12 +127,15 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
         @Override public void stop() throws RemoteException
         {
             stopRunner();
-            try
+            if (callback != null)
             {
-                callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
-            }
-            catch (RemoteException ignored)
-            {
+                try
+                {
+                    callback.onStatusChanged(Consts.STATUS_DISCONNECTED);
+                }
+                catch (RemoteException ignored)
+                {
+                }
             }
         }
     }
@@ -215,12 +218,15 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                     if (ip == null)
                     {
                         stopRunner();
-                        try
+                        if (callback != null)
                         {
-                            callback.onStatusChanged(Consts.STATUS_FAILED);
-                        }
-                        catch (Exception ignored)
-                        {//Ignore remote exception and null point exception
+                            try
+                            {
+                                callback.onStatusChanged(Consts.STATUS_FAILED);
+                            }
+                            catch (Exception ignored)
+                            {
+                            }
                         }
                         return;
                     }
@@ -250,12 +256,15 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                         if (Jni.sendFd(fd) != -1)
                         {
                             isVPNConnected = true;
-                            try
+                            if (callback != null)
                             {
-                                callback.onStatusChanged(Consts.STATUS_CONNECTED);
-                            }
-                            catch (Exception ignored)
-                            {//Ignore remoteexcetpion and nullpoint
+                                try
+                                {
+                                    callback.onStatusChanged(Consts.STATUS_CONNECTED);
+                                }
+                                catch (Exception ignored)
+                                {
+                                }
                             }
                             return;
                         }
@@ -263,12 +272,15 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                     }
                 }
                 stopRunner();
-                try
+                if(callback!=null)
                 {
-                    callback.onStatusChanged(Consts.STATUS_FAILED);
-                }
-                catch (Exception ignored)
-                {//Ignore remoteexcetpion and nullpoint
+                    try
+                    {
+                        callback.onStatusChanged(Consts.STATUS_FAILED);
+                    }
+                    catch (Exception ignored)
+                    {
+                    }
                 }
             }
         }).start();
@@ -447,7 +459,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                                    String.format(PRIVATE_VLAN, "2"),
                                    ssrProfile.localPort, fd, VPN_MTU, Consts.baseDir);
 
-        if(globalProfile.ipv6Route)
+        if (globalProfile.ipv6Route)
         {
             cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
         }
