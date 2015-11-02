@@ -377,7 +377,7 @@ public class SSRLocal extends Thread
         }
         catch (Exception e)
         {
-            Log.e("EXC", e.getMessage());
+            Log.e("EXC", ""+e.getMessage());
         }
         exec.shutdown();
         ssc = null;

@@ -14,8 +14,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -26,7 +28,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.adapter.ToolbarSpinnerAdapter;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity
     private Toolbar toolbar;
     private Spinner spinner;
     private DrawerLayout drawer;
+    private CoordinatorLayout coordinatorLayout;
     private NavigationView nav;
     private FloatingActionButton fab;
     //
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity
     //
     private PrefFragment pref;
     //
-    private VPNServiceCallBack callback=null;
+    private VPNServiceCallBack callback = null;
     private ISSRService ssrs;
 
     @Override
@@ -109,7 +111,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
         ssrs = null;
-        callback=null;
+        callback = null;
         //
         unbindService(this);
         super.onDestroy();
@@ -143,7 +145,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
         ssrs = null;
-        callback=null;
+        callback = null;
         switchUI(true);
     }
 
@@ -160,18 +162,18 @@ public class MainActivity extends AppCompatActivity
                     {
                     case Consts.STATUS_CONNECTED:
                         switchUI(false);
-                        Toast.makeText(MainActivity.this, R.string.connected,
-                                       Toast.LENGTH_SHORT).show();
+                        Snackbar.make(coordinatorLayout, R.string.connected, Snackbar.LENGTH_SHORT)
+                                .show();
                         break;
                     case Consts.STATUS_FAILED:
                         switchUI(true);
-                        Toast.makeText(MainActivity.this, R.string.connect_failed,
-                                       Toast.LENGTH_SHORT).show();
+                        Snackbar.make(coordinatorLayout, R.string.connect_failed,
+                                      Snackbar.LENGTH_SHORT).show();
                         break;
                     case Consts.STATUS_DISCONNECTED:
                         switchUI(true);
-                        Toast.makeText(MainActivity.this, R.string.disconnected,
-                                       Toast.LENGTH_SHORT).show();
+                        Snackbar.make(coordinatorLayout, R.string.disconnected,
+                                      Snackbar.LENGTH_SHORT).show();
                         break;
                     }
                 }
@@ -181,9 +183,10 @@ public class MainActivity extends AppCompatActivity
 
     private void setupUI()
     {
+        drawer = (DrawerLayout) findViewById(R.id.drawer);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         spinner = (Spinner) findViewById(R.id.spinner_nav);
-        drawer = (DrawerLayout) findViewById(R.id.drawer);
+        coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinatorlayout);
         nav = (NavigationView) findViewById(R.id.nav);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         //
@@ -257,110 +260,6 @@ public class MainActivity extends AppCompatActivity
         Hawk.put("CurrentServer", lbl);
     }
 
-//    @Override public boolean onMenuItemClick(MenuItem item)
-//    {
-//        try
-//        {
-//            if (ssrs != null && ssrs.status())
-//            {
-//                Toast.makeText(MainActivity.this, "Please disconnect first.", Toast.LENGTH_SHORT)
-//                     .show();
-//                return true;
-//            }
-//        }
-//        catch (RemoteException ignored)
-//        {
-//        }
-//        switch (item.getItemId())
-//        {
-//        case R.id.action_maunally_add_server:
-//            addNewServer(Consts.defaultIP,
-//                         Consts.remotePort,
-//                         Consts.defaultCryptMethod, "");
-//            loadServerList();
-//            pref.reloadPref();
-//            break;
-//        case R.id.action_add_server_from_qrcode:
-//            Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-//            List<ResolveInfo> activities = getPackageManager()
-//                    .queryIntentActivities(intent, PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
-//            if (activities.size() > 0)
-//            {
-//                intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-//                startActivityForResult(intent, REQUEST_CODE_SCAN_QR);
-//            }
-//            else
-//            {
-//                new AlertDialog.Builder(this)
-//                        .setTitle(R.string.req_install_qrscan_app)
-//                        .setMessage(
-//                                R.string.req_install_qrscan_app_msg)
-//                        .setPositiveButton(android.R.string.ok,
-//                                           new DialogInterface.OnClickListener()
-//                                           {
-//                                               @Override public void onClick(
-//                                                       DialogInterface dialog,
-//                                                       int which)
-//                                               {
-//                                                   Intent goToMarket
-//                                                           = new Intent(
-//                                                           Intent.ACTION_VIEW)
-//                                                           .setData(Uri.parse(
-//                                                                   "market://details?id=com.google.zxing.client.android"));
-//                                                   startActivity(goToMarket);
-//                                               }
-//                                           })
-//                        .setNegativeButton(android.R.string.cancel, null)
-//                        .show();
-//            }
-//            break;
-//        case R.id.action_del_server:
-//            ArrayList<String> list = Hawk.get("ServerList");
-//            String del = Hawk.get("CurrentServer");
-//            list.remove(del);
-//            Hawk.put("ServerList", list);
-//            //
-//            if (list.size() == 0)
-//            {
-//                addNewServer(Consts.defaultIP,
-//                             Consts.remotePort,
-//                             Consts.defaultCryptMethod, "");
-//            }
-//            else
-//            {
-//                Hawk.put("CurrentServer", list.get(list.size() - 1));
-//            }
-//            Hawk.remove(del);
-//            //
-//            loadServerList();
-//            pref.reloadPref();
-//            break;
-//        case R.id.action_fresh_dns_cache:
-//            ShellUtil.runRootCmd(
-//                    new String[]{"ndc resolver flushdefaultif", "ndc resolver flushif wlan0"});
-//            break;
-//        case R.id.action_show_current_qrcode:
-//            String cur = Hawk.get("CurrentServer");
-//            SSRProfile ssp = Hawk.get(cur);
-//            String b64 = SSAddressUtil.getUtil().generate(ssp);
-//            if (b64 != null)
-//            {
-//                int px = ScreenUtil.dp2px(this, 230);
-//                Bitmap bm = ((QRCode) QRCode.from(b64).withSize(px, px)).bitmap();
-//                ImageView iv = new ImageView(this);
-//                iv.setImageBitmap(bm);
-//                new AlertDialog.Builder(this)
-//                        .setView(iv).setPositiveButton(android.R.string.ok, null)
-//                        .show();
-//                iv.getLayoutParams().height = px;
-//                iv.getLayoutParams().width = px;
-//                iv.requestLayout();
-//            }
-//            break;
-//        }
-//        return true;
-//    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
@@ -375,8 +274,8 @@ public class MainActivity extends AppCompatActivity
         {
             if (ssrs != null && ssrs.status())
             {
-                Toast.makeText(MainActivity.this, "Please disconnect first.", Toast.LENGTH_SHORT)
-                     .show();
+                Snackbar.make(coordinatorLayout, "Please disconnect first.", Snackbar.LENGTH_SHORT)
+                        .show();
                 return true;
             }
         }
@@ -477,8 +376,8 @@ public class MainActivity extends AppCompatActivity
     {
         if (ssrs == null)
         {
-            Toast.makeText(MainActivity.this, "VPN process not connected", Toast.LENGTH_SHORT)
-                 .show();
+            Snackbar.make(coordinatorLayout, "VPN process not connected", Snackbar.LENGTH_SHORT)
+                    .show();
             return;
         }
         try
@@ -505,7 +404,6 @@ public class MainActivity extends AppCompatActivity
         catch (RemoteException e)
         {
             switchUI(true);
-            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -535,8 +433,8 @@ public class MainActivity extends AppCompatActivity
                 {
                     DialogManager.getInstance().dismissTipDialog();
                     switchUI(true);
-                    Toast.makeText(MainActivity.this, R.string.connect_failed,
-                                   Toast.LENGTH_SHORT).show();
+                    Snackbar.make(coordinatorLayout, R.string.connect_failed, Snackbar.LENGTH_SHORT)
+                            .show();
                 }
             }
             else
@@ -556,18 +454,20 @@ public class MainActivity extends AppCompatActivity
                         addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
                         loadServerList();
                         pref.reloadPref();
-                        Toast.makeText(MainActivity.this, R.string.add_success, Toast.LENGTH_SHORT)
-                             .show();
+                        Snackbar.make(coordinatorLayout, R.string.add_success, Snackbar.LENGTH_SHORT)
+                                .show();
                         return;
                     }
                 }
             }
             else if (resultCode == RESULT_CANCELED)
             {
-                Toast.makeText(MainActivity.this, R.string.add_canceled, Toast.LENGTH_SHORT).show();
+                Snackbar.make(coordinatorLayout, R.string.add_canceled, Snackbar.LENGTH_SHORT)
+                        .show();
                 return;
             }
-            Toast.makeText(MainActivity.this, R.string.add_failed, Toast.LENGTH_SHORT).show();
+            Snackbar.make(coordinatorLayout, R.string.add_failed, Snackbar.LENGTH_SHORT)
+                    .show();
             break;
         }
     }

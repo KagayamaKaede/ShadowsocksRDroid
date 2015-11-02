@@ -5,11 +5,6 @@ import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.v4.view.ViewCompat;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ListView;
 
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.Consts;
@@ -20,7 +15,6 @@ import com.proxy.shadowsocksr.items.SSRProfile;
 import com.proxy.shadowsocksr.preference.PasswordPreference;
 import com.proxy.shadowsocksr.preference.SummaryEditTextPreference;
 import com.proxy.shadowsocksr.preference.SummaryListPreference;
-import com.proxy.shadowsocksr.util.ScreenUtil;
 
 import java.util.ArrayList;
 
@@ -75,24 +69,20 @@ public class PrefFragment extends PreferenceFragment
         prefAuto = (CheckBoxPreference) findPreference("auto_connect");
     }
 
-    @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState)
-    {
-        View v = super.onCreateView(inflater, container, savedInstanceState);
-
-        if (v != null)
-        {
-            ListView lv = (ListView) v.findViewById(android.R.id.list);
-            ViewCompat.setNestedScrollingEnabled(lv, true);
-            lv.setClipToPadding(false);
-            lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-//            {
-//                lv.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-//            }
-        }
-        return v;
-    }
+//    @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
+//            Bundle savedInstanceState)
+//    {
+//        //View v = super.onCreateView(inflater, container, savedInstanceState);
+//
+//        //if (v != null)
+//        //{
+//            //ListView lv = (ListView) v.findViewById(android.R.id.list);
+//            //ViewCompat.setNestedScrollingEnabled(lv, true);
+//            //lv.setClipToPadding(false);
+//            //lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
+//        //}
+//        return super.onCreateView(inflater, container, savedInstanceState);
+//    }
 
     @Override public void onResume()
     {
@@ -119,11 +109,11 @@ public class PrefFragment extends PreferenceFragment
     public void setPrefEnabled(boolean isEnable)
     {
         //TODO: loop return map.count=0
-        //        Map<String, ?> map = pm.getSharedPreferences().getAll();
-        //        for (String k : map.keySet())
-        //        {
-        //            findPreference(k).setEnabled(isEnable);
-        //        }
+        //Map<String, ?> map = pm.getSharedPreferences().getAll();
+        //for (String k : map.keySet())
+        //{
+        //    findPreference(k).setEnabled(isEnable);
+        //}
         prefLbl.setEnabled(isEnable);
         prefSvr.setEnabled(isEnable);
         prefRmtPort.setEnabled(isEnable);

@@ -10,8 +10,8 @@ android {
         applicationId "com.proxy.shadowsocksr"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 8
-        versionName "1.0.7 Beta"
+        versionCode 9
+        versionName "1.0.8 Beta"
     }
     buildTypes {
         debug {
@@ -114,9 +114,9 @@ repositories {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.android.support:design:23.0.1'
-    compile 'com.android.support:recyclerview-v7:23.0.1'
+    compile 'com.android.support:appcompat-v7:23.1.0'
+    compile 'com.android.support:design:23.1.0'
+    compile 'com.android.support:recyclerview-v7:23.1.0'
     //Crypt Storage
     compile 'com.orhanobut:hawk:1.18'
     //Shell
@@ -128,5 +128,5 @@ dependencies {
     //Crypto
     compile 'com.madgag.spongycastle:core:1.53.0.0'
     //mem leak check
-    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3'
+    //debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3'
 }
