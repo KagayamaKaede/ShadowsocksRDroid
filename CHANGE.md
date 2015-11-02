@@ -1,3 +1,9 @@
+##1.0.8 TEST
+
++ Not support SSR protocol yet.
++ Replace ss-local and ss-tunnel to java-impl. (TEST STAGE)
++ May be contains many bug, even not work properly.
+
 ##1.0.7 Beta
 
 + Optimized UI.

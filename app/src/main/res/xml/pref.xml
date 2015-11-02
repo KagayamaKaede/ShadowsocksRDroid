@@ -79,6 +79,11 @@
             android:summary="@string/whether_use_route"
             android:title="@string/route"/>
         <CheckBoxPreference
+            android:checked="false"
+            android:key="ipv6_route"
+            android:summary="@string/forwarding_ipv6_traffic_to_remote"
+            android:title="@string/ipv6_route"/>
+        <CheckBoxPreference
             android:checked="true"
             android:key="udp_forwarding"
             android:summary="@string/relay_udp_packet_to_remote_svr"

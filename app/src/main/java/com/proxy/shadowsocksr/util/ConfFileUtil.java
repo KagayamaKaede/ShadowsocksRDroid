@@ -39,7 +39,7 @@ public class ConfFileUtil
             " cache_dir = \"/data/data/com.proxy.shadowsocksr\";" + Consts.lineSept +
             " server_ip = %s;" + Consts.lineSept +
             " server_port = %d;" + Consts.lineSept +
-            " query_method = tcp_only;" + Consts.lineSept +
+            " query_method = udp_only;" + Consts.lineSept +
             " run_ipv4 = on;" + Consts.lineSept +
             " min_ttl = 15m;" + Consts.lineSept +
             " max_ttl = 1w;" + Consts.lineSept +
@@ -70,7 +70,7 @@ public class ConfFileUtil
             " cache_dir = \"/data/data/com.proxy.shadowsocksr\";" + Consts.lineSept +
             " server_ip = %s;" + Consts.lineSept +
             " server_port = %d;" + Consts.lineSept +
-            " query_method = tcp_only;" + Consts.lineSept +
+            " query_method = udp_only;" + Consts.lineSept +
             " run_ipv4 = on;" + Consts.lineSept +
             " min_ttl = 15m;" + Consts.lineSept +
             " max_ttl = 1w;" + Consts.lineSept +
@@ -109,7 +109,7 @@ public class ConfFileUtil
             " cache_dir = \"/data/data/com.proxy.shadowsocksr\";" + Consts.lineSept +
             " server_ip = %s;" + Consts.lineSept +
             " server_port = %d;" + Consts.lineSept +
-            " query_method = tcp_only;" + Consts.lineSept +
+            " query_method = udp_only;" + Consts.lineSept +
             " run_ipv4 = on;" + Consts.lineSept +
             " min_ttl = 15m;" + Consts.lineSept +
             " max_ttl = 1w;" + Consts.lineSept +

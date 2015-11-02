@@ -3,7 +3,15 @@
 [中文版本介绍](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/Readme.cn.md)
 
 A ShadowsocksR client for Android4.0+(API Level 14+,and support 64bit cpu), written in Java.
-Compatible Shadowsocks(Shadowsocks-libev) protocol and will support ShadowsocksR protocol in the future.
+Compatible Shadowsocks protocol and will support ShadowsocksR protocol in the future.
+
+##Plans
+
+* Full java implementation of Shadowsocks.
+* Improve the material design UI.
+* Improve performance, reduce memory and battery usage.
+* Fix bug.
+* Wait breakwa11 complete ShadowsocksR Protocol Specification, then began to write java implementation of ShadowsocksR.
 
 ##Requisites for compile
 
@@ -37,6 +45,8 @@ If you have any advices or questions, You can pull request, submit issue or send
 * libevent: [BSD](https://github.com/shadowsocks/shadowsocks-android/blob/master/src/main/jni/libevent/LICENSE)
 * Hawk: [ApacheV2](https://github.com/orhanobut/hawk/blob/master/LICENSE)
 * libsuperuser: [ApacheV2](https://github.com/Chainfire/libsuperuser/blob/master/LICENSE)
+* dnsjava: [BSD](https://github.com/dnsjava/dnsjava/blob/master/LICENSE)
+* Bouncy Castle: [MIT & BC](https://bouncycastle.org/license.html)
 
 ##License
 

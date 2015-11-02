@@ -121,7 +121,12 @@ dependencies {
     compile 'com.orhanobut:hawk:1.18'
     //Shell
     compile project(':libsuperuser')
-    compile ("net.glxn.qrgen:android:2.0")
+    //generate qr code
+    compile 'net.glxn.qrgen:android:2.0'
     //DNS Resolve
     compile files('libs/org.xbill.dns_2.1.7.jar')
+    //Crypto
+    compile 'com.madgag.spongycastle:core:1.53.0.0'
+    //mem leak check
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3'
 }

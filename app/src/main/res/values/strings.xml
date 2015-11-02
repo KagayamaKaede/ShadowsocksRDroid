@@ -55,4 +55,6 @@
     <string name="ssr_server_feature_support_tip">Some feature need server support.</string>
     <string name="unchecked_to_use_origin_tcp">Unchecked to use origin TCP</string>
     <string name="unchecked_to_use_origin_udp">Unchecked to use origin UDP</string>
+    <string name="forwarding_ipv6_traffic_to_remote">Forwarding IPv6 traffic to remote</string>
+    <string name="ipv6_route">IPv6 Route</string>
 </resources>

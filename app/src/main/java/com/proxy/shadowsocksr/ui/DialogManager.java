@@ -36,6 +36,7 @@ public class DialogManager
         if (pd != null)
         {
             pd.dismiss();
+            manager = null;
         }
     }
 }

@@ -24,6 +24,7 @@ public class ConnectProfile implements Parcelable
     //
     //Global
     public String route;
+    public boolean ipv6Route;
     public boolean globalProxy;
     public boolean dnsForward;
     public boolean autoConnect;
@@ -43,7 +44,7 @@ public class ConnectProfile implements Parcelable
         localPort = ssp.localPort;
         cryptMethod = ssp.cryptMethod;
         passwd = ssp.passwd;
-        enableSSR=ssp.enableSSR;
+        enableSSR = ssp.enableSSR;
         //SSR
         tcpProtocol = ssp.tcpProtocol;
         obfsMethod = ssp.obfsMethod;
@@ -51,6 +52,7 @@ public class ConnectProfile implements Parcelable
         udpOverTcp = ssp.udpOverTcp;
         //Global
         route = gp.route;
+        ipv6Route = gp.ipv6Route;
         globalProxy = gp.globalProxy;
         dnsForward = gp.dnsForward;
         autoConnect = gp.autoConnect;
@@ -65,7 +67,7 @@ public class ConnectProfile implements Parcelable
         localPort = in.readInt();
         cryptMethod = in.readString();
         passwd = in.readString();
-        enableSSR=in.readInt()==1;
+        enableSSR = in.readInt() == 1;
         //SSR
         tcpProtocol = in.readString();
         obfsMethod = in.readString();
@@ -73,6 +75,7 @@ public class ConnectProfile implements Parcelable
         udpOverTcp = in.readInt() == 1;
         //Global
         route = in.readString();
+        ipv6Route = in.readInt() == 1;
         globalProxy = in.readInt() == 1;
         dnsForward = in.readInt() == 1;
         autoConnect = in.readInt() == 1;
@@ -107,12 +110,13 @@ public class ConnectProfile implements Parcelable
         dest.writeInt(localPort);
         dest.writeString(cryptMethod);
         dest.writeString(passwd);
-        dest.writeInt(enableSSR?1:0);
+        dest.writeInt(enableSSR ? 1 : 0);
         dest.writeString(tcpProtocol);
         dest.writeString(obfsMethod);
-        dest.writeInt(tcpOverUdp?1:0);
-        dest.writeInt(udpOverTcp?1:0);
+        dest.writeInt(tcpOverUdp ? 1 : 0);
+        dest.writeInt(udpOverTcp ? 1 : 0);
         dest.writeString(route);
+        dest.writeInt(ipv6Route ? 1 : 0);
         dest.writeInt(globalProxy ? 1 : 0);
         dest.writeInt(dnsForward ? 1 : 0);
         dest.writeInt(autoConnect ? 1 : 0);

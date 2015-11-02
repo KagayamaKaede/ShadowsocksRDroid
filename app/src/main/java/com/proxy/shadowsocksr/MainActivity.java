@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity
     //
     private PrefFragment pref;
     //
-    private VPNServiceCallBack callback;
+    private VPNServiceCallBack callback=null;
     private ISSRService ssrs;
 
     @Override
@@ -102,14 +102,14 @@ public class MainActivity extends AppCompatActivity
         {
             try
             {
-                ssrs.unRegisterISSRServiceCallBack(callback);
+                ssrs.unRegisterISSRServiceCallBack();
             }
-            catch (RemoteException e)
+            catch (RemoteException ignored)
             {
-                e.printStackTrace();
             }
         }
         ssrs = null;
+        callback=null;
         //
         unbindService(this);
         super.onDestroy();
@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity
         {
             try
             {
-                ssrs.unRegisterISSRServiceCallBack(callback);
+                ssrs.unRegisterISSRServiceCallBack();
             }
             catch (RemoteException e)
             {
@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
         ssrs = null;
-
+        callback=null;
         switchUI(true);
     }
 

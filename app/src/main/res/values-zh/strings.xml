@@ -56,4 +56,6 @@
     <string name="unchecked_to_use_origin_tcp">取消选中则使用原始TCP</string>
     <string name="unchecked_to_use_origin_udp">取消选中则使用原始UCP</string>
     <string name="disconnecting">连接断开中&#8230;</string>
+    <string name="forwarding_ipv6_traffic_to_remote">转发 IPv6 流量到远程服务器</string>
+    <string name="ipv6_route">IPv6 路由</string>
 </resources>
