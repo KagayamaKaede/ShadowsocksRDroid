@@ -1,6 +1,7 @@
 ##1.0.9 Beta
 
 + Using TCP resolve domain.
++ fixed aes crypto issue.
 + May be contains many bug, even not work properly.
 + Not support SSR protocol yet.
 

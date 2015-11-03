@@ -10,8 +10,8 @@ android {
         applicationId "com.proxy.shadowsocksr"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 9
-        versionName "1.0.8 Beta"
+        versionCode 10
+        versionName "1.0.9 Beta"
     }
     buildTypes {
         debug {

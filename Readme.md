@@ -32,6 +32,7 @@ If you have any advices or questions, You can pull request, submit issue or send
 ##Thanks
 
 [shadowsocks](https://github.com/shadowsocks "shadowsocks github organization") github organization staff.
+[ShadowsocksR](https://github.com/breakwa11) developer.
 
 ##Open Source Licenses
 

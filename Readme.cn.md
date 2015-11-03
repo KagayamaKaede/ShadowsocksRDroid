@@ -31,7 +31,8 @@
 
 ##感谢
 
-[shadowsocks](https://github.com/shadowsocks "shadowsocks github 组") github 组 全体人员。
+* [shadowsocks](https://github.com/shadowsocks "shadowsocks github 组") github 组 全体人员。
+* [ShadowsocksR](https://github.com/breakwa11) 开发者。
 
 ##开源许可证
 
