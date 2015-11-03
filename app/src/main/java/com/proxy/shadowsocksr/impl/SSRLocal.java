@@ -3,6 +3,8 @@ package com.proxy.shadowsocksr.impl;
 import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
+import com.proxy.shadowsocksr.impl.obfs.AbsObfs;
+import com.proxy.shadowsocksr.impl.proto.AbsProtocol;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -53,6 +55,8 @@ public class SSRLocal extends Thread
         public ByteBuffer localReadBuf = ByteBuffer.allocate(8224);
         public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8224);
         public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
+        public AbsObfs obfs;
+        public AbsProtocol proto;
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
         public volatile boolean isDirect = false;//bypass acl list
@@ -62,28 +66,36 @@ public class SSRLocal extends Thread
     {
         exec = Executors.newCachedThreadPool();
         //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
-        try
+
+        while (isRunning)//When tcp server crashed, restart it.
         {
-            ssc = ServerSocketChannel.open();
-            ssc.configureBlocking(true);
-            ssc.socket().bind(new InetSocketAddress(locIP, locPort));
-            while (isRunning)
+            try
             {
-                ChannelAttach attach = new ChannelAttach();
-                attach.localSkt = ssc.accept();
-                attach.localSkt.configureBlocking(true);
-                attach.localSkt.socket().setTcpNoDelay(true);
-                attach.localSkt.socket().setReuseAddress(true);
-                exec.submit(new LocalSocketHandler(attach));
+                ssc = ServerSocketChannel.open();
+                ssc.configureBlocking(true);
+                ssc.socket().bind(new InetSocketAddress(locIP, locPort));
+                while (isRunning)
+                {
+                    ChannelAttach attach = new ChannelAttach();
+                    attach.localSkt = ssc.accept();
+                    attach.localSkt.configureBlocking(true);
+                    attach.localSkt.socket().setTcpNoDelay(true);
+                    attach.localSkt.socket().setReuseAddress(true);
+                    exec.submit(new LocalSocketHandler(attach));
+                }
             }
-        }
-        catch (Exception e)
-        {
-            Log.e("EXC", "tcp server err: " + e.getMessage());
-        }
-        finally
-        {
-            stopSSRLocal();
+            catch (Exception e)
+            {
+                Log.e("EXC", "tcp server err: " + e.getMessage());
+            }
+            //
+            try
+            {
+                ssc.close();
+            }
+            catch (Exception ignored)
+            {
+            }
         }
     }
 
@@ -377,7 +389,7 @@ public class SSRLocal extends Thread
         }
         catch (Exception e)
         {
-            Log.e("EXC", ""+e.getMessage());
+            Log.e("EXC", "" + e.getMessage());
         }
         exec.shutdown();
         ssc = null;

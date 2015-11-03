@@ -2,7 +2,7 @@
 -target 1.7
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
--dontoptimize
+# -dontoptimize
 -dontpreverify
 -verbose
 -ignorewarning

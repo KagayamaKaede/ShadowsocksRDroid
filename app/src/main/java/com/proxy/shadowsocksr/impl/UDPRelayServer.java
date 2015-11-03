@@ -78,77 +78,89 @@ public class UDPRelayServer extends Thread
 
         exec = Executors.newCachedThreadPool();
         //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
-        try
-        {
-            udpServer = DatagramChannel.open();
-            udpServer.configureBlocking(true);
-            udpServer.socket().bind(isaLocal);
-        }
-        catch (Exception e)
-        {
-            Log.e("EXC", "UDPRealyServer Init Failed!");
-            return;
-        }
 
         ByteBuffer buf = ByteBuffer.allocate(1500);
 
-        try
+        while (isRunning)//When udp server crashed, prepare it again.
         {
-            while (isRunning)
+            try
             {
-                SocketAddress localAddress = udpServer.receive(buf);
-                //
-                buf.flip();
-                int rcnt = buf.limit();
-                if (rcnt < 8)
+                udpServer = DatagramChannel.open();
+                udpServer.configureBlocking(true);
+                udpServer.socket().bind(isaLocal);
+            }
+            catch (Exception e)
+            {
+                Log.e("EXC", "UDPRealyServer Init Failed!");
+                return;
+            }
+            //
+            try
+            {
+                while (isRunning)
                 {
-                    Log.e("EXC", "LOCAL RECV SMALL PKG");
-                    buf.clear();//not response small package
-                    continue;
-                }
-                //
-                if (!(buf.get() == 0 && //RSV
-                      buf.get() == 0 && //RSV
-                      buf.get() == 0))  //FRAG
-                {
-                    Log.e("EXC", "LOCAL RECV NOT SOCKS5 UDP PKG");
-                    buf.clear();
-                    continue;
-                }
-                //
-                byte[] dataLocalIn = new byte[rcnt - 3];
-                buf.get(dataLocalIn);
-                byte[] dataRemoteOut = crypto.encrypt(dataLocalIn);
-                //
-                UDPRemoteDataHandler handler = cache.get(localAddress);
-                if (handler == null)
-                {
-                    DatagramChannel remoteChannel = DatagramChannel.open();
-                    remoteChannel.configureBlocking(true);
-                    remoteChannel.connect(isaRemote);
-                    boolean isProtected = onNeedProtectUDPListener
-                            .onNeedProtectUDP(remoteChannel.socket());
-                    Log.e("EXC", isProtected ? "UDP PROTECTED" : "UDP PROTECT FAILED");
-                    if (isProtected)
+                    SocketAddress localAddress = udpServer.receive(buf);
+                    //
+                    buf.flip();
+                    int rcnt = buf.limit();
+                    if (rcnt < 8)
                     {
-                        handler = new UDPRemoteDataHandler(localAddress, remoteChannel);
-                        cache.put(localAddress, handler);
-                        exec.submit(handler);
+                        Log.e("EXC", "LOCAL RECV SMALL PKG");
+                        buf.clear();//not response small package
+                        continue;
                     }
-                    else
+                    //
+                    if (!(buf.get() == 0 && //RSV
+                          buf.get() == 0 && //RSV
+                          buf.get() == 0))  //FRAG
                     {
+                        Log.e("EXC", "LOCAL RECV NOT SOCKS5 UDP PKG");
                         buf.clear();
                         continue;
                     }
+                    //
+                    byte[] dataLocalIn = new byte[rcnt - 3];
+                    buf.get(dataLocalIn);
+                    byte[] dataRemoteOut = crypto.encrypt(dataLocalIn);
+                    //
+                    UDPRemoteDataHandler handler = cache.get(localAddress);
+                    if (handler == null)
+                    {
+                        DatagramChannel remoteChannel = DatagramChannel.open();
+                        remoteChannel.configureBlocking(true);
+                        remoteChannel.connect(isaRemote);
+                        boolean isProtected = onNeedProtectUDPListener
+                                .onNeedProtectUDP(remoteChannel.socket());
+                        Log.e("EXC", isProtected ? "UDP PROTECTED" : "UDP PROTECT FAILED");
+                        if (isProtected)
+                        {
+                            handler = new UDPRemoteDataHandler(localAddress, remoteChannel);
+                            cache.put(localAddress, handler);
+                            exec.submit(handler);
+                        }
+                        else
+                        {
+                            buf.clear();
+                            continue;
+                        }
+                    }
+                    handler.remoteChannel.write(ByteBuffer.wrap(dataRemoteOut));
+                    //
+                    buf.clear();
                 }
-                handler.remoteChannel.write(ByteBuffer.wrap(dataRemoteOut));
-                //
-                buf.clear();
             }
-        }
-        catch (Exception e)
-        {
-            Log.e("EXC", "UDPRealyServer EXEC: " + e.getMessage());
+            catch (Exception e)
+            {
+                Log.e("EXC", "UDPRealyServer EXEC: " + e.getMessage());
+            }
+            try
+            {
+                udpServer.close();
+            }
+            catch (Exception ignored)
+            {
+            }
+            buf.clear();
         }
     }
 

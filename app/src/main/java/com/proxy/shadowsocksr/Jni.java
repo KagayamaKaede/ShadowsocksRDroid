@@ -7,8 +7,8 @@ public final class Jni
         System.loadLibrary("Jni");
     }
 
-    public static native void exec(String cmd);
+    //public static native void exec(String cmd);
     public static native String getABI();
     public static native int sendFd(int fd);
-    public static native void jniClose(int fd);
+    //public static native void jniClose(int fd);
 }

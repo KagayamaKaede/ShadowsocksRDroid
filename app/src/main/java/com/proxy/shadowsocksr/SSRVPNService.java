@@ -57,6 +57,13 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private SSRTunnel tunnel = null;
     private UDPRelayServer udprs = null;
 
+    @Override public void onCreate()
+    {
+        super.onCreate();
+        //TODO force service run on foreground.
+        //Notification notification=new Notification()
+    }
+
     @Override public IBinder onBind(Intent intent)
     {
         return binder;
@@ -272,7 +279,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                     }
                 }
                 stopRunner();
-                if(callback!=null)
+                if (callback != null)
                 {
                     try
                     {
@@ -355,7 +362,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
         tunnel = new SSRTunnel(ssrProfile.server, "127.0.0.1", "8.8.8.8", ssrProfile.remotePort,
                                8163, 53, ssrProfile.cryptMethod, ssrProfile.passwd);
 
-        tunnel.setOnNeedProtectUDPListener(this);
+        tunnel.setOnNeedProtectTCPListener(this);
         tunnel.start();
     }
 

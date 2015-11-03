@@ -11,7 +11,7 @@
 * 完善材料设计UI.
 * 提升性能，降低内存和电池使用率。
 * ~~正确使用杀虫剂~~(修复bug)。
-* 等待 breakwa11 完成 ShadowsocksR 协议规范，然后开始写 java 版本的 ShadowsocksR.
+* 写 java 版本的 ShadowsocksR.
 
 ##编译准备
 

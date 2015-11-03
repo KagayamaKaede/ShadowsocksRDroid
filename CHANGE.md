@@ -1,3 +1,9 @@
+##1.0.9 Beta
+
++ Using TCP resolve domain.
++ May be contains many bug, even not work properly.
++ Not support SSR protocol yet.
+
 ##1.0.8 TEST
 
 + Not support SSR protocol yet.

@@ -90,7 +90,7 @@
             android:title="@string/udp_relay"/>
         <CheckBoxPreference
             android:key="auto_connect"
-            android:summary="@string/start_ssr_on_boot"
+            android:summary="@string/start_ssr_on_startup"
             android:title="@string/auto_connect"/>
         <CheckBoxPreference
             android:disableDependentsState="true"

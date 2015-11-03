@@ -35,10 +35,10 @@ public class AESCrypto extends AbsCrypto
     {
         switch (mode)
         {
-            case "cfb":
-                encrypt = new CFBBlockCipher(new AESFastEngine(), bit);//save power...may be...=_=
-                decrypt = new CFBBlockCipher(new AESFastEngine(), bit);
-                break;
+        case "cfb":
+            encrypt = new CFBBlockCipher(new AESFastEngine(), 128);//save power...may be...=_=
+            decrypt = new CFBBlockCipher(new AESFastEngine(), 128);
+            break;
         }
     }
 
@@ -50,7 +50,7 @@ public class AESCrypto extends AbsCrypto
 
     @Override public void updateDecryptIV(byte[] iv)
     {
-        encrypt.reset();
+        decrypt.reset();
         decrypt.init(false, new ParametersWithIV(new KeyParameter(key), iv));
     }
 
@@ -60,12 +60,12 @@ public class AESCrypto extends AbsCrypto
         try
         {
             encrypt.processBytes(data, 0, data.length, out, 0);
-            return out;
         }
         catch (DataLengthException ignored)
         {
         }
-        return null;
+
+        return out;
     }
 
     @Override public byte[] decrypt(byte[] data)
@@ -74,11 +74,11 @@ public class AESCrypto extends AbsCrypto
         try
         {
             decrypt.processBytes(data, 0, data.length, out, 0);
-            return out;
         }
-        catch (Exception ignored)
+        catch (DataLengthException ignored)
         {
         }
-        return null;
+
+        return out;
     }
 }

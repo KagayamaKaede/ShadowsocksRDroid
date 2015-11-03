@@ -11,7 +11,7 @@ Compatible Shadowsocks protocol and will support ShadowsocksR protocol in the fu
 * Improve the material design UI.
 * Improve performance, reduce memory and battery usage.
 * Fix bug.
-* Wait breakwa11 complete ShadowsocksR Protocol Specification, then began to write java implementation of ShadowsocksR.
+* Write java implementation of ShadowsocksR.
 
 ##Requisites for compile
 

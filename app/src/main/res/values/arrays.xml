@@ -4,11 +4,6 @@
         <item>AES-128-CFB</item>
         <item>AES-192-CFB</item>
         <item>AES-256-CFB</item>
-        <item>BF-CFB</item>
-        <item>CAMELLIA-256-CFB</item>
-        <item>CAST5-CFB</item>
-        <item>IDEA-CFB</item>
-        <item>SEED-CFB</item>
         <item>SALSA20</item>
         <item>CHACHA20</item>
     </string-array>
@@ -16,11 +11,6 @@
         <item>aes-128-cfb</item>
         <item>aes-192-cfb</item>
         <item>aes-256-cfb</item>
-        <item>bf-cfb</item>
-        <item>camellia-256-cfb</item>
-        <item>cast5-cfb</item>
-        <item>idea-cfb</item>
-        <item>seed-cfb</item>
         <item>salsa20</item>
         <item>chacha20</item>
     </string-array>

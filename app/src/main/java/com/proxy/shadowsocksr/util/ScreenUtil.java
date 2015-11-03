@@ -63,7 +63,7 @@ public class ScreenUtil
                 size.x = (Integer) Display.class.getMethod("getRawWidth").invoke(display);
                 size.y = (Integer) Display.class.getMethod("getRawHeight").invoke(display);
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
             }
         }

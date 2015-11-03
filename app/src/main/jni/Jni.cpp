@@ -13,12 +13,12 @@
 
 #include "jni.h"
 
-void Java_com_proxy_shadowsocksr_Jni_exec
-        (JNIEnv *env, jobject thiz, jstring cmd) {
-    const char *str = env->GetStringUTFChars(cmd, 0);
-    system(str);
-    env->ReleaseStringUTFChars(cmd, str);
-}
+//void Java_com_proxy_shadowsocksr_Jni_exec
+//        (JNIEnv *env, jobject thiz, jstring cmd) {
+//    const char *str = env->GetStringUTFChars(cmd, 0);
+//    system(str);
+//    env->ReleaseStringUTFChars(cmd, str);
+//}
 
 jstring Java_com_proxy_shadowsocksr_Jni_getABI
         (JNIEnv *env, jobject thiz) {
@@ -74,8 +74,8 @@ static const char *classPathName = "com/proxy/shadowsocksr/Jni";
 static JNINativeMethod method_table[] = {
         {"sendFd",   "(I)I",
                 (void *) Java_com_proxy_shadowsocksr_Jni_sendFd},
-        {"exec",     "(Ljava/lang/String;)V",
-                (void *) Java_com_proxy_shadowsocksr_Jni_exec},
+//        {"exec",     "(Ljava/lang/String;)V",
+//                (void *) Java_com_proxy_shadowsocksr_Jni_exec},
         {"getABI",   "()Ljava/lang/String;",
                 (void *) Java_com_proxy_shadowsocksr_Jni_getABI}
 };

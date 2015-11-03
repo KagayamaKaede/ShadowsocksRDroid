@@ -3,7 +3,7 @@
     <string name="fresh_dns_cache">Fresh DNS Cache(need root)</string>
     <string name="add_server">Manually Add Server</string>
     <string name="del_current_server">Delete Current Server</string>
-    <string name="proxy_tip">Checked apps will use proxy access internet.</string>
+    <string name="proxy_tip">Checked apps will use proxy access internet</string>
     <string name="configuration_label">Configuration Name</string>
     <string name="server_host_name">Server host name or ip</string>
     <string name="server_name">Server</string>
@@ -21,9 +21,9 @@
     <string name="per_app_proxy">Per App Proxy</string>
     <string name="relay_udp_packet_to_remote_svr">Forward UDP packets to remote server</string>
     <string name="udp_relay">UDP Forwarding</string>
-    <string name="start_ssr_on_boot">Enable ShadowsocksR Droid on startup</string>
+    <string name="start_ssr_on_startup">Enable ShadowsocksR on startup</string>
     <string name="auto_connect">Auto Connect</string>
-    <string name="direct_to_ssr_page">Open ShadowsocksR Droid GitHub page.</string>
+    <string name="direct_to_ssr_page">Open ShadowsocksR GitHub page</string>
     <string name="all">All</string>
     <string name="bypass_lan">Bypass Lan</string>
     <string name="bypass_lan_list">Bypass Lan &amp; List</string>
@@ -41,7 +41,7 @@
     <string name="connect_failed">Connect failed!</string>
     <string name="add_svr_from_pic">Add Server From QRCode</string>
     <string name="req_install_qrscan_app">Install Barcode Scanner?</string>
-    <string name="req_install_qrscan_app_msg">We need Barcode Scanner to scan QRCode.Would you like to install it?</string>
+    <string name="req_install_qrscan_app_msg">We need Barcode Scanner to scan QRCode. Would you like to install it?</string>
     <string name="add_success">Add Success</string>
     <string name="add_canceled">Add Canceled</string>
     <string name="add_failed">Add Failed</string>
@@ -52,7 +52,7 @@
     <string name="obfs_method">Obfs Method</string>
     <string name="enable_tcp_over_udp">Enable TCP over UDP</string>
     <string name="enable_udp_over_tcp">Enable UDP over TCP</string>
-    <string name="ssr_server_feature_support_tip">Some feature need server support.</string>
+    <string name="ssr_server_feature_support_tip">Some feature need server support</string>
     <string name="unchecked_to_use_origin_tcp">Unchecked to use origin TCP</string>
     <string name="unchecked_to_use_origin_udp">Unchecked to use origin UDP</string>
     <string name="forwarding_ipv6_traffic_to_remote">Forwarding IPv6 traffic to remote</string>

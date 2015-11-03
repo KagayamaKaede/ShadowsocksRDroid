@@ -1,42 +1,38 @@
 package com.proxy.shadowsocksr.impl;
 
 import android.util.Log;
-import android.util.LruCache;
 
-import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener;
+import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
+import com.proxy.shadowsocksr.impl.obfs.AbsObfs;
+import com.proxy.shadowsocksr.impl.proto.AbsProtocol;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 
 public class SSRTunnel extends Thread
 {
-    private DatagramChannel udpServer;
-    private InetSocketAddress isaLocal;
-    private InetSocketAddress isaRemote;
-    private UDPEncryptor crypto;
-
+    private ServerSocketChannel ssc;
     private String remoteIP;
     private String localIP;
     private int remotePort;
     private int localPort;
     private int dnsPort;
 
-    private byte[] dnsIp = new byte[4];
+    private byte[] dnsIp;
 
-    private final int ivLen;
+    private String pwd;
+    private String cryptMethod;
 
     private ExecutorService exec;
     private volatile boolean isRunning = true;
 
-    private LruCache<SocketAddress, UDPRemoteDataHandler> cache;
-
-    private OnNeedProtectUDPListener onNeedProtectUDPListener;
+    private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
     public SSRTunnel(String remoteIP, String localIP, String dnsIP, int remotePort, int localPort,
             int dnsPort, String cryptMethod, String pwd)
@@ -46,21 +42,172 @@ public class SSRTunnel extends Thread
         this.remotePort = remotePort;
         this.localPort = localPort;
         this.dnsPort = dnsPort;
-        cache = new LruCache<>(128);
-        crypto = new UDPEncryptor(pwd, cryptMethod);
-        ivLen = crypto.getIVLen();
-        //
-        String[] spt = dnsIP.split("\\.");
-        dnsIp[0] = (byte) Character.getNumericValue(spt[0].charAt(0));
-        dnsIp[1] = (byte) Character.getNumericValue(spt[1].charAt(0));
-        dnsIp[2] = (byte) Character.getNumericValue(spt[2].charAt(0));
-        dnsIp[3] = (byte) Character.getNumericValue(spt[3].charAt(0));
+        this.cryptMethod = cryptMethod;
+        this.pwd = pwd;
+
+        try
+        {
+            dnsIp = InetAddress.getByName(dnsIP).getAddress();
+        }
+        catch (UnknownHostException ignored)
+        {
+        }
     }
 
-    public void setOnNeedProtectUDPListener(
-            OnNeedProtectUDPListener onNeedProtectUDPListener)
+    public void setOnNeedProtectTCPListener(
+            OnNeedProtectTCPListener onNeedProtectTCPListener)
     {
-        this.onNeedProtectUDPListener = onNeedProtectUDPListener;
+        this.onNeedProtectTCPListener = onNeedProtectTCPListener;
+    }
+
+    class ChannelAttach
+    {
+        public ByteBuffer localReadBuf = ByteBuffer.allocate(8224);
+        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8224);
+        public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
+        public AbsObfs obfs;
+        public AbsProtocol proto;
+        public SocketChannel localSkt;
+        public SocketChannel remoteSkt;
+    }
+
+    @Override public void run()
+    {
+        exec = Executors.newCachedThreadPool();
+        //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+
+        while (isRunning)//When tcp server crashed, restart it.
+        {
+            try
+            {
+                ssc = ServerSocketChannel.open();
+                ssc.configureBlocking(true);
+                ssc.socket().bind(new InetSocketAddress(localIP, localPort));
+                while (isRunning)
+                {
+                    ChannelAttach attach = new ChannelAttach();
+                    attach.localSkt = ssc.accept();
+                    attach.localSkt.configureBlocking(true);
+                    attach.localSkt.socket().setTcpNoDelay(true);
+                    attach.localSkt.socket().setReuseAddress(true);
+                    exec.submit(new LocalSocketHandler(attach));
+                }
+            }
+            catch (Exception e)
+            {
+                Log.e("EXC", "dns server err: " + e.getMessage());
+            }
+            //
+            try
+            {
+                ssc.close();
+            }
+            catch (Exception ignored)
+            {
+            }
+        }
+    }
+
+    class LocalSocketHandler implements Runnable
+    {
+        private final ChannelAttach attach;
+
+        public LocalSocketHandler(ChannelAttach attach)
+        {
+            this.attach = attach;
+        }
+
+        @Override public void run()
+        {
+            try
+            {
+                if (!prepareRemote(attach, remoteIP, remotePort))
+                {
+                    Log.e("EXC", "REMOTE CONNECT FAILED!");
+                    return;
+                }
+                //
+                attach.localReadBuf.put((byte) 1);
+                attach.localReadBuf.put(dnsIp);
+                attach.localReadBuf.put((byte) ((dnsPort >> 8) & 0xFF));
+                attach.localReadBuf.put((byte) (dnsPort & 0xFF));
+                //
+                new Thread(new RemoteSocketHandler(attach)).start();
+                //
+                while (isRunning)
+                {
+                    if (!checkSessionAlive(attach))
+                    {
+                        Log.e("EXC", "DEAD");
+                        break;
+                    }
+                    int rcnt = attach.localSkt.read(attach.localReadBuf);
+                    if (rcnt < 1)
+                    {
+                        break;
+                    }
+                    Log.e("EXC", "READ LOC CNT: " + rcnt);
+                    attach.localReadBuf.flip();
+                    byte[] recv = new byte[attach.localReadBuf.limit()];
+                    attach.localReadBuf.get(recv);
+
+                    recv = attach.crypto.encrypt(recv);
+                    int wcnt = attach.remoteSkt.write(ByteBuffer.wrap(recv));
+                    if (wcnt != recv.length)
+                    {
+                        break;
+                    }
+                    attach.localReadBuf.clear();
+                }
+            }
+            catch (Exception e)
+            {
+                Log.e("EXC", "LOCAL EXEC: " + e.getMessage());
+            }
+            cleanSession(attach);
+        }
+    }
+
+    private boolean prepareRemote(ChannelAttach attach, String remoteIP, int remotePort)
+    throws Exception
+    {
+        attach.remoteSkt = SocketChannel.open();
+        attach.remoteSkt.configureBlocking(true);
+        attach.remoteSkt.socket().setReuseAddress(true);
+        attach.remoteSkt.socket().setTcpNoDelay(true);
+        boolean success = onNeedProtectTCPListener.onNeedProtectTCP(attach.remoteSkt.socket());
+        if (!success)
+        {
+            return false;
+        }
+        attach.remoteSkt.connect(new InetSocketAddress(remoteIP, remotePort));
+        return attach.remoteSkt.isConnected();
+    }
+
+    private boolean checkSessionAlive(ChannelAttach attach)
+    {
+        return attach.localSkt != null &&
+               attach.remoteSkt != null &&
+               attach.localSkt.socket().isConnected() &&
+               attach.remoteSkt.socket().isConnected();
+    }
+
+    private void cleanSession(ChannelAttach attach)
+    {
+        try
+        {
+            attach.remoteSkt.socket().close();
+            attach.localSkt.socket().close();
+            attach.remoteSkt.close();
+            attach.localSkt.close();
+        }
+        catch (Exception ignored)
+        {
+        }
+        attach.remoteSkt = null;
+        attach.localSkt = null;
+        attach.localReadBuf = null;
+        attach.remoteReadBuf = null;
     }
 
     public void stopTunnel()
@@ -68,118 +215,23 @@ public class SSRTunnel extends Thread
         isRunning = false;
         try
         {
-            udpServer.socket().close();
-            udpServer.close();
+            ssc.close();
         }
-        catch (Exception ignored)
+        catch (Exception e)
         {
+            Log.e("EXC", "" + e.getMessage());
         }
-        if (cache.size() > 0)
-        {
-            cache.evictAll();
-        }
-        udpServer = null;
         exec.shutdown();
+        ssc = null;
     }
 
-    @Override public void run()
+    class RemoteSocketHandler implements Runnable
     {
-        isaLocal = new InetSocketAddress(localIP, localPort);
-        isaRemote = new InetSocketAddress(remoteIP, remotePort);
+        private ChannelAttach attach;
 
-        exec = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
-                                      300L, TimeUnit.SECONDS,
-                                      new SynchronousQueue<Runnable>());
-        try
+        public RemoteSocketHandler(ChannelAttach attach)
         {
-            udpServer = DatagramChannel.open();
-            udpServer.configureBlocking(true);
-            udpServer.socket().bind(isaLocal);
-        }
-        catch (Exception e)
-        {
-            Log.e("EXC", "UDPRealyServer Init Failed!");
-            return;
-        }
-
-        ByteBuffer buf = ByteBuffer.allocate(1500);
-
-        try
-        {
-            while (isRunning)
-            {
-                SocketAddress localAddress = udpServer.receive(buf);
-                //
-                buf.flip();
-                int rcnt = buf.limit();
-                if (rcnt < 12)//DNS datagram min size should be ?
-                {
-                    Log.e("EXC", "LOCAL RECV SMALL PKG");
-                    buf.clear();//not response small package
-                    continue;
-                }
-                //
-                byte[] dataLocalIn = new byte[rcnt];
-                buf.get(dataLocalIn);
-                //
-                byte[] dataRemoteOut = new byte[dataLocalIn.length + 7];
-                dataRemoteOut[0] = 1;
-                dataRemoteOut[1] = dnsIp[0];
-                dataRemoteOut[2] = dnsIp[1];
-                dataRemoteOut[3] = dnsIp[2];
-                dataRemoteOut[4] = dnsIp[3];
-                dataRemoteOut[5] = (byte) ((dnsPort >> 8) & 0xFF);
-                dataRemoteOut[6] = (byte) (dnsPort & 0xFF);
-                System.arraycopy(dataLocalIn, 0, dataRemoteOut, 7, dataLocalIn.length);
-                //
-                //Utils.bytesHexDmp("DNS LOCAL", dataRemoteOut);
-                //
-                dataRemoteOut = crypto.encrypt(dataRemoteOut);
-                //
-                UDPRemoteDataHandler handler = cache.get(localAddress);
-                if (handler == null)
-                {
-                    DatagramChannel remoteChannel = DatagramChannel.open();
-                    remoteChannel.configureBlocking(true);
-                    remoteChannel.connect(isaRemote);
-                    boolean isProtected = onNeedProtectUDPListener
-                            .onNeedProtectUDP(remoteChannel.socket());
-                    Log.e("EXC", isProtected ? "UDP PROTECTED" : "UDP PROTECT FAILED");
-                    if (isProtected)
-                    {
-                        handler = new UDPRemoteDataHandler(localAddress, remoteChannel);
-                        cache.put(localAddress, handler);
-                        exec.submit(handler);
-                    }
-                    else
-                    {
-                        buf.clear();
-                        continue;
-                    }
-                }
-                handler.remoteChannel.write(ByteBuffer.wrap(dataRemoteOut));
-                //
-                buf.clear();
-            }
-        }
-        catch (Exception e)
-        {
-            Log.e("EXC", "UDPRealyServer EXEC :" + e.getMessage());
-        }
-    }
-
-    class UDPRemoteDataHandler implements Runnable
-    {
-        public SocketAddress localAddress;
-        public DatagramChannel remoteChannel;
-
-        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(1500);
-
-        public UDPRemoteDataHandler(SocketAddress localAddress,
-                DatagramChannel remoteChannel)
-        {
-            this.localAddress = localAddress;
-            this.remoteChannel = remoteChannel;
+            this.attach = attach;
         }
 
         @Override public void run()
@@ -188,39 +240,35 @@ public class SSRTunnel extends Thread
             {
                 while (isRunning)
                 {
-                    int rcnt = remoteChannel.read(remoteReadBuf);
-                    if (rcnt < ivLen + 12)
+                    if (!checkSessionAlive(attach))
                     {
-                        remoteReadBuf.clear();//just drop
-                        continue;
+                        Log.e("EXC", "DEAD");
+                        break;
                     }
-                    remoteReadBuf.flip();
-                    byte[] dataRemoteIn = new byte[rcnt];
-                    remoteReadBuf.get(dataRemoteIn);
-                    dataRemoteIn = crypto.decrypt(dataRemoteIn);
-                    byte[] dataLocalOut = new byte[dataRemoteIn.length -
-                                                   7];//may be server return ipv6?
-                    //Utils.bytesHexDmp("DNS REMOTE", dataRemoteIn);
-                    System.arraycopy(dataRemoteIn, 7, dataLocalOut, 0, dataLocalOut.length);
-                    udpServer.send(ByteBuffer.wrap(dataLocalOut), localAddress);
-                    //
-                    remoteReadBuf.clear();
+                    int rcnt = attach.remoteSkt.read(attach.remoteReadBuf);
+                    if (rcnt < 1)
+                    {
+                        break;
+                    }
+                    Log.e("EXC", "READ RMT CNT: " + rcnt);
+                    attach.remoteReadBuf.flip();
+                    byte[] recv = new byte[rcnt];
+                    attach.remoteReadBuf.get(recv);
+                    recv = attach.crypto.decrypt(recv);
+                    //Utils.bytesHexDmp("remote read", recv);
+                    int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
+                    if (wcnt != recv.length)
+                    {
+                        break;
+                    }
+                    attach.remoteReadBuf.clear();
                 }
             }
             catch (Exception e)
             {
-                Log.e("EXC", "UDP REMOTE EXC");
-                cache.remove(localAddress);
-                try
-                {
-                    remoteChannel.close();
-                }
-                catch (Exception e1)
-                {
-                    e1.printStackTrace();
-                }
-                remoteChannel = null;
+                Log.e("EXC", "REMOTE EXEC");
             }
+            cleanSession(attach);
         }
     }
 }
