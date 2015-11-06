@@ -13,13 +13,15 @@
 * ~~正确使用杀虫剂~~(修复bug)。
 * 写 java 版本的 ShadowsocksR.
 
-##编译准备
+##开发
 
 * JDK 1.7+
 * Android SDK 23+
 * Android NDK r10e+
 
 * 请使用最新版本的Android Studio以减少编译时遇到问题的可能。
+
+* [插件开发规范](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/PluginDevSpec.md)
 
 ##版本修改
 

@@ -46,7 +46,6 @@
     <string name="add_canceled">Add Canceled</string>
     <string name="add_failed">Add Failed</string>
     <string name="show_qr">Show current QRCode</string>
-    <string name="enable_shadowsocksr_feature">Enable ShadowsocksR Feature(Current not support)</string>
     <string name="ssr_feature_configuration">SSR Feature Configuration</string>
     <string name="protocol_type">Protocol Type</string>
     <string name="obfs_method">Obfs Method</string>
@@ -57,4 +56,5 @@
     <string name="unchecked_to_use_origin_udp">Unchecked to use origin UDP</string>
     <string name="forwarding_ipv6_traffic_to_remote">Forwarding IPv6 traffic to remote</string>
     <string name="ipv6_route">IPv6 Route</string>
+    <string name="obfs_param">Obfs Param</string>
 </resources>

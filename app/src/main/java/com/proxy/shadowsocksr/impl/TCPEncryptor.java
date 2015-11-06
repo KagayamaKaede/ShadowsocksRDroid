@@ -1,7 +1,7 @@
 package com.proxy.shadowsocksr.impl;
 
 import com.proxy.shadowsocksr.impl.crypto.CryptoInfo;
-import com.proxy.shadowsocksr.impl.crypto.Utils;
+import com.proxy.shadowsocksr.impl.crypto.CryptoUtils;
 import com.proxy.shadowsocksr.impl.crypto.crypto.AbsCrypto;
 import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoChooser;
 
@@ -38,7 +38,7 @@ public class TCPEncryptor
             {
                 byte[] passbf = pwd.getBytes(Charset.forName("UTF-8"));
                 key = new byte[cryptMethodInfo[0]];
-                Utils.EVP_BytesToKey(passbf, key);
+                CryptoUtils.EVP_BytesToKey(passbf, key);
                 cachedKeys.put(k, key);
             }
             crypto = CryptoChooser.getMatchCrypto(cryptMethod, key);

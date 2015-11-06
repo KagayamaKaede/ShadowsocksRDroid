@@ -37,35 +37,32 @@
             android:key="password"
             android:summary="@string/not_set_yet"
             android:title="@string/password"/>
-        <CheckBoxPreference
-            android:key="enable_ssr"
-            android:summary="@string/ssr_server_feature_support_tip"
-            android:title="@string/enable_shadowsocksr_feature"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="ssr_feature"
         android:title="@string/ssr_feature_configuration">
         <com.proxy.shadowsocksr.preference.SummaryListPreference
-            android:dependency="enable_ssr"
             android:entries="@array/tcp_protocol_entry"
             android:entryValues="@array/tcp_protocol_value"
             android:key="protocol_type"
             android:summary="@string/protocol_type"
             android:title="@string/protocol_type"/>
         <com.proxy.shadowsocksr.preference.SummaryListPreference
-            android:dependency="enable_ssr"
             android:entries="@array/obfs_method_entry"
             android:entryValues="@array/obfs_method_value"
             android:key="obfs_method"
             android:summary="@string/obfs_method"
             android:title="@string/obfs_method"/>
+        <com.proxy.shadowsocksr.preference.SummaryEditTextPreference
+            android:key="obfs_param"
+            android:summary=""
+            android:enabled="false"
+            android:title="@string/obfs_param"/>
         <CheckBoxPreference
-            android:dependency="enable_ssr"
             android:key="tcp_over_udp"
             android:summary="@string/unchecked_to_use_origin_tcp"
             android:title="@string/enable_tcp_over_udp"/>
         <CheckBoxPreference
-            android:dependency="enable_ssr"
             android:key="udp_over_tcp"
             android:summary="@string/unchecked_to_use_origin_udp"
             android:title="@string/enable_udp_over_tcp"/>

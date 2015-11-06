@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity
         drawer = (DrawerLayout) findViewById(R.id.drawer);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         spinner = (Spinner) findViewById(R.id.spinner_nav);
-        coordinatorLayout=(CoordinatorLayout)findViewById(R.id.coordinatorlayout);
+        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorlayout);
         nav = (NavigationView) findViewById(R.id.nav);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         //
@@ -245,12 +245,13 @@ public class MainActivity extends AppCompatActivity
         spinner.setSelection(tsAdapter.getPosition(cur));
     }
 
-    private void addNewServer(String server, int rmtPort, String method, String pwd)
+    private void addNewServer(String server, int rmtPort, String method, String pwd,
+            String tcpProtocol, String obfsMethod, String obfsParam)
     {
         String lbl = "Svr-" + System.currentTimeMillis();
-        SSRProfile newPro = new SSRProfile(server, rmtPort, Consts.localPort, method, pwd,
-                                           false, Consts.defaultTcpProtocol,
-                                           Consts.defaultObfsMethod, false, false);
+        SSRProfile newPro = new SSRProfile(
+                server, rmtPort, Consts.defaultLocalPort, method, pwd, tcpProtocol,
+                obfsMethod, obfsParam, false, false);
         Hawk.put(lbl, newPro);
 
         ArrayList<String> lst = Hawk.get("ServerList");
@@ -286,8 +287,10 @@ public class MainActivity extends AppCompatActivity
         {
         case R.id.action_maunally_add_server:
             addNewServer(Consts.defaultIP,
-                         Consts.remotePort,
-                         Consts.defaultCryptMethod, "");
+                         Consts.defaultRemotePort,
+                         Consts.defaultCryptMethod, "",
+                         Consts.defaultTcpProtocol,
+                         Consts.defaultObfsMethod, "");
             loadServerList();
             pref.reloadPref();
             break;
@@ -334,8 +337,10 @@ public class MainActivity extends AppCompatActivity
             if (list.size() == 0)
             {
                 addNewServer(Consts.defaultIP,
-                             Consts.remotePort,
-                             Consts.defaultCryptMethod, "");
+                             Consts.defaultRemotePort,
+                             Consts.defaultCryptMethod, "",
+                             Consts.defaultTcpProtocol,
+                             Consts.defaultObfsMethod, "");
             }
             else
             {
@@ -353,7 +358,7 @@ public class MainActivity extends AppCompatActivity
         case R.id.action_show_current_qrcode:
             String cur = Hawk.get("CurrentServer");
             SSRProfile ssp = Hawk.get(cur);
-            String b64 = SSAddressUtil.getUtil().generate(ssp);
+            String b64 = SSAddressUtil.getUtil().generate(ssp, (String) spinner.getSelectedItem());
             if (b64 != null)
             {
                 int px = ScreenUtil.dp2px(this, 230);
@@ -451,10 +456,12 @@ public class MainActivity extends AppCompatActivity
                     SSRProfile pro = SSAddressUtil.getUtil().parse(contents);
                     if (pro != null)
                     {
-                        addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd);
+                        addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd,
+                                     pro.tcpProtocol, pro.obfsMethod, pro.obfsParam);
                         loadServerList();
                         pref.reloadPref();
-                        Snackbar.make(coordinatorLayout, R.string.add_success, Snackbar.LENGTH_SHORT)
+                        Snackbar.make(coordinatorLayout, R.string.add_success,
+                                      Snackbar.LENGTH_SHORT)
                                 .show();
                         return;
                     }

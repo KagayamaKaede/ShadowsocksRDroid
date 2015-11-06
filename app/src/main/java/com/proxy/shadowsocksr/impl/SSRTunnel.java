@@ -2,9 +2,12 @@ package com.proxy.shadowsocksr.impl;
 
 import android.util.Log;
 
+import com.proxy.shadowsocksr.impl.crypto.CryptoUtils;
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
 import com.proxy.shadowsocksr.impl.obfs.AbsObfs;
+import com.proxy.shadowsocksr.impl.obfs.ObfsChooser;
 import com.proxy.shadowsocksr.impl.proto.AbsProtocol;
+import com.proxy.shadowsocksr.impl.proto.ProtocolChooser;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -23,6 +26,9 @@ public class SSRTunnel extends Thread
     private int remotePort;
     private int localPort;
     private int dnsPort;
+    private String tcpProtocol;
+    private String obfsMethod;
+    private String obfsParam;
 
     private byte[] dnsIp;
 
@@ -35,7 +41,8 @@ public class SSRTunnel extends Thread
     private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
     public SSRTunnel(String remoteIP, String localIP, String dnsIP, int remotePort, int localPort,
-            int dnsPort, String cryptMethod, String pwd)
+            int dnsPort, String cryptMethod, String tcpProtocol, String obfsMethod,
+            String obfsParam, String pwd)
     {
         this.remoteIP = remoteIP;
         this.localIP = localIP;
@@ -44,6 +51,9 @@ public class SSRTunnel extends Thread
         this.dnsPort = dnsPort;
         this.cryptMethod = cryptMethod;
         this.pwd = pwd;
+        this.tcpProtocol = tcpProtocol;
+        this.obfsMethod = obfsMethod;
+        this.obfsParam = obfsParam;
 
         try
         {
@@ -62,11 +72,13 @@ public class SSRTunnel extends Thread
 
     class ChannelAttach
     {
-        public ByteBuffer localReadBuf = ByteBuffer.allocate(8224);
-        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8224);
+        public ByteBuffer localReadBuf = ByteBuffer.allocate(8192);
+        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8192);
         public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
-        public AbsObfs obfs;
-        public AbsProtocol proto;
+        public AbsObfs obfs = ObfsChooser
+                .getObfs(obfsMethod, remoteIP, remotePort, 1440, obfsParam);
+        public AbsProtocol proto = ProtocolChooser
+                .getProtocol(tcpProtocol, remoteIP, remotePort, 1440);
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
     }
@@ -150,8 +162,11 @@ public class SSRTunnel extends Thread
                     attach.localReadBuf.flip();
                     byte[] recv = new byte[attach.localReadBuf.limit()];
                     attach.localReadBuf.get(recv);
-
+                    //
+                    recv = attach.proto.beforeEncrypt(recv);
                     recv = attach.crypto.encrypt(recv);
+                    recv = attach.obfs.afterEncrypt(recv);
+                    //
                     int wcnt = attach.remoteSkt.write(ByteBuffer.wrap(recv));
                     if (wcnt != recv.length)
                     {
@@ -254,7 +269,12 @@ public class SSRTunnel extends Thread
                     attach.remoteReadBuf.flip();
                     byte[] recv = new byte[rcnt];
                     attach.remoteReadBuf.get(recv);
+                    //
+                    recv = attach.obfs.beforeDecrypt(recv, false);//TODO
                     recv = attach.crypto.decrypt(recv);
+                    recv = attach.proto.afterDecrypt(recv);
+                    CryptoUtils.bytesHexDmp("EXC - DRECV", recv);
+                    //
                     //Utils.bytesHexDmp("remote read", recv);
                     int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
                     if (wcnt != recv.length)

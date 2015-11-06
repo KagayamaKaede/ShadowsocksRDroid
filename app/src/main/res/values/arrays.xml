@@ -28,11 +28,15 @@
 
     <string-array name="tcp_protocol_entry">
         <item>Origin</item>
-        <item>Verify Head(New Protocol)</item>
+        <item>Verify Simple</item>
+        <item>Verify Deflate</item>
+        <item>Auth Simple</item>
     </string-array>
     <string-array name="tcp_protocol_value">
         <item>origin</item>
-        <item>verify-head</item>
+        <item>verify_simple</item>
+        <item>verify_deflate</item>
+        <item>auth_simple</item>
     </string-array>
 
     <string-array name="obfs_method_entry">
@@ -40,13 +44,11 @@
         <item>Http Simple</item>
         <item>TLS Simple</item>
         <item>Random Head</item>
-        <item>Verify Simple</item>
     </string-array>
     <string-array name="obfs_method_value">
         <item>plain</item>
         <item>http_simple</item>
         <item>tls_simple</item>
         <item>random_head</item>
-        <item>verify_simple</item>
     </string-array>
 </resources>

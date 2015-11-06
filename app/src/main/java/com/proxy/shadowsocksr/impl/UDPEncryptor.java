@@ -1,7 +1,7 @@
 package com.proxy.shadowsocksr.impl;
 
 import com.proxy.shadowsocksr.impl.crypto.CryptoInfo;
-import com.proxy.shadowsocksr.impl.crypto.Utils;
+import com.proxy.shadowsocksr.impl.crypto.CryptoUtils;
 import com.proxy.shadowsocksr.impl.crypto.crypto.AbsCrypto;
 import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoChooser;
 
@@ -19,7 +19,7 @@ public class UDPEncryptor
         cryptMethodInfo = new CryptoInfo().getCipherInfo(cryptMethod);
         byte[] passwd = pwd.getBytes(Charset.forName("UTF-8"));
         byte[] key = new byte[cryptMethodInfo[0]];
-        Utils.EVP_BytesToKey(passwd, key);
+        CryptoUtils.EVP_BytesToKey(passwd, key);
         crypto = CryptoChooser.getMatchCrypto(cryptMethod, key);
     }
 

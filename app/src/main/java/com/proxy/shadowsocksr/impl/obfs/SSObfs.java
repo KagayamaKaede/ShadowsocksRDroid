@@ -2,9 +2,9 @@ package com.proxy.shadowsocksr.impl.obfs;
 
 public class SSObfs extends AbsObfs
 {
-    public SSObfs(String rmtIP, int tcpMss, String usrParamStr)
+    public SSObfs(String usrParamStr, String rmtIP, int rmtPort, int tcpMss)
     {
-        super(rmtIP, tcpMss, usrParamStr);
+        super(usrParamStr, rmtIP,rmtPort, tcpMss);
     }
 
     @Override public byte[] afterEncrypt(byte[] data)

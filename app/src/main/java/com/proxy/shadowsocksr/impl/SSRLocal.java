@@ -4,7 +4,9 @@ import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
 import com.proxy.shadowsocksr.impl.obfs.AbsObfs;
+import com.proxy.shadowsocksr.impl.obfs.ObfsChooser;
 import com.proxy.shadowsocksr.impl.proto.AbsProtocol;
+import com.proxy.shadowsocksr.impl.proto.ProtocolChooser;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -21,6 +23,9 @@ public class SSRLocal extends Thread
     private String rmtIP;
     private String pwd;
     private String cryptMethod;
+    private String tcpProtocol;
+    private String obfsMethod;
+    private String obfsParam;
     private int rmtPort;
     private int locPort;
 
@@ -33,7 +38,8 @@ public class SSRLocal extends Thread
     private List<String> aclList;
 
     public SSRLocal(String locIP, String rmtIP, int rmtPort, int locPort, String pwd,
-            String cryptMethod, List<String> aclList)
+            String cryptMethod, String tcpProtocol, String obfsMethod, String obfsParam,
+            List<String> aclList)
     {
         this.locIP = locIP;
         this.rmtIP = rmtIP;
@@ -41,6 +47,9 @@ public class SSRLocal extends Thread
         this.locPort = locPort;
         this.pwd = pwd;
         this.cryptMethod = cryptMethod;
+        this.tcpProtocol = tcpProtocol;
+        this.obfsMethod = obfsMethod;
+        this.obfsParam = obfsParam;
         this.aclList = aclList;
     }
 
@@ -52,11 +61,11 @@ public class SSRLocal extends Thread
 
     class ChannelAttach
     {
-        public ByteBuffer localReadBuf = ByteBuffer.allocate(8224);
-        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8224);
+        public ByteBuffer localReadBuf = ByteBuffer.allocate(8192);
+        public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8192);
         public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
-        public AbsObfs obfs;
-        public AbsProtocol proto;
+        public AbsObfs obfs = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam);
+        public AbsProtocol proto = ProtocolChooser.getProtocol(tcpProtocol, rmtIP, rmtPort, 1440);
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
         public volatile boolean isDirect = false;//bypass acl list
@@ -184,6 +193,7 @@ public class SSRLocal extends Thread
             //
             new Thread(new RemoteSocketHandler(attach)).start();
             //
+            //
             while (isRunning)
             {
                 if (!checkSessionAlive(attach))
@@ -198,12 +208,16 @@ public class SSRLocal extends Thread
                 }
                 Log.e("EXC", "READ LOC CNT: " + rcnt);
                 attach.localReadBuf.flip();
+                //attach.localReadBuf.mark();
                 byte[] recv = new byte[attach.localReadBuf.limit()];//size must be limit, not rcnt.
                 attach.localReadBuf.get(recv);
 
                 if (!attach.isDirect)
                 {
+                    recv = attach.proto.beforeEncrypt(recv);
+                    Utils.bytesHexDmp("EXC - LOC DATA", recv);
                     recv = attach.crypto.encrypt(recv);
+                    recv = attach.obfs.afterEncrypt(recv);
                 }
 
                 int wcnt = attach.remoteSkt.write(ByteBuffer.wrap(recv));
@@ -426,9 +440,12 @@ public class SSRLocal extends Thread
                     attach.remoteReadBuf.get(recv);
                     if (!attach.isDirect)
                     {
+                        recv = attach.obfs.beforeDecrypt(recv, false);//TODO
                         recv = attach.crypto.decrypt(recv);
+                        recv = attach.proto.afterDecrypt(recv);
+                        Utils.bytesHexDmp("EXC - RECV DAT", recv);
                     }
-                    //Utils.bytesHexDmp("remote read", recv);
+
                     int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
                     if (wcnt != recv.length)
                     {

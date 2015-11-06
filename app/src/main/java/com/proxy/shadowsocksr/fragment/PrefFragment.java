@@ -3,6 +3,7 @@ package com.proxy.shadowsocksr.fragment;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
+import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
@@ -27,10 +28,10 @@ public class PrefFragment extends PreferenceFragment
     private SummaryEditTextPreference prefLocPort;
     private SummaryListPreference prefCryptMethod;
     private PasswordPreference prefPwd;
-    private CheckBoxPreference prefEnableSSR;
     //SSR
     private SummaryListPreference prefTcpProto;
     private SummaryListPreference prefObfsMethod;
+    private SummaryEditTextPreference prefObfsParam;
     private CheckBoxPreference prefTcpOverUdp;
     private CheckBoxPreference prefUdpOverTcp;
     //Global
@@ -55,10 +56,10 @@ public class PrefFragment extends PreferenceFragment
         prefLocPort = (SummaryEditTextPreference) findPreference("local_port");
         prefCryptMethod = (SummaryListPreference) findPreference("crypt_method");
         prefPwd = (PasswordPreference) findPreference("password");
-        prefEnableSSR = (CheckBoxPreference) findPreference("enable_ssr");
         //SSR
         prefTcpProto = (SummaryListPreference) findPreference("protocol_type");
         prefObfsMethod = (SummaryListPreference) findPreference("obfs_method");
+        prefObfsParam = (SummaryEditTextPreference) findPreference("obfs_param");
         prefTcpOverUdp = (CheckBoxPreference) findPreference("tcp_over_udp");
         prefUdpOverTcp = (CheckBoxPreference) findPreference("udp_over_tcp");
         //Global
@@ -67,22 +68,36 @@ public class PrefFragment extends PreferenceFragment
         prefGlobal = (CheckBoxPreference) findPreference("global_proxy");
         prefUdpRelay = (CheckBoxPreference) findPreference("udp_forwarding");
         prefAuto = (CheckBoxPreference) findPreference("auto_connect");
+        //
+        configSpecialPref();
     }
 
-//    @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
-//            Bundle savedInstanceState)
-//    {
-//        //View v = super.onCreateView(inflater, container, savedInstanceState);
-//
-//        //if (v != null)
-//        //{
-//            //ListView lv = (ListView) v.findViewById(android.R.id.list);
-//            //ViewCompat.setNestedScrollingEnabled(lv, true);
-//            //lv.setClipToPadding(false);
-//            //lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
-//        //}
-//        return super.onCreateView(inflater, container, savedInstanceState);
-//    }
+    private void configSpecialPref()
+    {
+        prefObfsMethod.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener()
+        {
+            @Override public boolean onPreferenceChange(Preference pref, Object val)
+            {
+                prefObfsParam.setEnabled(val.equals("http_simple"));
+                return true;
+            }
+        });
+    }
+
+    //    @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    //            Bundle savedInstanceState)
+    //    {
+    //        //View v = super.onCreateView(inflater, container, savedInstanceState);
+    //
+    //        //if (v != null)
+    //        //{
+    //            //ListView lv = (ListView) v.findViewById(android.R.id.list);
+    //            //ViewCompat.setNestedScrollingEnabled(lv, true);
+    //            //lv.setClipToPadding(false);
+    //            //lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
+    //        //}
+    //        return super.onCreateView(inflater, container, savedInstanceState);
+    //    }
 
     @Override public void onResume()
     {
@@ -121,9 +136,12 @@ public class PrefFragment extends PreferenceFragment
         prefCryptMethod.setEnabled(isEnable);
         prefPwd.setEnabled(isEnable);
         //SSR
-        prefEnableSSR.setEnabled(isEnable);
         prefTcpProto.setEnabled(isEnable);
         prefObfsMethod.setEnabled(isEnable);
+        //
+        prefObfsParam
+                .setEnabled(isEnable && prefObfsMethod.getValue().equals("http_simple"));
+        //
         prefTcpOverUdp.setEnabled(isEnable);
         prefUdpOverTcp.setEnabled(isEnable);
         //Global
@@ -194,10 +212,12 @@ public class PrefFragment extends PreferenceFragment
             ss.server = sp.getString(key, Consts.defaultIP);
             break;
         case "remote_port":
-            ss.remotePort = Integer.valueOf(sp.getString(key, String.valueOf(Consts.remotePort)));
+            ss.remotePort = Integer
+                    .valueOf(sp.getString(key, String.valueOf(Consts.defaultRemotePort)));
             break;
         case "local_port":
-            ss.localPort = Integer.valueOf(sp.getString(key, String.valueOf(Consts.remotePort)));
+            ss.localPort = Integer
+                    .valueOf(sp.getString(key, String.valueOf(Consts.defaultRemotePort)));
             break;
         case "crypt_method":
             ss.cryptMethod = sp.getString(key, Consts.defaultCryptMethod);
@@ -205,14 +225,14 @@ public class PrefFragment extends PreferenceFragment
         case "password":
             ss.passwd = sp.getString(key, "");
             break;
-        case "enable_ssr":
-            ss.enableSSR = sp.getBoolean(key, false);
-            break;
         case "protocol_type":
             ss.tcpProtocol = sp.getString(key, Consts.defaultTcpProtocol);
             break;
         case "obfs_method":
             ss.obfsMethod = sp.getString(key, Consts.defaultObfsMethod);
+            break;
+        case "obfs_param":
+            ss.obfsParam = sp.getString(key, "");
             break;
         case "tcp_over_udp":
             ss.tcpOverUdp = sp.getBoolean(key, false);
@@ -234,10 +254,13 @@ public class PrefFragment extends PreferenceFragment
         prefCryptMethod.setValue(ss.cryptMethod);
         prefLocPort.setText(ss.localPort + "");
         prefPwd.setText(ss.passwd);
-        prefEnableSSR.setChecked(ss.enableSSR);
         //SSR
         prefTcpProto.setValue(ss.tcpProtocol);
         prefObfsMethod.setValue(ss.obfsMethod);
+        prefObfsParam.setText(ss.obfsParam);
+        //
+        prefObfsParam.setEnabled(ss.obfsMethod.equals("http_simple"));
+        //
         prefTcpOverUdp.setChecked(ss.tcpOverUdp);
         prefUdpOverTcp.setChecked(ss.udpOverTcp);
         //Global

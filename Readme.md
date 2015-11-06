@@ -13,13 +13,15 @@ Compatible Shadowsocks protocol and will support ShadowsocksR protocol in the fu
 * Fix bug.
 * Write java implementation of ShadowsocksR.
 
-##Requisites for compile
+##Develop
 
 * JDK 1.7+
 * Android SDK 23+
 * Android NDK r10e+
 
-Please use the latest version of Android Studio to reduce problems.
+* Please use the latest version of Android Studio to reduce problems.
+
+* [Plugin develop Spec.(Chinese,中文)](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/PluginDevSpec.md)
 
 ##Changes
 

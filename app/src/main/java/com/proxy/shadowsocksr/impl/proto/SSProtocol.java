@@ -2,9 +2,9 @@ package com.proxy.shadowsocksr.impl.proto;
 
 public class SSProtocol extends AbsProtocol
 {
-    public SSProtocol(String rmtIP, int tcpMss, String usrParamStr)
+    public SSProtocol(String rmtIP, int rmtPort, int tcpMss)
     {
-        super(rmtIP, tcpMss, usrParamStr);
+        super(rmtIP, rmtPort, tcpMss);
     }
 
     @Override public byte[] beforeEncrypt(byte[] data)

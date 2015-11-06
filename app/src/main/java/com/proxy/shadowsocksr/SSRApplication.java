@@ -48,12 +48,11 @@ public class SSRApplication extends Application
         {
             SSRProfile dftSSRProfile = new SSRProfile(
                     Consts.defaultIP,
-                    Consts.remotePort,
-                    Consts.localPort,
+                    Consts.defaultRemotePort,
+                    Consts.defaultLocalPort,
                     Consts.defaultCryptMethod,
-                    "", false,
-                    Consts.defaultTcpProtocol,
-                    Consts.defaultObfsMethod,
+                    "", Consts.defaultTcpProtocol,
+                    Consts.defaultObfsMethod, "",
                     false, false);
             Hawk.put("Sample", dftSSRProfile);
 

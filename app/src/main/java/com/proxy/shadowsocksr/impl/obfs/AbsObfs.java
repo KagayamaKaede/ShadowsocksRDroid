@@ -2,8 +2,17 @@ package com.proxy.shadowsocksr.impl.obfs;
 
 public abstract class AbsObfs
 {
-    public AbsObfs(String rmtIP, int tcpMss, String usrParamStr)
+    protected String obfsParam;
+    protected final String remoteIP;
+    protected final int remotePort;
+    protected final int tcpMss;
+
+    public AbsObfs(String usrParamStr, String rmtIP, int rmtPort, int tcpMss)
     {
+        obfsParam = usrParamStr;
+        remoteIP = rmtIP;
+        remotePort = rmtPort;
+        this.tcpMss = tcpMss;
     }
 
     /**

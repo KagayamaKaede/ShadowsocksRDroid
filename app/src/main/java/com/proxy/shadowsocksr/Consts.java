@@ -5,10 +5,10 @@ import android.annotation.SuppressLint;
 public class Consts
 {
     //Default ss profile
-    public final static String defaultIP = "1.2.3.4";
+    public final static String defaultIP = "please.change.me";
     public final static String defaultCryptMethod = "aes-256-cfb";
-    public final static int remotePort = 2333;
-    public final static int localPort = 1093;
+    public final static int defaultRemotePort = 2333;
+    public final static int defaultLocalPort = 1093;
     //SSR
     public final static String defaultTcpProtocol="origin";
     public final static String defaultObfsMethod="plain";

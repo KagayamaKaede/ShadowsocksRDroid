@@ -2,8 +2,15 @@ package com.proxy.shadowsocksr.impl.proto;
 
 public abstract class AbsProtocol
 {
-    public AbsProtocol(String rmtIP, int tcpMss, String usrParamStr)
+    protected final String remoteIP;
+    protected final int remotePort;
+    protected final int tcpMss;
+
+    public AbsProtocol(String rmtIP, int rmtPort, int tcpMss)
     {
+        remoteIP = rmtIP;
+        remotePort = rmtPort;
+        this.tcpMss = tcpMss;
     }
 
     /**

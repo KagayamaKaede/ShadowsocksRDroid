@@ -19,6 +19,7 @@ public class ConnectProfile implements Parcelable
     //SSR
     public String tcpProtocol;
     public String obfsMethod;
+    public String obfsParam;
     public boolean tcpOverUdp;
     public boolean udpOverTcp;
     //
@@ -44,10 +45,10 @@ public class ConnectProfile implements Parcelable
         localPort = ssp.localPort;
         cryptMethod = ssp.cryptMethod;
         passwd = ssp.passwd;
-        enableSSR = ssp.enableSSR;
         //SSR
         tcpProtocol = ssp.tcpProtocol;
         obfsMethod = ssp.obfsMethod;
+        obfsParam = ssp.obfsParam;
         tcpOverUdp = ssp.tcpOverUdp;
         udpOverTcp = ssp.udpOverTcp;
         //Global
@@ -71,6 +72,7 @@ public class ConnectProfile implements Parcelable
         //SSR
         tcpProtocol = in.readString();
         obfsMethod = in.readString();
+        obfsParam = in.readString();
         tcpOverUdp = in.readInt() == 1;
         udpOverTcp = in.readInt() == 1;
         //Global
@@ -113,6 +115,7 @@ public class ConnectProfile implements Parcelable
         dest.writeInt(enableSSR ? 1 : 0);
         dest.writeString(tcpProtocol);
         dest.writeString(obfsMethod);
+        dest.writeString(obfsParam);
         dest.writeInt(tcpOverUdp ? 1 : 0);
         dest.writeInt(udpOverTcp ? 1 : 0);
         dest.writeString(route);

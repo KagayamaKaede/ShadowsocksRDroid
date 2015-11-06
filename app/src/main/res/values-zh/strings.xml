@@ -46,7 +46,6 @@
     <string name="req_install_qrscan_app">是否安装 条码扫描器？</string>
     <string name="req_install_qrscan_app_msg">我们需要 条码扫描器来扫描二维码，您想要安装它吗？</string>
     <string name="show_qr">显示当前二维码</string>
-    <string name="enable_shadowsocksr_feature">启用 影梭R 功能(暂不支持)</string>
     <string name="enable_tcp_over_udp">启用 TCP over UDP</string>
     <string name="enable_udp_over_tcp">启用 UDP over TCP</string>
     <string name="obfs_method">混淆方法</string>
@@ -58,4 +57,5 @@
     <string name="disconnecting">连接断开中&#8230;</string>
     <string name="forwarding_ipv6_traffic_to_remote">转发 IPv6 流量到远程服务器</string>
     <string name="ipv6_route">IPv6 路由</string>
+    <string name="obfs_param">混淆参数</string>
 </resources>

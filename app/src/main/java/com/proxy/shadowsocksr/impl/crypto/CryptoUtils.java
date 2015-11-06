@@ -1,21 +1,10 @@
 package com.proxy.shadowsocksr.impl.crypto;
 
-import android.util.Log;
-
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
-public final class Utils
+public final class CryptoUtils
 {
-    public static byte[] randomBytes(int len)
-    {
-        byte[] bs = new byte[len];
-        new SecureRandom().nextBytes(bs);
-        return bs;
-    }
-
     public static void EVP_BytesToKey(byte[] password, byte[] key)
     {
         byte[] result = new byte[password.length + 16];
@@ -43,27 +32,5 @@ public final class Utils
             {
             }
         }
-    }
-
-    public static void bytesHexDmp(String tag,byte[] bytes)
-    {
-        StringBuilder sb=new StringBuilder();
-        for (byte b:bytes)
-        {
-            sb.append(String.format("%02X ",b));
-        }
-        Log.e(tag,sb.toString());
-    }
-
-    public static void bufHexDmp(String tag,ByteBuffer bb)
-    {
-        StringBuilder sb=new StringBuilder();
-        int st=bb.position();
-        int cnt=bb.limit();
-        for(;st<cnt;st++)
-        {
-            sb.append(String.format("%02X ",bb.get(st)));
-        }
-        Log.e(tag,sb.toString());
     }
 }

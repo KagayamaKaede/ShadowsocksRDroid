@@ -118,7 +118,7 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
         {
             session = cp.label;
             ssrProfile = new SSRProfile(cp.server, cp.remotePort, cp.localPort, cp.cryptMethod,
-                                        cp.passwd, cp.enableSSR, cp.tcpProtocol, cp.obfsMethod,
+                                        cp.passwd, cp.tcpProtocol, cp.obfsMethod, cp.obfsParam,
                                         cp.tcpOverUdp, cp.udpOverTcp);
             globalProfile = new GlobalProfile(cp.route, cp.ipv6Route, cp.globalProxy, cp.dnsForward,
                                               cp.autoConnect);
@@ -342,6 +342,9 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                              ssrProfile.localPort,
                              ssrProfile.passwd,
                              ssrProfile.cryptMethod,
+                             ssrProfile.tcpProtocol,
+                             ssrProfile.obfsMethod,
+                             ssrProfile.obfsParam,
                              aclList);
 
         local.setOnNeedProtectTCPListener(this);
@@ -360,7 +363,11 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private void startDnsTunnel()
     {
         tunnel = new SSRTunnel(ssrProfile.server, "127.0.0.1", "8.8.8.8", ssrProfile.remotePort,
-                               8163, 53, ssrProfile.cryptMethod, ssrProfile.passwd);
+                               8163, 53, ssrProfile.cryptMethod,
+                               ssrProfile.tcpProtocol,
+                               ssrProfile.obfsMethod,
+                               ssrProfile.obfsParam,
+                               ssrProfile.passwd);
 
         tunnel.setOnNeedProtectTCPListener(this);
         tunnel.start();
