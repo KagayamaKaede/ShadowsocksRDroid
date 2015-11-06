@@ -18,4 +18,8 @@
 
 7. 如果您的混淆插件需要用户输入字符串参数，请修改PrefFragment类的configSpecialPref()、setPrefEnabled(boolean isEnable)以及loadCurrentPref()方法，以便App可以正确启用EditTextPreference供用户输入。
 
+##Tip
+
+1. 由于添加了协议，可能会产生由协议本身导致的断包，粘包的问题，这些需由插件自己处理，因为主程序不向插件暴露Buffer。
+
 ####如果您既想使用我们开发的SSR Droid，又想用自己写的插件（或是协议，混淆的思路）并且愿意公开它，那么欢迎Pull Request或通过任何你能联系到我们的方式来提交您的智慧结晶，我们会视情况将其加入并发布出来。

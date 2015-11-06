@@ -23,7 +23,7 @@ public class VerifySimpleProtocol extends AbsProtocol
             return data;
         }
         int rndLen = Utils.randomInt(16); //0~15
-        byte[] out = new byte[2 + 1 + rndLen - 1 + data.length + 4];
+        byte[] out = new byte[2 + 1 + rndLen + data.length + 4];
         out[0] = (byte) ((out.length >> 8) & 0xFF);
         out[1] = (byte) (out.length & 0xFF);
         out[2] = (byte) (rndLen + 1); //include this byte
@@ -53,13 +53,14 @@ public class VerifySimpleProtocol extends AbsProtocol
 
     @Override public byte[] afterDecrypt(byte[] data)
     {
-        ByteBuffer bb = ByteBuffer.allocate((data.length / 8192 + 1) * UNIT_SIZE);
+        ByteBuffer bb = ByteBuffer.allocate((data.length / 8191 + 1) * UNIT_SIZE);
         for (int i = 0; i < data.length; )
         {
-            short len = (short) ((data[i] & 0xFF) | ((data[i + 1] << 8) & 0xFF));
-            if (len > 8192)
+            short len = (short) (((data[i] & 0xFF) << 8) | (data[i + 1] & 0xFF));
+            //
+            if (len >= 8192)
             {
-                Log.e("EXC", "TO BIG");
+                Log.e("EXC", "TOO BIG");
                 return new byte[0];
             }
             //
@@ -75,14 +76,12 @@ public class VerifySimpleProtocol extends AbsProtocol
                     continue;
                 }
             }
-            Log.e("EXC", "NULL");
             return new byte[0];
         }
 
         bb.flip();
         byte[] out = new byte[bb.limit()];
         bb.get(out);
-        Log.e("EXC", "parser protocol ok");
         return out;
     }
 }

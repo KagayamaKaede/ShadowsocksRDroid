@@ -273,7 +273,7 @@ public class SSRTunnel extends Thread
                     recv = attach.obfs.beforeDecrypt(recv, false);//TODO
                     recv = attach.crypto.decrypt(recv);
                     recv = attach.proto.afterDecrypt(recv);
-                    CryptoUtils.bytesHexDmp("EXC - DRECV", recv);
+                    Utils.bytesHexDmp("EXC - DRECV", recv);
                     //
                     //Utils.bytesHexDmp("remote read", recv);
                     int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
