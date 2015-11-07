@@ -1,5 +1,6 @@
 package com.proxy.shadowsocksr;
 
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
@@ -9,6 +10,7 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.support.v4.app.NotificationCompat;
 
 import com.proxy.shadowsocksr.impl.SSRLocal;
 import com.proxy.shadowsocksr.impl.SSRTunnel;
@@ -56,13 +58,6 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private SSRLocal local = null;
     private SSRTunnel tunnel = null;
     private UDPRelayServer udprs = null;
-
-    @Override public void onCreate()
-    {
-        super.onCreate();
-        //TODO force service run on foreground.
-        //Notification notification=new Notification()
-    }
 
     @Override public IBinder onBind(Intent intent)
     {
@@ -273,6 +268,20 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
                                 {
                                 }
                             }
+                            PendingIntent open = PendingIntent.getActivity(
+                                    SSRVPNService.this, -1, new Intent(
+                                            SSRVPNService.this, MainActivity.class), 0);
+                            NotificationCompat.Builder notificationBuilder
+                                    = new NotificationCompat.Builder(SSRVPNService.this);
+                            notificationBuilder.setWhen(0)
+                                               .setTicker("VPN service started")
+                                               .setContentTitle(getString(R.string.app_name))
+                                               .setContentText(session)
+                                               .setContentIntent(open)
+                                               .setPriority(NotificationCompat.PRIORITY_MIN)
+                                               .setSmallIcon(R.drawable.ic_stat_shadowsocks);
+                            startForeground(1, notificationBuilder.build());
+                            //
                             return;
                         }
                         tries++;
@@ -299,6 +308,9 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
 
         //reset
         killProcesses();
+
+        //
+        stopForeground(true);
 
         //close conn
         if (conn != null)
