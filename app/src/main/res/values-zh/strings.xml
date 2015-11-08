@@ -15,7 +15,6 @@
     <string name="not_set_yet">尚未设置</string>
     <string name="password">密码</string>
     <string name="per_app_proxy">分应用代理</string>
-    <string name="relay_udp_packet_to_remote_svr">转发UDP包到远程服务器</string>
     <string name="remote_port">远程端口</string>
     <string name="remote_server_port">远程服务器端口</string>
     <string name="route">路由</string>
@@ -23,7 +22,7 @@
     <string name="server_name">服务器</string>
     <string name="set_proxy_for_sel_apps">给选中的应用设置代理</string>
     <string name="start_ssr_on_startup">开机自动启动 影梭R</string>
-    <string name="udp_relay">UDP转发</string>
+    <string name="udp_dns">使用UDP协议解析域名</string>
     <string name="whether_use_route">是否使用路由</string>
     <string name="all">全局</string>
     <string name="bypass_lan">绕过局域网</string>

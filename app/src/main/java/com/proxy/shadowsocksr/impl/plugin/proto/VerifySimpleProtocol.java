@@ -13,7 +13,7 @@ public class VerifySimpleProtocol extends AbsProtocol
     public VerifySimpleProtocol(String rmtIP, int rmtPort, int tcpMss,
             HashMap<String, Object> shareParam)
     {
-        super(rmtIP, rmtPort, tcpMss,shareParam);
+        super(rmtIP, rmtPort, tcpMss, shareParam);
     }
 
     private final int UNIT_SIZE = 8100;// 8191 - 2 - 1 - 15 - 4;
@@ -33,7 +33,7 @@ public class VerifySimpleProtocol extends AbsProtocol
         out[2] = (byte) (rndLen + 1); //include this byte
         System.arraycopy(Utils.randomBytes(rndLen), 0, out, 3,
                          rndLen);//if rndLen=0, no byte will be copy.
-        System.arraycopy(data, 0, out, rndLen + 2 + 1, data.length);
+        System.arraycopy(data, 0, out, 2 + 1 + rndLen, data.length);
         Utils.fillCRC32(Arrays.copyOfRange(out, 0, out.length - 4), out, out.length - 4);
         return out;
     }
@@ -43,7 +43,6 @@ public class VerifySimpleProtocol extends AbsProtocol
         ByteBuffer bb = ByteBuffer.allocate((data.length / UNIT_SIZE + 1) * 8191);
         while (data.length > UNIT_SIZE)
         {
-            Log.e("EXC", "SPLIT DATA");
             bb.put(packData(Arrays.copyOfRange(data, 0, UNIT_SIZE)));
             data = Arrays.copyOfRange(data, UNIT_SIZE, data.length);
         }
@@ -63,7 +62,6 @@ public class VerifySimpleProtocol extends AbsProtocol
             System.arraycopy(tmpBytes, 0, buf, 0, tmpBytes.length);
             System.arraycopy(data, 0, buf, tmpBytes.length, data.length);
             tmpBytes = null;
-            Utils.bytesHexDmp("ETC", buf);
         }
         else
         {
@@ -73,7 +71,7 @@ public class VerifySimpleProtocol extends AbsProtocol
         ByteBuffer bb = ByteBuffer.allocate((buf.length / 8191 + 1) * UNIT_SIZE);
         for (int i = 0; i < buf.length; )
         {
-            if (buf.length - i <= 8)
+            if (buf.length - i < 7)
             {
                 Log.e("EXC", "TOO SHORT");
                 tmpBytes = Arrays.copyOfRange(buf, i, buf.length);
@@ -82,7 +80,7 @@ public class VerifySimpleProtocol extends AbsProtocol
 
             short len = (short) (((buf[i] & 0xFF) << 8) | (buf[i + 1] & 0xFF));
             //
-            if (len <= 8 || len >= 8192)
+            if (len < 7 || len > 8191)
             {
                 Log.e("EXC", "TOO LONG OR SHORT");
                 return new byte[0];
@@ -93,21 +91,16 @@ public class VerifySimpleProtocol extends AbsProtocol
                 tmpBytes = Arrays.copyOfRange(buf, i, buf.length);
                 break;
             }
-
             //
             byte[] crc = Arrays.copyOfRange(buf, i + len - 4, i + len);
             byte[] dat = Arrays.copyOfRange(buf, i, i + len - 4);
             if (Arrays.equals(crc, Utils.getCRC32(dat)))
             {
                 short rndLen = (short) (dat[2] & 0xFF);
-                if (len - 2 - rndLen - 4 > 0)
-                {
-                    bb.put(Arrays.copyOfRange(dat, 2 + rndLen, dat.length));
-                    i += len;
-                    continue;
-                }
+                bb.put(Arrays.copyOfRange(dat, 2 + rndLen, dat.length));
+                i += len;
+                continue;
             }
-            Log.e("EXC", "CRC ERR");
             return new byte[0];
         }
 

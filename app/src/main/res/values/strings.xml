@@ -19,8 +19,7 @@
     <string name="global_proxy">Global Proxy</string>
     <string name="set_proxy_for_sel_apps">Set proxy for selected apps</string>
     <string name="per_app_proxy">Per App Proxy</string>
-    <string name="relay_udp_packet_to_remote_svr">Forward UDP packets to remote server</string>
-    <string name="udp_relay">UDP Forwarding</string>
+    <string name="udp_dns">Use UDP resolve domain</string>
     <string name="start_ssr_on_startup">Enable ShadowsocksR on startup</string>
     <string name="auto_connect">Auto Connect</string>
     <string name="direct_to_ssr_page">Open ShadowsocksR GitHub page</string>

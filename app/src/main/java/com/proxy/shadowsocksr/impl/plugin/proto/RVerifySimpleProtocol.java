@@ -6,13 +6,14 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 
-public class RewriteVerifySimpleProtocol extends AbsProtocol
+public class RVerifySimpleProtocol extends AbsProtocol
 {
-    private final int UNIT_SIZE = 8100;
+    private final int UNIT_SIZE = 8100;// 8191 - 2 - 1 - 15 - 4;
 
-    public RewriteVerifySimpleProtocol(String rmtIP, int rmtPort, int tcpMss,HashMap<String,Object> shareParam)
+    public RVerifySimpleProtocol(String rmtIP, int rmtPort, int tcpMss,
+            HashMap<String, Object> shareParam)
     {
-        super(rmtIP, rmtPort, tcpMss,shareParam);
+        super(rmtIP, rmtPort, tcpMss, shareParam);
     }
 
     @Override public byte[] beforeEncrypt(byte[] data) throws Exception
@@ -20,20 +21,21 @@ public class RewriteVerifySimpleProtocol extends AbsProtocol
         ByteBuffer buf = ByteBuffer.allocate((data.length / UNIT_SIZE + 1) * 8191);
         int rndLen;
         int dtLen;
+        int rtLen;
         byte[] bt;
         for (int i = 0; i < data.length; )
         {
             rndLen = Utils.randomInt(16); //0~15
             dtLen = data.length - i;
             dtLen = dtLen > UNIT_SIZE ? UNIT_SIZE : dtLen;
-            bt = new byte[2 + 1 + rndLen + dtLen + 4];
-            bt[0] = (byte) ((bt.length >> 8) & 0xFF);
-            bt[1] = (byte) (bt.length & 0xFF);
+            bt = new byte[2 + 1 + rndLen + dtLen];
+            rtLen = bt.length + 4;
+            bt[0] = (byte) ((rtLen >> 8) & 0xFF);
+            bt[1] = (byte) (rtLen & 0xFF);
             bt[2] = (byte) (rndLen + 1); //include this byte
             System.arraycopy(Utils.randomBytes(rndLen), 0, bt, 3, rndLen);
             System.arraycopy(data, i, bt, 2 + 1 + rndLen, dtLen);
-            Utils.fillCRC32(Arrays.copyOfRange(bt, 0, bt.length - 4), bt, bt.length - 4);
-            buf.put(bt);
+            buf.put(bt).put(Utils.getCRC32(bt));
             i += dtLen;
         }
         buf.flip();
@@ -43,6 +45,7 @@ public class RewriteVerifySimpleProtocol extends AbsProtocol
     }
 
     private byte[] tmpBuf = null;
+    private final byte[] nb = new byte[0];
 
     @Override public byte[] afterDecrypt(byte[] data) throws Exception
     {
@@ -58,8 +61,6 @@ public class RewriteVerifySimpleProtocol extends AbsProtocol
         {
             buf = data;
         }
-
-        byte[] nb = new byte[0];
 
         ByteBuffer bb = ByteBuffer.allocate((buf.length / 8191 + 1) * UNIT_SIZE);
 
@@ -88,7 +89,8 @@ public class RewriteVerifySimpleProtocol extends AbsProtocol
             dat = Arrays.copyOfRange(buf, i, i + len - 4);
             if (Arrays.equals(Arrays.copyOfRange(buf, i + len - 4, i + len), Utils.getCRC32(dat)))
             {
-                bb.put(Arrays.copyOfRange(dat, 2 + buf[i + 2], dat.length));
+                bb.put(Arrays.copyOfRange(dat, 2 + (dat[2] & 0xFF), dat.length));
+                i += len;
                 continue;
             }
             return nb;

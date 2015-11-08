@@ -33,13 +33,13 @@ public class AuthSimpleProtocol extends AbsProtocol
         {
             return dft;
         }
-        switch (buf[0])
+        switch (buf[0] & 0xFF)
         {
-        case 1:
+        case 1://ipv4
             return 7;
-        case 3:
-            return 4 + buf[1];
-        case 4:
+        case 3://domain
+            return 4 + (buf[1] & 0xFF);
+        case 4://ipv6
             return 19;
         default:
             return dft;
@@ -69,8 +69,8 @@ public class AuthSimpleProtocol extends AbsProtocol
             }
             headSent = true;
             //
-            int headSize = getHeadSize(data, 30);
-            int dataLen = Math.min(data.length, Utils.randomInt(32) + headSize);
+            int dataLen = Math.min(data.length, Utils.randomInt(32) + getHeadSize(data, 30));
+            //
             byte[] firstPkg = new byte[12 + dataLen];
             Utils.fillEpoch(firstPkg, 0);//utc
             System.arraycopy(clientId, 0, firstPkg, 4, clientId.length);//client id
@@ -86,6 +86,7 @@ public class AuthSimpleProtocol extends AbsProtocol
             data = vsp.beforeEncrypt(data);
             byte[] out = new byte[firstPkg.length + data.length];
             System.arraycopy(firstPkg, 0, out, 0, firstPkg.length);
+            Utils.bytesHexDmp("FP",firstPkg);
             System.arraycopy(data, 0, out, firstPkg.length, data.length);
             //
             return out;

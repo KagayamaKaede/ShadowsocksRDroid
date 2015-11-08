@@ -38,7 +38,7 @@ public class PrefFragment extends PreferenceFragment
     private SummaryListPreference prefRoute;
     private CheckBoxPreference prefIPv6;
     private CheckBoxPreference prefGlobal;
-    private CheckBoxPreference prefUdpRelay;
+    private CheckBoxPreference prefUdpDNS;
     private CheckBoxPreference prefAuto;
 
     private PreferenceManager pm;
@@ -66,7 +66,7 @@ public class PrefFragment extends PreferenceFragment
         prefRoute = (SummaryListPreference) findPreference("route");
         prefIPv6 = (CheckBoxPreference) findPreference("ipv6_route");
         prefGlobal = (CheckBoxPreference) findPreference("global_proxy");
-        prefUdpRelay = (CheckBoxPreference) findPreference("udp_forwarding");
+        prefUdpDNS = (CheckBoxPreference) findPreference("udp_dns");
         prefAuto = (CheckBoxPreference) findPreference("auto_connect");
         //
         configSpecialPref();
@@ -148,7 +148,7 @@ public class PrefFragment extends PreferenceFragment
         prefRoute.setEnabled(isEnable);
         prefIPv6.setEnabled(isEnable);
         prefGlobal.setEnabled(isEnable);
-        prefUdpRelay.setEnabled(isEnable);
+        prefUdpDNS.setEnabled(isEnable);
         prefAuto.setEnabled(isEnable);
         findPreference("per_app_proxy").setEnabled(isEnable);
     }
@@ -169,7 +169,7 @@ public class PrefFragment extends PreferenceFragment
         case "global_proxy":
             globalProfile.globalProxy = sp.getBoolean(key, false);
             break;
-        case "udp_forwarding":
+        case "udp_dns":
             globalProfile.dnsForward = sp.getBoolean(key, true);
             break;
         case "auto_connect":
@@ -268,7 +268,7 @@ public class PrefFragment extends PreferenceFragment
         prefRoute.setValue(globalProfile.route);
         prefIPv6.setChecked(globalProfile.ipv6Route);
         prefGlobal.setChecked(globalProfile.globalProxy);
-        prefUdpRelay.setChecked(globalProfile.dnsForward);
+        prefUdpDNS.setChecked(globalProfile.dnsForward);
         prefAuto.setChecked(globalProfile.autoConnect);
     }
 
