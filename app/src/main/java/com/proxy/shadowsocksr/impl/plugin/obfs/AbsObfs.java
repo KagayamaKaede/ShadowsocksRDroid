@@ -1,4 +1,4 @@
-package com.proxy.shadowsocksr.impl.obfs;
+package com.proxy.shadowsocksr.impl.plugin.obfs;
 
 public abstract class AbsObfs
 {
@@ -22,7 +22,7 @@ public abstract class AbsObfs
      * @param data before process data
      * @return after process data
      */
-    public abstract byte[] afterEncrypt(byte[] data);
+    public abstract byte[] afterEncrypt(byte[] data) throws Exception;
 
     /**
      * If you want to write obfs plugin,<br/>
@@ -31,5 +31,5 @@ public abstract class AbsObfs
      * @param data before process data
      * @return after process data
      */
-    public abstract byte[] beforeDecrypt(byte[] data, boolean needsendback);
+    public abstract byte[] beforeDecrypt(byte[] data, boolean needsendback) throws Exception;
 }

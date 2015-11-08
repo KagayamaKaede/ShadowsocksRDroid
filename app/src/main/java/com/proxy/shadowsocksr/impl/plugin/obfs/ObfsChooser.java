@@ -1,4 +1,4 @@
-package com.proxy.shadowsocksr.impl.obfs;
+package com.proxy.shadowsocksr.impl.plugin.obfs;
 
 public final class ObfsChooser
 {

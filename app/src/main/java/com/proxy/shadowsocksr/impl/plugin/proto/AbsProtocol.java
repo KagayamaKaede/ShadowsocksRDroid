@@ -1,4 +1,6 @@
-package com.proxy.shadowsocksr.impl.proto;
+package com.proxy.shadowsocksr.impl.plugin.proto;
+
+import java.util.HashMap;
 
 public abstract class AbsProtocol
 {
@@ -6,11 +8,14 @@ public abstract class AbsProtocol
     protected final int remotePort;
     protected final int tcpMss;
 
-    public AbsProtocol(String rmtIP, int rmtPort, int tcpMss)
+    protected final HashMap<String, Object> shareParam;
+
+    public AbsProtocol(String rmtIP, int rmtPort, int tcpMss, HashMap<String, Object> shareParam)
     {
         remoteIP = rmtIP;
         remotePort = rmtPort;
         this.tcpMss = tcpMss;
+        this.shareParam = shareParam;
     }
 
     /**
@@ -20,7 +25,7 @@ public abstract class AbsProtocol
      * @param data before process data
      * @return after process data
      */
-    public abstract byte[] beforeEncrypt(byte[] data);
+    public abstract byte[] beforeEncrypt(byte[] data) throws Exception;
 
     /**
      * If you want to write protocol plugin,<br/>
@@ -29,5 +34,5 @@ public abstract class AbsProtocol
      * @param data before process data
      * @return after process data
      */
-    public abstract byte[] afterDecrypt(byte[] data);
+    public abstract byte[] afterDecrypt(byte[] data) throws Exception;
 }

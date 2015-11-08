@@ -2,12 +2,11 @@ package com.proxy.shadowsocksr.impl;
 
 import android.util.Log;
 
-import com.proxy.shadowsocksr.impl.crypto.CryptoUtils;
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
-import com.proxy.shadowsocksr.impl.obfs.AbsObfs;
-import com.proxy.shadowsocksr.impl.obfs.ObfsChooser;
-import com.proxy.shadowsocksr.impl.proto.AbsProtocol;
-import com.proxy.shadowsocksr.impl.proto.ProtocolChooser;
+import com.proxy.shadowsocksr.impl.plugin.obfs.AbsObfs;
+import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser;
+import com.proxy.shadowsocksr.impl.plugin.proto.AbsProtocol;
+import com.proxy.shadowsocksr.impl.plugin.proto.ProtocolChooser;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -15,6 +14,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,6 +39,8 @@ public class SSRTunnel extends Thread
     private volatile boolean isRunning = true;
 
     private OnNeedProtectTCPListener onNeedProtectTCPListener;
+
+    private HashMap<String, Object> shareParam;
 
     public SSRTunnel(String remoteIP, String localIP, String dnsIP, int remotePort, int localPort,
             int dnsPort, String cryptMethod, String tcpProtocol, String obfsMethod,
@@ -78,13 +80,14 @@ public class SSRTunnel extends Thread
         public AbsObfs obfs = ObfsChooser
                 .getObfs(obfsMethod, remoteIP, remotePort, 1440, obfsParam);
         public AbsProtocol proto = ProtocolChooser
-                .getProtocol(tcpProtocol, remoteIP, remotePort, 1440);
+                .getProtocol(tcpProtocol, remoteIP, remotePort, 1440, shareParam);
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
     }
 
     @Override public void run()
     {
+        shareParam = new HashMap<>();
         exec = Executors.newCachedThreadPool();
         //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 
@@ -273,9 +276,7 @@ public class SSRTunnel extends Thread
                     recv = attach.obfs.beforeDecrypt(recv, false);//TODO
                     recv = attach.crypto.decrypt(recv);
                     recv = attach.proto.afterDecrypt(recv);
-                    Utils.bytesHexDmp("EXC - DRECV", recv);
                     //
-                    //Utils.bytesHexDmp("remote read", recv);
                     int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
                     if (wcnt != recv.length)
                     {
@@ -286,7 +287,7 @@ public class SSRTunnel extends Thread
             }
             catch (Exception e)
             {
-                Log.e("EXC", "REMOTE EXEC");
+                Log.e("EXC", "REMOTE EXEC: T" + e.getMessage());
             }
             cleanSession(attach);
         }

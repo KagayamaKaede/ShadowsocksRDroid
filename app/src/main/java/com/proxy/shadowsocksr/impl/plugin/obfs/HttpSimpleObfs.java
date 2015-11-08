@@ -1,4 +1,4 @@
-package com.proxy.shadowsocksr.impl.obfs;
+package com.proxy.shadowsocksr.impl.plugin.obfs;
 
 import com.proxy.shadowsocksr.impl.Utils;
 
@@ -20,7 +20,7 @@ public class HttpSimpleObfs extends AbsObfs
     private boolean headSent = false;
     private boolean headRecv = false;
 
-    @Override public byte[] afterEncrypt(byte[] data)
+    @Override public byte[] afterEncrypt(byte[] data) throws Exception
     {
         if (headSent)
         {
@@ -55,7 +55,7 @@ public class HttpSimpleObfs extends AbsObfs
         return sb.toString().getBytes();
     }
 
-    @Override public byte[] beforeDecrypt(byte[] data, boolean needsendback)
+    @Override public byte[] beforeDecrypt(byte[] data, boolean needsendback) throws Exception
     {
         if (headRecv)
         {

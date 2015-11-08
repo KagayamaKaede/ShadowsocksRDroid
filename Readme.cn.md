@@ -3,15 +3,16 @@
 [English version introduction](https://github.com/KagayamaKaede/ShadowsocksRDroid)
 
 这是一个用Java编写的ShadowSocksR安卓客户端，支持安卓4.0+，支持64位CPU机型。
-兼容Shadowsocks协议，在未来会加入对ShadowsocksR协议的支持。
+兼容Shadowsocks协议，目前已加入部分对ShadowsocksR协议的支持。
 
 ##计划
 
 * 完成 java 版本的 Shadowsocks.
 * 完善材料设计UI.
 * 提升性能，降低内存和电池使用率。
-* ~~正确使用杀虫剂~~(修复bug)。
+* 修复bug。
 * 写 java 版本的 ShadowsocksR.
+* 如果我有足够的时间, （可能）会写NAT模式（如果需要）。
 
 ##开发
 
@@ -35,6 +36,7 @@
 
 * [shadowsocks](https://github.com/shadowsocks "shadowsocks github 组") github 组 全体人员。
 * [ShadowsocksR](https://github.com/breakwa11) 开发者。
+* 所有测试者。
 
 ##开源许可证
 

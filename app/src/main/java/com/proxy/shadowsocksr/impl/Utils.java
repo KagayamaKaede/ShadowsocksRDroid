@@ -25,7 +25,7 @@ public final class Utils
     public static byte[] getCRC32(byte[] src)
     {
         byte[] dst = new byte[4];
-        fillCRC32(src,dst,0);
+        fillCRC32(src, dst, 0);
         return dst;
     }
 
@@ -44,8 +44,21 @@ public final class Utils
     public static byte[] randomBytes(int len)
     {
         byte[] bs = new byte[len];
+        if (len == 0)
+        {
+            return bs;
+        }
         srnd.nextBytes(bs);
         return bs;
+    }
+
+    //
+    public static void fillIntAsBytes(int i,byte[] dst,int dstOff)
+    {
+        dst[dstOff] = (byte) (i);
+        dst[dstOff + 1] = (byte) (i >> 8);
+        dst[dstOff + 2] = (byte) (i >> 16);
+        dst[dstOff + 3] = (byte) (i >> 24);
     }
 
     //
@@ -69,5 +82,14 @@ public final class Utils
             sb.append(String.format("%02X ", bb.get(st)));
         }
         Log.e(tag, sb.toString());
+    }
+
+    public static void fillEpoch(byte[] dst, int dstOff)
+    {
+        long cur = (System.currentTimeMillis() / 1000L) & 0xFFFFFFFFL;
+        dst[dstOff] = (byte) (cur);
+        dst[dstOff + 1] = (byte) (cur >> 8);
+        dst[dstOff + 2] = (byte) (cur >> 16);
+        dst[dstOff + 3] = (byte) (cur >> 24);
     }
 }

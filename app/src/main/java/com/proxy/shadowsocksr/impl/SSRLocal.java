@@ -3,15 +3,16 @@ package com.proxy.shadowsocksr.impl;
 import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener;
-import com.proxy.shadowsocksr.impl.obfs.AbsObfs;
-import com.proxy.shadowsocksr.impl.obfs.ObfsChooser;
-import com.proxy.shadowsocksr.impl.proto.AbsProtocol;
-import com.proxy.shadowsocksr.impl.proto.ProtocolChooser;
+import com.proxy.shadowsocksr.impl.plugin.obfs.AbsObfs;
+import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser;
+import com.proxy.shadowsocksr.impl.plugin.proto.AbsProtocol;
+import com.proxy.shadowsocksr.impl.plugin.proto.ProtocolChooser;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +37,8 @@ public class SSRLocal extends Thread
     private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
     private List<String> aclList;
+
+    private HashMap<String, Object> shareParam;
 
     public SSRLocal(String locIP, String rmtIP, int rmtPort, int locPort, String pwd,
             String cryptMethod, String tcpProtocol, String obfsMethod, String obfsParam,
@@ -65,7 +68,8 @@ public class SSRLocal extends Thread
         public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8192);
         public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
         public AbsObfs obfs = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam);
-        public AbsProtocol proto = ProtocolChooser.getProtocol(tcpProtocol, rmtIP, rmtPort, 1440);
+        public AbsProtocol proto = ProtocolChooser
+                .getProtocol(tcpProtocol, rmtIP, rmtPort, 1440, shareParam);
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
         public volatile boolean isDirect = false;//bypass acl list
@@ -73,6 +77,7 @@ public class SSRLocal extends Thread
 
     @Override public void run()
     {
+        shareParam=new HashMap<>();
         exec = Executors.newCachedThreadPool();
         //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 
@@ -193,7 +198,6 @@ public class SSRLocal extends Thread
             //
             new Thread(new RemoteSocketHandler(attach)).start();
             //
-            //
             while (isRunning)
             {
                 if (!checkSessionAlive(attach))
@@ -215,7 +219,6 @@ public class SSRLocal extends Thread
                 if (!attach.isDirect)
                 {
                     recv = attach.proto.beforeEncrypt(recv);
-                    Utils.bytesHexDmp("EXC - LOC DATA", recv);
                     recv = attach.crypto.encrypt(recv);
                     recv = attach.obfs.afterEncrypt(recv);
                 }
@@ -267,15 +270,14 @@ public class SSRLocal extends Thread
             return false;
         }
         attach.localReadBuf.flip();
-        //Utils.bufHexDmp("AUTH", attach.localReadBuf.duplicate());
         if (attach.localReadBuf.get() != 0x05)//Socks Version
         {
             return false;
         }
 
         int methodCnt = attach.localReadBuf.get();
-        if (attach.localReadBuf.limit() - attach.localReadBuf.position() < methodCnt ||
-            attach.localReadBuf.limit() - attach.localReadBuf.position() > methodCnt)
+        int mCnt = attach.localReadBuf.limit() - attach.localReadBuf.position();
+        if (mCnt < methodCnt || mCnt > methodCnt)
         {
             return false;
         }
@@ -401,9 +403,8 @@ public class SSRLocal extends Thread
         {
             ssc.close();
         }
-        catch (Exception e)
+        catch (Exception ignored)
         {
-            Log.e("EXC", "" + e.getMessage());
         }
         exec.shutdown();
         ssc = null;
@@ -443,7 +444,6 @@ public class SSRLocal extends Thread
                         recv = attach.obfs.beforeDecrypt(recv, false);//TODO
                         recv = attach.crypto.decrypt(recv);
                         recv = attach.proto.afterDecrypt(recv);
-                        Utils.bytesHexDmp("EXC - RECV DAT", recv);
                     }
 
                     int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
@@ -456,7 +456,7 @@ public class SSRLocal extends Thread
             }
             catch (Exception e)
             {
-                Log.e("EXC", "REMOTE EXEC");
+                Log.e("EXC", "REMOTE EXEC L: " + e.getMessage());
             }
             cleanSession(attach);
         }

@@ -1,4 +1,4 @@
-package com.proxy.shadowsocksr.impl.obfs;
+package com.proxy.shadowsocksr.impl.plugin.obfs;
 
 public class SSObfs extends AbsObfs
 {
@@ -7,12 +7,12 @@ public class SSObfs extends AbsObfs
         super(usrParamStr, rmtIP,rmtPort, tcpMss);
     }
 
-    @Override public byte[] afterEncrypt(byte[] data)
+    @Override public byte[] afterEncrypt(byte[] data) throws Exception
     {
         return data;
     }
 
-    @Override public byte[] beforeDecrypt(byte[] data, boolean needsendback)
+    @Override public byte[] beforeDecrypt(byte[] data, boolean needsendback) throws Exception
     {
         return data;
     }
