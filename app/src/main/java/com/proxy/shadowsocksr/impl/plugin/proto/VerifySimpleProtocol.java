@@ -1,7 +1,5 @@
 package com.proxy.shadowsocksr.impl.plugin.proto;
 
-import android.util.Log;
-
 import com.proxy.shadowsocksr.impl.Utils;
 
 import java.nio.ByteBuffer;
@@ -73,7 +71,6 @@ public class VerifySimpleProtocol extends AbsProtocol
         {
             if (buf.length - i < 7)
             {
-                Log.e("EXC", "TOO SHORT");
                 tmpBytes = Arrays.copyOfRange(buf, i, buf.length);
                 break;
             }
@@ -82,7 +79,6 @@ public class VerifySimpleProtocol extends AbsProtocol
             //
             if (len < 7 || len > 8191)
             {
-                Log.e("EXC", "TOO LONG OR SHORT");
                 return new byte[0];
             }
             //

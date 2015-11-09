@@ -87,7 +87,6 @@ public class AuthSimpleProtocol extends AbsProtocol
         data = vsp.beforeEncrypt(data);
         byte[] out = new byte[firstPkg.length + data.length];
         System.arraycopy(firstPkg, 0, out, 0, firstPkg.length);
-        Utils.bytesHexDmp("FP", firstPkg);
         System.arraycopy(data, 0, out, firstPkg.length, data.length);
         //
         return out;

@@ -131,7 +131,6 @@ public class UDPRelayServer extends Thread
                         remoteChannel.connect(isaRemote);
                         boolean isProtected = onNeedProtectUDPListener
                                 .onNeedProtectUDP(remoteChannel.socket());
-                        Log.e("EXC", isProtected ? "UDP PROTECTED" : "UDP PROTECT FAILED");
                         if (isProtected)
                         {
                             handler = new UDPRemoteDataHandler(localAddress, remoteChannel);

@@ -14,7 +14,8 @@ public class HttpSimpleObfs extends AbsObfs
     public HttpSimpleObfs(String usrParamStr, String rmtIP, int rmtPort, int tcpMss)
     {
         super(usrParamStr, rmtIP, rmtPort, tcpMss);
-        obfsParam = usrParamStr == null || usrParamStr.equals("") ? "mvnrepository.com" : usrParamStr;
+        obfsParam = usrParamStr == null || usrParamStr.equals("") ? "mvnrepository.com" :
+                    usrParamStr;
     }
 
     private boolean headSent = false;
@@ -30,7 +31,7 @@ public class HttpSimpleObfs extends AbsObfs
         headSent = true;
         if (data.length > 64)
         {
-            int headLen = Utils.randomInt(64)+1;
+            int headLen = Utils.randomInt(64) + 1;
             byte[] out = encodeHead(Arrays.copyOfRange(data, 0, headLen));
             byte[] end = new byte[out.length + (data.length - headLen)];
             System.arraycopy(out, 0, end, 0, out.length);
@@ -64,9 +65,9 @@ public class HttpSimpleObfs extends AbsObfs
         //
         headRecv = true;
         int pos = -1;
-        int cnt = data.length - 5;
+        int cnt = data.length - 4;
         //     //TODO may be can...
-        for (int i = 214; i < cnt; i++)
+        for (int i = 219; i < cnt; i++)
         {
             if (data[i] == '\r' && data[i + 1] == '\n' &&
                 data[i + 2] == '\r' && data[i + 3] == '\n')
@@ -74,7 +75,7 @@ public class HttpSimpleObfs extends AbsObfs
                 pos = i + 4;
             }
         }
-        if (pos == -1)
+        if (pos == -1 || pos==data.length)
         {
             return new byte[0];
         }

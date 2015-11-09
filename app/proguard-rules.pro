@@ -3,21 +3,19 @@
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 # -dontoptimize
--dontpreverify
+# -dontpreverify
 -verbose
 -ignorewarning
 
--optimizations !code/simplification/arithmetic,!field/*,!class/merging/* #Confusion algorithm
--optimizations !code/simplification/cast
+-optimizations !field/*, !class/merging/*
 
 -allowaccessmodification
 -useuniqueclassmembernames
 -keepattributes *Annotation*,Exceptions,Signature,SourceFile,LineNumberTable,InnerClass,EnclosingMethod
--dontwarn android.support.**
 -dontskipnonpubliclibraryclasses -dontskipnonpubliclibraryclassmembers
 
--dontwarn org.xbill.**
--keep class com.proxy.shadowsocksr.** { *; }
+-keep class com.proxy.shadowsocksr.items.SSRProfile { *; }
+-keep class com.proxy.shadowsocksr.items.GlobalProfile { *; }
 
 # 不混淆 下面类及其子类
 -keep public class * extends android.app.Fragment
@@ -44,7 +42,6 @@
 -keep class * implements android.os.Parcelable {
   public static final android.os.Parcelable$Creator *;
 }
-
 
 #不混淆Serializable的子类
 -keepclassmembers class * implements java.io.Serializable {
@@ -117,7 +114,7 @@
 }
 
 # Keep GSON stuff
--keep class sun.misc.Unsafe { *; }
+# -keep class sun.misc.Unsafe { *; }
 -keep class com.google.gson.** { *; }
 
 # Application classes that will be serialized/deserialized over Gson
