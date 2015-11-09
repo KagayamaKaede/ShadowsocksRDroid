@@ -1,18 +1,19 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.osdetector'
 
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.1"
 
+    //noinspection GroovyAssignabilityCheck
     defaultConfig {
         applicationId "com.proxy.shadowsocksr"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 10
-        versionName "1.0.9 Beta"
+        versionCode 11
+        versionName "1.1.0 Test"
     }
+    //noinspection GroovyAssignabilityCheck
     buildTypes {
         debug {
             ndk {
@@ -60,7 +61,9 @@ android {
         }
     }
 
+    //noinspection GroovyAssignabilityCheck
     sourceSets {
+        //noinspection GroovyAssignabilityCheck
         main {
             jni.srcDirs = []
             jniLibs.srcDirs = ['libs']
@@ -70,7 +73,7 @@ android {
     //noinspection GroovyAssignabilityCheck
     task buildNative(type: Exec, description: 'Compile JNI source') {
         def ndkBuild = getNdkDir() + "/ndk-build"
-        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        if (osdetector.os=="windows") {
             ndkBuild += ".cmd"
         }
         workingDir file('src/main')
@@ -92,6 +95,7 @@ android {
         compileTask -> compileTask.dependsOn buildNative
     }
 
+    //noinspection GroovyAssignabilityCheck
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_7
         targetCompatibility JavaVersion.VERSION_1_7
@@ -102,9 +106,9 @@ def getNdkDir() {
     if (System.env.ANDROID_NDK_ROOT != null) return System.env.ANDROID_NDK_ROOT
 
     Properties properties = new Properties()
+    //noinspection GroovyAssignabilityCheck
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
     def ndkdir = properties.getProperty('ndk.dir', null)
-    if (ndkdir == null) throw new GradleException("NDK location not found. Define location with ndk.dir in the local.properties file or with an ANDROID_NDK_ROOT environment variable.")
     return ndkdir
 }
 
@@ -118,9 +122,9 @@ dependencies {
     compile 'com.android.support:design:23.1.0'
     compile 'com.android.support:recyclerview-v7:23.1.0'
     //Crypt Storage
-    compile 'com.orhanobut:hawk:1.18'
+    compile 'com.github.orhanobut:hawk:1.19'
     //Shell
-    compile project(':libsuperuser')
+    compile 'eu.chainfire:libsuperuser:1.0.0.+'
     //generate qr code
     compile 'net.glxn.qrgen:android:2.0'
     //DNS Resolve
