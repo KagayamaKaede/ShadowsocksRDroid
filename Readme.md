@@ -11,7 +11,7 @@ Compatible Shadowsocks protocol and support some ShadowsocksR function.
 * Improve the material design UI.
 * Improve performance, reduce memory and battery usage.
 * Fix bug.
-* Write java implementation of ShadowsocksR.
+* Write java implementation of ShadowsocksR plugin.
 * If I have enough time, (may be) write NAT mode(if need).
 
 ##Develop

@@ -1,3 +1,11 @@
+##1.1.0 Test
+
++ This is the ```first``` support SSR plugin version.
++ Support obfs: http\_simple.
++ Support protocol: verify\_simple, auth\_simple.
++ Update language.
++ ```May be contains many bug, even not work properly```.
+
 ##1.0.9 Beta
 
 + Using TCP resolve domain.

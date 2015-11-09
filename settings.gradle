@@ -1,1 +1,1 @@
-include ':app', ':libsuperuser'
+include ':app'
