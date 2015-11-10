@@ -8,8 +8,10 @@ import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser;
 import com.proxy.shadowsocksr.impl.plugin.proto.AbsProtocol;
 import com.proxy.shadowsocksr.impl.plugin.proto.ProtocolChooser;
 
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketImpl;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
@@ -37,6 +39,8 @@ public class SSRTunnel extends Thread
 
     private ExecutorService exec;
     private volatile boolean isRunning = true;
+
+    private boolean supportTFO = true;
 
     private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
@@ -102,15 +106,11 @@ public class SSRTunnel extends Thread
                 {
                     ChannelAttach attach = new ChannelAttach();
                     attach.localSkt = ssc.accept();
-                    attach.localSkt.configureBlocking(true);
-                    attach.localSkt.socket().setTcpNoDelay(true);
-                    attach.localSkt.socket().setReuseAddress(true);
                     exec.submit(new LocalSocketHandler(attach));
                 }
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
-                Log.e("EXC", "dns server err: " + e.getMessage());
             }
             //
             try
@@ -136,6 +136,10 @@ public class SSRTunnel extends Thread
         {
             try
             {
+                attach.localSkt.configureBlocking(true);
+                attach.localSkt.socket().setTcpNoDelay(true);
+                attach.localSkt.socket().setReuseAddress(true);
+                //
                 if (!prepareRemote(attach, remoteIP, remotePort))
                 {
                     Log.e("EXC", "REMOTE CONNECT FAILED!");
@@ -190,6 +194,10 @@ public class SSRTunnel extends Thread
     throws Exception
     {
         attach.remoteSkt = SocketChannel.open();
+        if (supportTFO && !tryOpenTFO(attach.remoteSkt))
+        {
+            attach.remoteSkt = SocketChannel.open();
+        }
         attach.remoteSkt.configureBlocking(true);
         attach.remoteSkt.socket().setReuseAddress(true);
         attach.remoteSkt.socket().setTcpNoDelay(true);
@@ -200,6 +208,24 @@ public class SSRTunnel extends Thread
         }
         attach.remoteSkt.connect(new InetSocketAddress(remoteIP, remotePort));
         return attach.remoteSkt.isConnected();
+    }
+
+    private boolean tryOpenTFO(SocketChannel channel)
+    {
+        try
+        {
+            Field impl = channel.socket().getClass().getDeclaredField("impl");
+            impl.setAccessible(true);
+            SocketImpl socketImpl = (SocketImpl) impl.get(channel.socket());
+            socketImpl.setOption(23, 5);//may be...
+            return true;
+        }
+        catch (Exception ignored)
+        {
+            Log.e("EXC", "TFO OPEN FAILED!");
+        }
+        supportTFO = false;
+        return false;
     }
 
     private boolean checkSessionAlive(ChannelAttach attach)
@@ -214,8 +240,6 @@ public class SSRTunnel extends Thread
     {
         try
         {
-            attach.remoteSkt.socket().close();
-            attach.localSkt.socket().close();
             attach.remoteSkt.close();
             attach.localSkt.close();
         }
@@ -235,9 +259,8 @@ public class SSRTunnel extends Thread
         {
             ssc.close();
         }
-        catch (Exception e)
+        catch (Exception ignored)
         {
-            Log.e("EXC", "" + e.getMessage());
         }
         exec.shutdown();
         ssc = null;
