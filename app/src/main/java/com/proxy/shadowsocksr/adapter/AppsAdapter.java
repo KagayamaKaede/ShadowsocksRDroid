@@ -13,7 +13,7 @@ import com.proxy.shadowsocksr.adapter.items.AppItem;
 
 import java.util.List;
 
-public class AppsAdapter extends RecyclerView.Adapter<AppsAdapter.ViewHolder>
+public final class AppsAdapter extends RecyclerView.Adapter<AppsAdapter.ViewHolder>
 {
     private List<AppItem> appLst;
     private OnItemClickListener onItemClickListener;

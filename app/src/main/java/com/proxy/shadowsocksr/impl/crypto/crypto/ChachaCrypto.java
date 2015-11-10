@@ -6,7 +6,7 @@ import org.spongycastle.crypto.engines.ChaChaEngine;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.crypto.params.ParametersWithIV;
 
-public class ChachaCrypto extends AbsCrypto
+public final class ChachaCrypto extends AbsCrypto
 {
     private StreamCipher chachaE;
     private StreamCipher chachaD;

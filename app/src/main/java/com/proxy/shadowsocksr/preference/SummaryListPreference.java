@@ -6,7 +6,7 @@ import android.os.Build;
 import android.preference.ListPreference;
 import android.util.AttributeSet;
 
-public class SummaryListPreference extends ListPreference
+public final class SummaryListPreference extends ListPreference
 {
     public SummaryListPreference(Context context)
     {

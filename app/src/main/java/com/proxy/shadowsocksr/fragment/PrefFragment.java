@@ -17,11 +17,9 @@ import com.proxy.shadowsocksr.preference.PasswordPreference;
 import com.proxy.shadowsocksr.preference.SummaryEditTextPreference;
 import com.proxy.shadowsocksr.preference.SummaryListPreference;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.UUID;
 
-public class PrefFragment extends PreferenceFragment
+public final class PrefFragment extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener
 {
     private SummaryEditTextPreference prefLbl;
@@ -45,14 +43,10 @@ public class PrefFragment extends PreferenceFragment
 
     private PreferenceManager pm;
 
-    private String randomPrefName;
-
     @Override public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        randomPrefName = UUID.randomUUID().toString();
         pm = getPreferenceManager();
-        pm.setSharedPreferencesName(randomPrefName);
         addPreferencesFromResource(R.xml.pref);
         //
         prefLbl = (SummaryEditTextPreference) findPreference("label");
@@ -274,7 +268,5 @@ public class PrefFragment extends PreferenceFragment
     private void cleanTempPref()
     {
         pm.getSharedPreferences().edit().clear().apply();
-        //noinspection ResultOfMethodCallIgnored
-        new File(Consts.baseDir + "shared_prefs/" + randomPrefName).delete();
     }
 }

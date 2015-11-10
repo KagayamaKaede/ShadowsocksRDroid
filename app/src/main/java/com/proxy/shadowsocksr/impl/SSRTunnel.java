@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class SSRTunnel extends Thread
+public final class SSRTunnel extends Thread
 {
     private ServerSocketChannel ssc;
     private String remoteIP;
@@ -42,9 +42,9 @@ public class SSRTunnel extends Thread
 
     private HashMap<String, Object> shareParam;
 
-    public SSRTunnel(String remoteIP, String localIP, String dnsIP, int remotePort, int localPort,
-            int dnsPort, String cryptMethod, String tcpProtocol, String obfsMethod,
-            String obfsParam, String pwd)
+    public SSRTunnel(String remoteIP, String localIP, String dnsIP, int remotePort,
+            int localPort, int dnsPort, String cryptMethod, String tcpProtocol,
+            String obfsMethod, String obfsParam, String pwd)
     {
         this.remoteIP = remoteIP;
         this.localIP = localIP;
@@ -142,10 +142,8 @@ public class SSRTunnel extends Thread
                     return;
                 }
                 //
-                attach.localReadBuf.put((byte) 1);
-                attach.localReadBuf.put(dnsIp);
-                attach.localReadBuf.put((byte) ((dnsPort >> 8) & 0xFF));
-                attach.localReadBuf.put((byte) (dnsPort & 0xFF));
+                attach.localReadBuf.put((byte) 1).put(dnsIp).put((byte) ((dnsPort >> 8) & 0xFF))
+                                   .put((byte) (dnsPort & 0xFF));
                 //
                 new Thread(new RemoteSocketHandler(attach)).start();
                 //
@@ -170,11 +168,7 @@ public class SSRTunnel extends Thread
                     recv = attach.crypto.encrypt(recv);
                     recv = attach.obfs.afterEncrypt(recv);
                     //
-                    int wcnt = attach.remoteSkt.write(ByteBuffer.wrap(recv));
-                    if (wcnt != recv.length)
-                    {
-                        break;
-                    }
+                    attach.remoteSkt.write(ByteBuffer.wrap(recv));
                     attach.localReadBuf.clear();
                 }
             }
@@ -274,11 +268,7 @@ public class SSRTunnel extends Thread
                     recv = attach.crypto.decrypt(recv);
                     recv = attach.proto.afterDecrypt(recv);
                     //
-                    int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
-                    if (wcnt != recv.length)
-                    {
-                        break;
-                    }
+                    attach.localSkt.write(ByteBuffer.wrap(recv));
                     attach.remoteReadBuf.clear();
                 }
             }

@@ -13,7 +13,7 @@ import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class UDPRelayServer extends Thread
+public final class UDPRelayServer extends Thread
 {
     private DatagramChannel udpServer;
     private InetSocketAddress isaLocal;

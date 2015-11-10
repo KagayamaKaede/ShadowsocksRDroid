@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConnectProfile implements Parcelable
+public final class ConnectProfile implements Parcelable
 {
     public String label;
     public String server;

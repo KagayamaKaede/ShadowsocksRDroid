@@ -6,7 +6,7 @@ import org.spongycastle.crypto.engines.Salsa20Engine;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.crypto.params.ParametersWithIV;
 
-public class SalsaCrypto extends AbsCrypto
+public final class SalsaCrypto extends AbsCrypto
 {
     private StreamCipher salsaE;
     private StreamCipher salsaD;

@@ -29,6 +29,7 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.Spinner;
 
+import com.google.android.gms.analytics.Tracker;
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.adapter.ToolbarSpinnerAdapter;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
@@ -45,7 +46,7 @@ import net.glxn.qrgen.android.QRCode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
+public final class MainActivity extends AppCompatActivity
         implements View.OnClickListener, AdapterView.OnItemSelectedListener, ServiceConnection
 {
     public final int REQUEST_CODE_CONNECT = 0;
@@ -67,6 +68,9 @@ public class MainActivity extends AppCompatActivity
     private VPNServiceCallBack callback = null;
     private ISSRService ssrs = null;
 
+    //
+    private Tracker tracker;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -84,6 +88,9 @@ public class MainActivity extends AppCompatActivity
         }
 
         bindService(new Intent(this, SSRVPNService.class), this, Context.BIND_AUTO_CREATE);
+        //
+        SSRApplication application = (SSRApplication) getApplication();
+        tracker = application.getDefaultTracker();
     }
 
     @Override protected void onPostCreate(Bundle savedInstanceState)
@@ -129,6 +136,7 @@ public class MainActivity extends AppCompatActivity
         catch (RemoteException ignored)
         {
         }
+        //
     }
 
     @Override public void onServiceDisconnected(ComponentName name)

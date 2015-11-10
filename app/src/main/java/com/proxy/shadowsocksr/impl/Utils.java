@@ -9,7 +9,7 @@ import java.util.zip.CRC32;
 
 public final class Utils
 {
-    private static CRC32 crc32 = new CRC32();
+    private static final CRC32 crc32 = new CRC32();
 
     public static void fillCRC32(byte[] src, byte[] dst, int dstOff)
     {
@@ -29,8 +29,8 @@ public final class Utils
         return dst;
     }
 
-    private static SecureRandom srnd = new SecureRandom();
-    private static Random rnd = new Random();
+    private static final SecureRandom srnd = new SecureRandom();
+    private static final Random rnd = new Random();
 
     /**
      * @param up max value(not include self)

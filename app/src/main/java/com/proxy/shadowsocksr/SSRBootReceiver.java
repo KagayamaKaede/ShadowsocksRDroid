@@ -7,7 +7,7 @@ import android.content.Intent;
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.items.GlobalProfile;
 
-public class SSRBootReceiver extends BroadcastReceiver
+public final class SSRBootReceiver extends BroadcastReceiver
 {
     @Override public void onReceive(Context context, Intent intent)
     {

@@ -6,7 +6,7 @@ import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoManager;
 
 import java.util.Arrays;
 
-public class TCPEncryptor
+public final class TCPEncryptor
 {
     private byte[] eIV;
     private boolean ivSent = false;

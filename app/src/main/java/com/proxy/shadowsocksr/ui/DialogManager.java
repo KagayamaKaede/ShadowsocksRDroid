@@ -3,7 +3,7 @@ package com.proxy.shadowsocksr.ui;
 import android.app.ProgressDialog;
 import android.content.Context;
 
-public class DialogManager
+public final class DialogManager
 {
     private DialogManager()
     {

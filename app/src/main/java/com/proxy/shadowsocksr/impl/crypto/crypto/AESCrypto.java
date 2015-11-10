@@ -7,7 +7,7 @@ import org.spongycastle.crypto.modes.CFBBlockCipher;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.crypto.params.ParametersWithIV;
 
-public class AESCrypto extends AbsCrypto
+public final class AESCrypto extends AbsCrypto
 {
     private String mode;
 

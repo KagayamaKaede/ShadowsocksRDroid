@@ -11,7 +11,7 @@ import java.net.URLEncoder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SSAddressUtil
+public final class SSAddressUtil
 {
     private static SSAddressUtil util;
 

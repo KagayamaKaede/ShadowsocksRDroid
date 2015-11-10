@@ -2,7 +2,7 @@ package com.proxy.shadowsocksr.adapter.items;
 
 import android.graphics.drawable.Drawable;
 
-public class AppItem
+public final class AppItem
 {
     public Drawable icon;
     public String name;

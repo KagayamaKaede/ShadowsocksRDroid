@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
-public class ConfFileUtil
+public final class ConfFileUtil
 {
     //    public static String SSRConf =
     //            "{\"server\": \"%s\"," +

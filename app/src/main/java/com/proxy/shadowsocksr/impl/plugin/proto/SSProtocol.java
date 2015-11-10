@@ -2,7 +2,7 @@ package com.proxy.shadowsocksr.impl.plugin.proto;
 
 import java.util.HashMap;
 
-public class SSProtocol extends AbsProtocol
+public final class SSProtocol extends AbsProtocol
 {
     public SSProtocol(String rmtIP, int rmtPort, int tcpMss, HashMap<String, Object> shareParam)
     {

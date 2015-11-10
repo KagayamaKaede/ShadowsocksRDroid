@@ -6,7 +6,7 @@ import android.os.Build;
 import android.preference.EditTextPreference;
 import android.util.AttributeSet;
 
-public class SummaryEditTextPreference extends EditTextPreference
+public final class SummaryEditTextPreference extends EditTextPreference
 {
     private String defaultSummary;
 

@@ -1,3 +1,9 @@
+##1.1.1 Test
+
++ Reduce RAM usage.
++ Improve crypt operating speed.
++ ```May be contains many bug, even not work properly```.
+
 ##1.1.0 Test
 
 + This is the ```first``` support SSR plugin version.

@@ -2,7 +2,7 @@ package com.proxy.shadowsocksr;
 
 import android.annotation.SuppressLint;
 
-public class Consts
+public final class Consts
 {
     //Default ss profile
     public final static String defaultIP = "please.change.me";
@@ -21,8 +21,6 @@ public class Consts
     public final static int STATUS_CONNECTED = 0;
     public final static int STATUS_FAILED = 1;
     public final static int STATUS_DISCONNECTED = 2;
-    //
-    public final static String TEMP_PREF_NAME = "dvy78dfv76dftv67dtv6tg6fg6vg";
     //
     public final static String lineSept = System.getProperty("line.separator");
 }

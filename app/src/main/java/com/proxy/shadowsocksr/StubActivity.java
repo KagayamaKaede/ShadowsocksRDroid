@@ -18,7 +18,7 @@ import com.proxy.shadowsocksr.items.SSRProfile;
 
 import java.util.List;
 
-public class StubActivity extends Activity implements ServiceConnection
+public final class StubActivity extends Activity implements ServiceConnection
 {
     private BroadcastReceiver receiver=null;
 

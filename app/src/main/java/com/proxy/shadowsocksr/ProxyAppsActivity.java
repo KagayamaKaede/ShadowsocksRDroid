@@ -20,7 +20,7 @@ import com.proxy.shadowsocksr.adapter.items.AppItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProxyAppsActivity extends AppCompatActivity implements AppsAdapter.OnItemClickListener
+public final class ProxyAppsActivity extends AppCompatActivity implements AppsAdapter.OnItemClickListener
 {
     private Toolbar toolbar;
     private RecyclerView rvApps;

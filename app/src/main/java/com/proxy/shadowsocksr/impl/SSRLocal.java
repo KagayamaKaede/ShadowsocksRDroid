@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class SSRLocal extends Thread
+public final class SSRLocal extends Thread
 {
     private ServerSocketChannel ssc;
     private String locIP;
@@ -135,7 +135,7 @@ public class SSRLocal extends Thread
                 attach.localReadBuf.flip();
                 byte atype = attach.localReadBuf.get();
                 short port;
-                if (atype == 0x01)
+                if (atype == (byte)0x01)
                 {
                     Log.e("EXC", "IPV4");
                     byte[] ip = new byte[4];
@@ -164,7 +164,7 @@ public class SSRLocal extends Thread
                     }
 
                 }
-                else if (atype == 0x04)
+                else if (atype == (byte)0x04)
                 {
                     Log.e("EXC", "IPV6");
                     if (!prepareRemote(attach, rmtIP, rmtPort))
@@ -212,7 +212,6 @@ public class SSRLocal extends Thread
                 }
                 Log.e("EXC", "READ LOC CNT: " + rcnt);
                 attach.localReadBuf.flip();
-                //attach.localReadBuf.mark();
                 byte[] recv = new byte[attach.localReadBuf.limit()];//size must be limit, not rcnt.
                 attach.localReadBuf.get(recv);
 
@@ -223,11 +222,7 @@ public class SSRLocal extends Thread
                     recv = attach.obfs.afterEncrypt(recv);
                 }
 
-                int wcnt = attach.remoteSkt.write(ByteBuffer.wrap(recv));
-                if (wcnt != recv.length)
-                {
-                    break;
-                }
+                attach.remoteSkt.write(ByteBuffer.wrap(recv));
                 attach.localReadBuf.clear();
             }
         }
@@ -298,7 +293,7 @@ public class SSRLocal extends Thread
         }
         attach.localReadBuf.clear();
         int wcnt = attach.localSkt.write(ByteBuffer.wrap(resp));
-        return wcnt == 2 && resp[1] == 0x00;
+        return resp[1] == 0x00;
     }
 
     private boolean processCMD(final ChannelAttach attach) throws Exception
@@ -327,10 +322,9 @@ public class SSRLocal extends Thread
         {
         case 0x01:
             //Response CMD
-            int writecnt = attach.localSkt.write(
-                    ByteBuffer.wrap(new byte[]{0x5, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}));
+            attach.localSkt.write(ByteBuffer.wrap(new byte[]{0x5, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}));
             attach.localReadBuf.clear();
-            return writecnt == 10;
+            return true;
         case 0x03:
             Log.e("EXC", "UDP ASSOC");
             InetSocketAddress isa =
@@ -349,8 +343,8 @@ public class SSRLocal extends Thread
             System.arraycopy(addr, 0, respb, 4, addr.length);
             respb[respb.length - 1] = (byte) (locPort & 0xFF);
             respb[respb.length - 2] = (byte) ((locPort >> 8) & 0xFF);
-            int wcnt = attach.localSkt.write(ByteBuffer.wrap(respb));
-            return wcnt == respb.length;
+            attach.localSkt.write(ByteBuffer.wrap(respb));
+            return true;
         case 0x02:
             //May be need reply 0x07(Cmd Not Support)
         default:
@@ -448,11 +442,7 @@ public class SSRLocal extends Thread
                         recv = attach.proto.afterDecrypt(recv);
                     }
 
-                    int wcnt = attach.localSkt.write(ByteBuffer.wrap(recv));
-                    if (wcnt != recv.length)
-                    {
-                        break;
-                    }
+                    attach.localSkt.write(ByteBuffer.wrap(recv));
                     attach.remoteReadBuf.clear();
                 }
             }

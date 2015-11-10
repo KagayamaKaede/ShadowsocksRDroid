@@ -6,7 +6,7 @@ import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoManager;
 
 import java.util.Arrays;
 
-public class UDPEncryptor
+public final class UDPEncryptor
 {
     private final AbsCrypto crypto;
 

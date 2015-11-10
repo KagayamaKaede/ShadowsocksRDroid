@@ -9,7 +9,7 @@ import android.util.AttributeSet;
 
 import com.proxy.shadowsocksr.R;
 
-public class PasswordPreference extends EditTextPreference
+public final class PasswordPreference extends EditTextPreference
 {
     public PasswordPreference(Context context)
     {

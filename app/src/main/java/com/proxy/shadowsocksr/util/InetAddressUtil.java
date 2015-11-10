@@ -30,7 +30,7 @@ package com.proxy.shadowsocksr.util;
 
 import java.util.regex.Pattern;
 
-public class InetAddressUtil
+public final class InetAddressUtil
 {
     private InetAddressUtil()
     {

@@ -11,7 +11,7 @@ import com.proxy.shadowsocksr.R;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ToolbarSpinnerAdapter extends BaseAdapter
+public final class ToolbarSpinnerAdapter extends BaseAdapter
 {
     private List<String> items = new ArrayList<>();
 

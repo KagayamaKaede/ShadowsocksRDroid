@@ -4,7 +4,7 @@ import com.proxy.shadowsocksr.Consts;
 
 import java.io.Serializable;
 
-public class SSRProfile implements Serializable
+public final class SSRProfile implements Serializable
 {
     public String server;
     public int remotePort;

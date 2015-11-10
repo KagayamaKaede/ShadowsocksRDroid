@@ -12,6 +12,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 
+import com.google.android.gms.analytics.Tracker;
 import com.proxy.shadowsocksr.impl.SSRLocal;
 import com.proxy.shadowsocksr.impl.SSRTunnel;
 import com.proxy.shadowsocksr.impl.UDPRelayServer;
@@ -34,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
-public class SSRVPNService extends VpnService implements OnNeedProtectTCPListener,
+public final class SSRVPNService extends VpnService implements OnNeedProtectTCPListener,
         OnNeedProtectUDPListener
 {
     private final int VPN_MTU = 1500;
@@ -54,8 +55,12 @@ public class SSRVPNService extends VpnService implements OnNeedProtectTCPListene
     private SSRTunnel tunnel = null;
     private UDPRelayServer udprs = null;
 
+    private Tracker tracker;
+
     @Override public IBinder onBind(Intent intent)
     {
+        SSRApplication application = (SSRApplication) getApplication();
+        tracker = application.getDefaultTracker();
         return binder;
     }
 

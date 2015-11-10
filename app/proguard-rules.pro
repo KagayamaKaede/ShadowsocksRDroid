@@ -113,6 +113,8 @@
     @com.google.common.annotations.VisibleForTesting *;
 }
 
+-keep class com.google.analytics.** { *; }
+
 # Keep GSON stuff
 # -keep class sun.misc.Unsafe { *; }
 -keep class com.google.gson.** { *; }

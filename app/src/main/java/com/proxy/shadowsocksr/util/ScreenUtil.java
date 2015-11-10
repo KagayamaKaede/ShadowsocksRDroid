@@ -6,7 +6,7 @@ import android.os.Build;
 import android.view.Display;
 import android.view.WindowManager;
 
-public class ScreenUtil
+public final class ScreenUtil
 {
     public static int dp2px(Context context, int dp)
     {
