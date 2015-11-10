@@ -15,20 +15,14 @@ import java.util.ArrayList;
 
 public class SSRApplication extends Application
 {
-    @Override public void onCreate()
-    {
-        super.onCreate();
-    }
-
     public void init()
     {
         Hawk.init(this)
-            .setLogLevel(LogLevel.FULL)
+            .setLogLevel(LogLevel.NONE)
             .setStorage(HawkBuilder.newSharedPrefStorage(this))
                 .setEncryptionMethod(
                         HawkBuilder.EncryptionMethod.NO_ENCRYPTION)//TODO: VER.2.0 local profile encrypt.
                 .build();
-
 
         //
         int curVersionCode = -1;
@@ -49,9 +43,8 @@ public class SSRApplication extends Application
             SSRProfile dftSSRProfile = new SSRProfile(
                     Consts.defaultIP,
                     Consts.defaultRemotePort,
-                    Consts.defaultLocalPort,
-                    Consts.defaultCryptMethod,
-                    "", Consts.defaultTcpProtocol,
+                    Consts.defaultCryptMethod, "",
+                    Consts.defaultTcpProtocol,
                     Consts.defaultObfsMethod, "",
                     false, false);
             Hawk.put("Sample", dftSSRProfile);
@@ -64,7 +57,7 @@ public class SSRApplication extends Application
 
             Hawk.put("PerAppProxy", new ArrayList<>());
 
-            GlobalProfile global = new GlobalProfile("bypass-lan", false, true, true, false);
+            GlobalProfile global = new GlobalProfile();
             Hawk.put("GlobalProfile", global);
 
             Hawk.put("FirstUse", false);

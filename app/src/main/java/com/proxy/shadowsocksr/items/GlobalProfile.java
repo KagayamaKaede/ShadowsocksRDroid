@@ -4,19 +4,9 @@ import java.io.Serializable;
 
 public class GlobalProfile implements Serializable
 {
-    public String route;
-    public boolean ipv6Route;
-    public boolean globalProxy;
-    public boolean dnsForward;
-    public boolean autoConnect;
-
-    public GlobalProfile(String route, boolean ipv6Route, boolean globalProxy, boolean dnsForward,
-            boolean autoConnect)
-    {
-        this.route = route;
-        this.ipv6Route = ipv6Route;
-        this.globalProxy = globalProxy;
-        this.dnsForward = dnsForward;
-        this.autoConnect = autoConnect;
-    }
+    public String route = "bypass-lan";
+    public boolean ipv6Route = false;
+    public boolean globalProxy = true;
+    public boolean dnsForward = true;
+    public boolean autoConnect = false;
 }

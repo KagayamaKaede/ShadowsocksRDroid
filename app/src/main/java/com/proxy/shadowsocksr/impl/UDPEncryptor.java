@@ -30,7 +30,7 @@ public class UDPEncryptor
 
     public byte[] encrypt(byte[] buf)
     {
-        byte[] iv = Utils.randomBytes(cryptMethodInfo[1]);
+        byte[] iv = Utils.srandomBytes(cryptMethodInfo[1]);
         crypto.updateEncryptIV(iv);
         buf = crypto.encrypt(buf);
         byte[] data = new byte[iv.length + buf.length];

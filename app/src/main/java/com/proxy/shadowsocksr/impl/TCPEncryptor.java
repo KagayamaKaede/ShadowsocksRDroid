@@ -25,7 +25,7 @@ public class TCPEncryptor
         int[] cryptMethodInfo = new CryptoInfo().getCipherInfo(cryptMethod);
         if (cryptMethodInfo != null)
         {
-            eIV = Utils.randomBytes(cryptMethodInfo[1]);
+            eIV = Utils.srandomBytes(cryptMethodInfo[1]);
             byte[] key;
 
             String k = cryptMethod + ":" + pwd;

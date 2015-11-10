@@ -17,7 +17,9 @@ import com.proxy.shadowsocksr.preference.PasswordPreference;
 import com.proxy.shadowsocksr.preference.SummaryEditTextPreference;
 import com.proxy.shadowsocksr.preference.SummaryListPreference;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class PrefFragment extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener
@@ -43,11 +45,14 @@ public class PrefFragment extends PreferenceFragment
 
     private PreferenceManager pm;
 
+    private String randomPrefName;
+
     @Override public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        randomPrefName = UUID.randomUUID().toString();
         pm = getPreferenceManager();
-        pm.setSharedPreferencesName(Consts.TEMP_PREF_NAME);//TODO: Random temp preference
+        pm.setSharedPreferencesName(randomPrefName);
         addPreferencesFromResource(R.xml.pref);
         //
         prefLbl = (SummaryEditTextPreference) findPreference("label");
@@ -123,12 +128,6 @@ public class PrefFragment extends PreferenceFragment
 
     public void setPrefEnabled(boolean isEnable)
     {
-        //TODO: loop return map.count=0
-        //Map<String, ?> map = pm.getSharedPreferences().getAll();
-        //for (String k : map.keySet())
-        //{
-        //    findPreference(k).setEnabled(isEnable);
-        //}
         prefLbl.setEnabled(isEnable);
         prefSvr.setEnabled(isEnable);
         prefRmtPort.setEnabled(isEnable);
@@ -217,7 +216,7 @@ public class PrefFragment extends PreferenceFragment
             break;
         case "local_port":
             ss.localPort = Integer
-                    .valueOf(sp.getString(key, String.valueOf(Consts.defaultRemotePort)));
+                    .valueOf(sp.getString(key, String.valueOf(Consts.defaultLocalPort)));
             break;
         case "crypt_method":
             ss.cryptMethod = sp.getString(key, Consts.defaultCryptMethod);
@@ -275,5 +274,7 @@ public class PrefFragment extends PreferenceFragment
     private void cleanTempPref()
     {
         pm.getSharedPreferences().edit().clear().apply();
+        //noinspection ResultOfMethodCallIgnored
+        new File(Consts.baseDir + "shared_prefs/" + randomPrefName).delete();
     }
 }

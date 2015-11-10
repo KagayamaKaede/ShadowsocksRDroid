@@ -14,7 +14,7 @@ public final class Utils
     public static void fillCRC32(byte[] src, byte[] dst, int dstOff)
     {
         crc32.update(src);
-        long crc = (~crc32.getValue()) & 0xFFFFFFFFL;
+        long crc = (~crc32.getValue());//not use high 32bit,need not mask it.
         dst[dstOff] = (byte) (crc);
         dst[dstOff + 1] = (byte) (crc >> 8);
         dst[dstOff + 2] = (byte) (crc >> 16);
@@ -48,12 +48,23 @@ public final class Utils
         {
             return bs;
         }
+        rnd.nextBytes(bs);
+        return bs;
+    }
+
+    public static byte[] srandomBytes(int len)
+    {
+        byte[] bs = new byte[len];
+        if (len == 0)
+        {
+            return bs;
+        }
         srnd.nextBytes(bs);
         return bs;
     }
 
     //
-    public static void fillIntAsBytes(int i,byte[] dst,int dstOff)
+    public static void fillIntAsBytes(int i, byte[] dst, int dstOff)
     {
         dst[dstOff] = (byte) (i);
         dst[dstOff + 1] = (byte) (i >> 8);
@@ -86,7 +97,7 @@ public final class Utils
 
     public static void fillEpoch(byte[] dst, int dstOff)
     {
-        long cur = (System.currentTimeMillis() / 1000L) & 0xFFFFFFFFL;
+        long cur = (System.currentTimeMillis() / 1000L);//not use high 32bit,need not mask it.
         dst[dstOff] = (byte) (cur);
         dst[dstOff + 1] = (byte) (cur >> 8);
         dst[dstOff + 2] = (byte) (cur >> 16);

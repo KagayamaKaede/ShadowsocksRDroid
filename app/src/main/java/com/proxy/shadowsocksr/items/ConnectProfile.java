@@ -14,7 +14,6 @@ public class ConnectProfile implements Parcelable
     public int localPort;
     public String cryptMethod;
     public String passwd;
-    public boolean enableSSR;
     //
     //SSR
     public String tcpProtocol;
@@ -68,7 +67,6 @@ public class ConnectProfile implements Parcelable
         localPort = in.readInt();
         cryptMethod = in.readString();
         passwd = in.readString();
-        enableSSR = in.readInt() == 1;
         //SSR
         tcpProtocol = in.readString();
         obfsMethod = in.readString();
@@ -112,7 +110,6 @@ public class ConnectProfile implements Parcelable
         dest.writeInt(localPort);
         dest.writeString(cryptMethod);
         dest.writeString(passwd);
-        dest.writeInt(enableSSR ? 1 : 0);
         dest.writeString(tcpProtocol);
         dest.writeString(obfsMethod);
         dest.writeString(obfsParam);

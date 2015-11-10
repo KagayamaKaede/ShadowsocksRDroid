@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity
     private PrefFragment pref;
     //
     private VPNServiceCallBack callback = null;
-    private ISSRService ssrs;
+    private ISSRService ssrs = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -227,9 +227,7 @@ public class MainActivity extends AppCompatActivity
         spinner.setAdapter(tsAdapter);
         //
         spinner.setOnItemSelectedListener(this);
-        //
         fab.setOnClickListener(this);
-        //
     }
 
     public void loadServerList()
@@ -250,7 +248,7 @@ public class MainActivity extends AppCompatActivity
     {
         String lbl = "Svr-" + System.currentTimeMillis();
         SSRProfile newPro = new SSRProfile(
-                server, rmtPort, Consts.defaultLocalPort, method, pwd, tcpProtocol,
+                server, rmtPort, method, pwd, tcpProtocol,
                 obfsMethod, obfsParam, false, false);
         Hawk.put(lbl, newPro);
 
@@ -307,25 +305,20 @@ public class MainActivity extends AppCompatActivity
             {
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.req_install_qrscan_app)
-                        .setMessage(
-                                R.string.req_install_qrscan_app_msg)
-                        .setPositiveButton(android.R.string.ok,
-                                           new DialogInterface.OnClickListener()
-                                           {
-                                               @Override public void onClick(
-                                                       DialogInterface dialog,
-                                                       int which)
-                                               {
-                                                   Intent goToMarket
-                                                           = new Intent(
-                                                           Intent.ACTION_VIEW)
-                                                           .setData(Uri.parse(
-                                                                   "market://details?id=com.google.zxing.client.android"));
-                                                   startActivity(goToMarket);
-                                               }
-                                           })
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show();
+                        .setMessage(R.string.req_install_qrscan_app_msg)
+                        .setPositiveButton(
+                                android.R.string.ok,
+                                new DialogInterface.OnClickListener()
+                                {
+                                    @Override public void onClick(DialogInterface dialog, int which)
+                                    {
+                                        Intent goToMarket = new Intent(Intent.ACTION_VIEW).setData(
+                                                Uri.parse(
+                                                        "market://details?id=com.google.zxing.client.android"));
+                                        startActivity(goToMarket);
+                                    }
+                                })
+                        .setNegativeButton(android.R.string.cancel, null).show();
             }
             break;
         case R.id.action_del_server:
@@ -461,8 +454,7 @@ public class MainActivity extends AppCompatActivity
                         loadServerList();
                         pref.reloadPref();
                         Snackbar.make(coordinatorLayout, R.string.add_success,
-                                      Snackbar.LENGTH_SHORT)
-                                .show();
+                                      Snackbar.LENGTH_SHORT).show();
                         return;
                     }
                 }
@@ -473,8 +465,7 @@ public class MainActivity extends AppCompatActivity
                         .show();
                 return;
             }
-            Snackbar.make(coordinatorLayout, R.string.add_failed, Snackbar.LENGTH_SHORT)
-                    .show();
+            Snackbar.make(coordinatorLayout, R.string.add_failed, Snackbar.LENGTH_SHORT).show();
             break;
         }
     }
@@ -508,14 +499,12 @@ public class MainActivity extends AppCompatActivity
             pref.setPrefEnabled(true);
             spinner.setEnabled(true);
             fab.setImageResource(android.R.drawable.ic_media_play);
-            //
         }
         else
         {
             pref.setPrefEnabled(false);
             spinner.setEnabled(false);
             fab.setImageResource(android.R.drawable.ic_media_pause);
-            //
         }
         fab.setEnabled(true);
     }

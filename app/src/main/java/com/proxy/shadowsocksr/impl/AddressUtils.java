@@ -31,7 +31,6 @@ public final class AddressUtils
 
     private static final String IP_ADDRESS = "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})";
     private static final String SLASH_FORMAT = IP_ADDRESS + "/(\\d{1,3})";
-    private static final Pattern addressPattern = Pattern.compile(IP_ADDRESS);
     private static final Pattern cidrPattern = Pattern.compile(SLASH_FORMAT);
 
     public static String ipv4BytesToIp(byte[] bytes)
