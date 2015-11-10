@@ -41,7 +41,7 @@ public class UDPRelayServer extends Thread
         this.localIP = localIP;
         this.remotePort = remotePort;
         this.localPort = localPort;
-        cache = new LruCache<>(100); //may be should bigger...
+        cache = new LruCache<>(64);//save ram
         crypto = new UDPEncryptor(pwd, cryptMethod);
         ivLen = crypto.getIVLen();
     }
@@ -79,7 +79,7 @@ public class UDPRelayServer extends Thread
         exec = Executors.newCachedThreadPool();
         //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 
-        ByteBuffer buf = ByteBuffer.allocate(1500);
+        ByteBuffer buf = ByteBuffer.allocate(1472);
 
         while (isRunning)//When udp server crashed, prepare it again.
         {

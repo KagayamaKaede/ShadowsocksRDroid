@@ -1,26 +1,21 @@
 package com.proxy.shadowsocksr.impl;
 
 import com.proxy.shadowsocksr.impl.crypto.CryptoInfo;
-import com.proxy.shadowsocksr.impl.crypto.CryptoUtils;
 import com.proxy.shadowsocksr.impl.crypto.crypto.AbsCrypto;
-import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoChooser;
+import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoManager;
 
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class UDPEncryptor
 {
-    private AbsCrypto crypto;
+    private final AbsCrypto crypto;
 
-    private int[] cryptMethodInfo;//Key size and iv size.
+    private final int[] cryptMethodInfo;//Key size and iv size.
 
     public UDPEncryptor(String pwd, String cryptMethod)
     {
         cryptMethodInfo = new CryptoInfo().getCipherInfo(cryptMethod);
-        byte[] passwd = pwd.getBytes(Charset.forName("UTF-8"));
-        byte[] key = new byte[cryptMethodInfo[0]];
-        CryptoUtils.EVP_BytesToKey(passwd, key);
-        crypto = CryptoChooser.getMatchCrypto(cryptMethod, key);
+        crypto = CryptoManager.getMatchCrypto(cryptMethod, pwd);
     }
 
     public int getIVLen()
@@ -42,8 +37,8 @@ public class UDPEncryptor
     public byte[] decrypt(byte[] buf)
     {
         byte[] iv = Arrays.copyOfRange(buf, 0, cryptMethodInfo[1]);
-        byte[] data = Arrays.copyOfRange(buf, cryptMethodInfo[1], buf.length);
+        buf = Arrays.copyOfRange(buf, cryptMethodInfo[1], buf.length);
         crypto.updateDecryptIV(iv);
-        return crypto.decrypt(data);
+        return crypto.decrypt(buf);
     }
 }

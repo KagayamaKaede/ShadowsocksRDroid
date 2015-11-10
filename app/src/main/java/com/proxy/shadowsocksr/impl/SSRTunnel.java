@@ -8,10 +8,8 @@ import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser;
 import com.proxy.shadowsocksr.impl.plugin.proto.AbsProtocol;
 import com.proxy.shadowsocksr.impl.plugin.proto.ProtocolChooser;
 
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketImpl;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
@@ -39,8 +37,6 @@ public class SSRTunnel extends Thread
 
     private ExecutorService exec;
     private volatile boolean isRunning = true;
-
-    private boolean supportTFO = true;
 
     private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
@@ -194,10 +190,6 @@ public class SSRTunnel extends Thread
     throws Exception
     {
         attach.remoteSkt = SocketChannel.open();
-        if (supportTFO && !tryOpenTFO(attach.remoteSkt))
-        {
-            attach.remoteSkt = SocketChannel.open();
-        }
         attach.remoteSkt.configureBlocking(true);
         attach.remoteSkt.socket().setReuseAddress(true);
         attach.remoteSkt.socket().setTcpNoDelay(true);
@@ -208,24 +200,6 @@ public class SSRTunnel extends Thread
         }
         attach.remoteSkt.connect(new InetSocketAddress(remoteIP, remotePort));
         return attach.remoteSkt.isConnected();
-    }
-
-    private boolean tryOpenTFO(SocketChannel channel)
-    {
-        try
-        {
-            Field impl = channel.socket().getClass().getDeclaredField("impl");
-            impl.setAccessible(true);
-            SocketImpl socketImpl = (SocketImpl) impl.get(channel.socket());
-            socketImpl.setOption(23, 5);//may be...
-            return true;
-        }
-        catch (Exception ignored)
-        {
-            Log.e("EXC", "TFO OPEN FAILED!");
-        }
-        supportTFO = false;
-        return false;
     }
 
     private boolean checkSessionAlive(ChannelAttach attach)
