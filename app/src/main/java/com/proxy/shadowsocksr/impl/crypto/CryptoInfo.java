@@ -3,7 +3,7 @@ package com.proxy.shadowsocksr.impl.crypto;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CryptoInfo
+public final class CryptoInfo
 {
     public Map<String, int[]> cipherList = new HashMap<>();
 
@@ -29,6 +29,6 @@ public class CryptoInfo
         {
             return cipherList.get(name);
         }
-        return null;
+        return t32_8;
     }
 }

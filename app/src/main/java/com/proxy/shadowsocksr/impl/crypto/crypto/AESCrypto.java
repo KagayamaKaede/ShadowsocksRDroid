@@ -9,9 +9,7 @@ import org.spongycastle.crypto.params.ParametersWithIV;
 
 public class AESCrypto extends AbsCrypto
 {
-    private int bit;
     private String mode;
-    private byte[] key;
 
     /**
      * @param cryptMethod must be aes-bit-mode,e.g. aes-256-cfb
@@ -20,11 +18,7 @@ public class AESCrypto extends AbsCrypto
     public AESCrypto(String cryptMethod, byte[] key)
     {
         super(cryptMethod, key);
-        String[] cpt = cryptMethod.split("-");
-        //
-        bit = Integer.valueOf(cpt[1]);
-        mode = cpt[2];
-        this.key = key;
+        mode = cryptMethod.split("-")[2];
         init();
     }
 
@@ -61,10 +55,10 @@ public class AESCrypto extends AbsCrypto
         {
             encrypt.processBytes(data, 0, data.length, out, 0);
         }
-        catch (DataLengthException ignored)
+        catch (DataLengthException e)
         {
+            return new byte[0];
         }
-
         return out;
     }
 
@@ -75,8 +69,9 @@ public class AESCrypto extends AbsCrypto
         {
             decrypt.processBytes(data, 0, data.length, out, 0);
         }
-        catch (DataLengthException ignored)
+        catch (DataLengthException e)
         {
+            return new byte[0];
         }
 
         return out;
