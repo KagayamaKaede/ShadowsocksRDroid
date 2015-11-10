@@ -1,7 +1,6 @@
 package com.proxy.shadowsocksr.util;
 
 import android.util.Base64;
-import android.util.Log;
 
 import com.proxy.shadowsocksr.Consts;
 import com.proxy.shadowsocksr.items.SSRProfile;
@@ -48,7 +47,7 @@ public class SSAddressUtil
         return null;
     }
 
-    public SSRProfile parse(String address)
+    public SSRProfile parse(String address,StringBuilder sb)
     {
         SSRProfile ssp = null;
         try
@@ -57,13 +56,10 @@ public class SSAddressUtil
             if (encoded.startsWith("ss://"))
             {
                 encoded = encoded.replace("ss://", "");
-                String path = URLDecoder.decode(new String(
-                        Base64.decode(encoded, Base64.NO_PADDING)), "UTF-8");
-                Log.e("EXC", encoded);
-                Log.e("EXC", path);
+                String path = new String(Base64.decode(encoded, Base64.NO_PADDING));
                 //
                 Pattern p = Pattern.compile(
-                        "(.*:){0,2}(.*):(.+)@(.+):(\\d{1,5})(/[^#.]+)?(#.+)?");
+                        "(.*:){0,2}(.*):(.+)@(.+):(\\d{1,5})(/[^#]+)?(#.+)?");
                 Matcher m = p.matcher(path);
                 //
                 String remarks = "svr-" + System.currentTimeMillis();
@@ -80,6 +76,7 @@ public class SSAddressUtil
                 {
                     remarks = m.group(7) == null ? remarks :
                               URLDecoder.decode(m.group(7), "UTF-8").substring(1);
+                    sb.append(remarks);
                     obfsParam = m.group(6) == null ? obfsParam :
                                 URLDecoder.decode(m.group(6), "UTF-8").substring(1);
                     rmtPort = Integer.valueOf(m.group(5));
@@ -108,7 +105,7 @@ public class SSAddressUtil
                     }
                     //
                     ssp = new SSRProfile(
-                            server, rmtPort, Consts.defaultLocalPort, cryptMethod,
+                            server, rmtPort, cryptMethod,
                             pwd, tcpProtocol, obfsMethod, obfsParam, false, false);
                 }
             }

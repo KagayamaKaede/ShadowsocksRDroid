@@ -243,10 +243,10 @@ public class MainActivity extends AppCompatActivity
         spinner.setSelection(tsAdapter.getPosition(cur));
     }
 
-    private void addNewServer(String server, int rmtPort, String method, String pwd,
+    private void addNewServer(String label, String server, int rmtPort, String method, String pwd,
             String tcpProtocol, String obfsMethod, String obfsParam)
     {
-        String lbl = "Svr-" + System.currentTimeMillis();
+        String lbl = label == null ? "Svr-" + System.currentTimeMillis() : label;
         SSRProfile newPro = new SSRProfile(
                 server, rmtPort, method, pwd, tcpProtocol,
                 obfsMethod, obfsParam, false, false);
@@ -284,7 +284,7 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId())
         {
         case R.id.action_maunally_add_server:
-            addNewServer(Consts.defaultIP,
+            addNewServer(null, Consts.defaultIP,
                          Consts.defaultRemotePort,
                          Consts.defaultCryptMethod, "",
                          Consts.defaultTcpProtocol,
@@ -329,7 +329,7 @@ public class MainActivity extends AppCompatActivity
             //
             if (list.size() == 0)
             {
-                addNewServer(Consts.defaultIP,
+                addNewServer(null, Consts.defaultIP,
                              Consts.defaultRemotePort,
                              Consts.defaultCryptMethod, "",
                              Consts.defaultTcpProtocol,
@@ -446,11 +446,12 @@ public class MainActivity extends AppCompatActivity
                 String contents = data.getStringExtra("SCAN_RESULT");
                 if (contents != null)
                 {
-                    SSRProfile pro = SSAddressUtil.getUtil().parse(contents);
+                    StringBuilder sb = new StringBuilder();
+                    SSRProfile pro = SSAddressUtil.getUtil().parse(contents, sb);
                     if (pro != null)
                     {
-                        addNewServer(pro.server, pro.remotePort, pro.cryptMethod, pro.passwd,
-                                     pro.tcpProtocol, pro.obfsMethod, pro.obfsParam);
+                        addNewServer(sb.toString(), pro.server, pro.remotePort, pro.cryptMethod,
+                                     pro.passwd, pro.tcpProtocol, pro.obfsMethod, pro.obfsParam);
                         loadServerList();
                         pref.reloadPref();
                         Snackbar.make(coordinatorLayout, R.string.add_success,
