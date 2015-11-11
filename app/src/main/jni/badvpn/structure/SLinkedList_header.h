@@ -39,16 +39,20 @@
 #define SLinkedListNode MERGE(SLinkedList, Node)
 
 // non-object public functions
-#define SLinkedListNext MERGE(SLinkedList, Next)
-#define SLinkedListPrev MERGE(SLinkedList, Prev)
+#define SLinkedListMarkRemoved MERGE(SLinkedList, MarkRemoved)
+#define SLinkedListIsRemoved MERGE(SLinkedList, IsRemoved)
 
 // public functions
 #define SLinkedList_Init MERGE(SLinkedList, _Init)
+#define SLinkedList_Next MERGE(SLinkedList, _Next)
+#define SLinkedList_Prev MERGE(SLinkedList, _Prev)
 #define SLinkedList_Prepend MERGE(SLinkedList, _Prepend)
 #define SLinkedList_Append MERGE(SLinkedList, _Append)
 #define SLinkedList_InsertBefore MERGE(SLinkedList, _InsertBefore)
 #define SLinkedList_InsertAfter MERGE(SLinkedList, _InsertAfter)
 #define SLinkedList_Remove MERGE(SLinkedList, _Remove)
+#define SLinkedList_RemoveFirst MERGE(SLinkedList, _RemoveFirst)
+#define SLinkedList_RemoveLast MERGE(SLinkedList, _RemoveLast)
 #define SLinkedList_First MERGE(SLinkedList, _First)
 #define SLinkedList_Last MERGE(SLinkedList, _Last)
 #define SLinkedList_IsEmpty MERGE(SLinkedList, _IsEmpty)

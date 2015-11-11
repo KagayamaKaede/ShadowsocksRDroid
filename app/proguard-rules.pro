@@ -16,6 +16,9 @@
 
 -keep class com.proxy.shadowsocksr.items.SSRProfile { *; }
 -keep class com.proxy.shadowsocksr.items.GlobalProfile { *; }
+-keep class com.proxy.shadowsocksr.preference.** { *; }
+
+-keep public class * extends android.app.backup.** { *; }
 
 # 不混淆 下面类及其子类
 -keep public class * extends android.app.Fragment
@@ -112,8 +115,6 @@
 -keepclassmembers class * {
     @com.google.common.annotations.VisibleForTesting *;
 }
-
--keep class com.google.analytics.** { *; }
 
 # Keep GSON stuff
 # -keep class sun.misc.Unsafe { *; }

@@ -135,7 +135,7 @@ public final class SSRLocal extends Thread
                 attach.localReadBuf.flip();
                 byte atype = attach.localReadBuf.get();
                 short port;
-                if (atype == (byte)0x01)
+                if (atype == (byte) 0x01)
                 {
                     Log.e("EXC", "IPV4");
                     byte[] ip = new byte[4];
@@ -164,7 +164,7 @@ public final class SSRLocal extends Thread
                     }
 
                 }
-                else if (atype == (byte)0x04)
+                else if (atype == (byte) 0x04)
                 {
                     Log.e("EXC", "IPV6");
                     if (!prepareRemote(attach, rmtIP, rmtPort))
@@ -210,7 +210,6 @@ public final class SSRLocal extends Thread
                 {
                     break;
                 }
-                Log.e("EXC", "READ LOC CNT: " + rcnt);
                 attach.localReadBuf.flip();
                 byte[] recv = new byte[attach.localReadBuf.limit()];//size must be limit, not rcnt.
                 attach.localReadBuf.get(recv);
@@ -231,7 +230,7 @@ public final class SSRLocal extends Thread
         {
             try
             {
-                attach.localSkt.configureBlocking(true);
+                //default is block
                 attach.localSkt.socket().setTcpNoDelay(true);
                 attach.localSkt.socket().setReuseAddress(true);
                 //
@@ -292,7 +291,7 @@ public final class SSRLocal extends Thread
             }
         }
         attach.localReadBuf.clear();
-        int wcnt = attach.localSkt.write(ByteBuffer.wrap(resp));
+        attach.localSkt.write(ByteBuffer.wrap(resp));
         return resp[1] == 0x00;
     }
 
@@ -322,7 +321,8 @@ public final class SSRLocal extends Thread
         {
         case 0x01:
             //Response CMD
-            attach.localSkt.write(ByteBuffer.wrap(new byte[]{0x5, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}));
+            attach.localSkt.write(ByteBuffer.wrap(new byte[]{0x5, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0,
+                    0x0, 0x0}));
             attach.localReadBuf.clear();
             return true;
         case 0x03:
@@ -356,7 +356,7 @@ public final class SSRLocal extends Thread
     throws Exception
     {
         attach.remoteSkt = SocketChannel.open();
-        attach.remoteSkt.configureBlocking(true);
+        //default is block
         attach.remoteSkt.socket().setReuseAddress(true);
         attach.remoteSkt.socket().setTcpNoDelay(true);
         boolean success = onNeedProtectTCPListener.onNeedProtectTCP(attach.remoteSkt.socket());

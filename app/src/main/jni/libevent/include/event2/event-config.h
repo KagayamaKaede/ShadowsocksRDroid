@@ -11,6 +11,10 @@
 #ifndef _EVENT2_EVENT_CONFIG_H_
 #define _EVENT2_EVENT_CONFIG_H_
 
+#ifndef TAILQ_END
+#define TAILQ_END(head) (NULL)
+#endif
+
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.in by autoheader.  */
 

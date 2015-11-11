@@ -44,7 +44,7 @@ public final class SummaryEditTextPreference extends EditTextPreference
 
     @Override public void setSummary(CharSequence summary)
     {
-        if (summary.length() == 0)
+        if (summary!=null && summary.length() == 0)
         {
             super.setSummary(defaultSummary);
         }

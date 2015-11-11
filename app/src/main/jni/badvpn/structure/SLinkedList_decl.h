@@ -41,10 +41,12 @@ typedef struct {
     SLinkedListEntry *next;
 } SLinkedListNode;
 
-static SLinkedListEntry * SLinkedListNext (SLinkedListEntry *entry);
-static SLinkedListEntry * SLinkedListPrev (SLinkedListEntry *entry);
+static void SLinkedListMarkRemoved (SLinkedListEntry *entry);
+static int SLinkedListIsRemoved (SLinkedListEntry *entry);
 
 static void SLinkedList_Init (SLinkedList *o);
+static SLinkedListEntry * SLinkedList_Next (SLinkedList *o, SLinkedListEntry *entry);
+static SLinkedListEntry * SLinkedList_Prev (SLinkedList *o, SLinkedListEntry *entry);
 static void SLinkedList_Prepend (SLinkedList *o, SLinkedListEntry *entry);
 #if SLINKEDLIST_PARAM_FEATURE_LAST
 static void SLinkedList_Append (SLinkedList *o, SLinkedListEntry *entry);
@@ -52,6 +54,10 @@ static void SLinkedList_Append (SLinkedList *o, SLinkedListEntry *entry);
 static void SLinkedList_InsertBefore (SLinkedList *o, SLinkedListEntry *entry, SLinkedListEntry *before_entry);
 static void SLinkedList_InsertAfter (SLinkedList *o, SLinkedListEntry *entry, SLinkedListEntry *after_entry);
 static void SLinkedList_Remove (SLinkedList *o, SLinkedListEntry *entry);
+static void SLinkedList_RemoveFirst (SLinkedList *o);
+#if SLINKEDLIST_PARAM_FEATURE_LAST
+static void SLinkedList_RemoveLast (SLinkedList *o);
+#endif
 static SLinkedListEntry * SLinkedList_First (const SLinkedList *o);
 #if SLINKEDLIST_PARAM_FEATURE_LAST
 static SLinkedListEntry * SLinkedList_Last (const SLinkedList *o);

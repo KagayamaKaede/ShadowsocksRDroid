@@ -4,9 +4,6 @@ import android.app.Application;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
 import com.orhanobut.hawk.Hawk;
 import com.orhanobut.hawk.HawkBuilder;
 import com.orhanobut.hawk.LogLevel;
@@ -17,11 +14,8 @@ import java.util.ArrayList;
 
 public class SSRApplication extends Application
 {
-    private Tracker tracker;
-
     public void init()
     {
-        //
         Hawk.init(this)
             .setLogLevel(LogLevel.NONE)
             .setStorage(HawkBuilder.newSharedPrefStorage(this))
@@ -85,19 +79,5 @@ public class SSRApplication extends Application
                 break;
             }
         }
-    }
-
-    synchronized public Tracker getDefaultTracker()
-    {
-        if (tracker == null)
-        {
-            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-            // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
-            tracker = analytics.newTracker(R.xml.trackers);
-            tracker.setUseSecure(true);
-            tracker.enableExceptionReporting(true);
-            tracker.send(new HitBuilders.EventBuilder("OPEN", "OPEN").build());
-        }
-        return tracker;
     }
 }

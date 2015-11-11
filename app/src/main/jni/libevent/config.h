@@ -1,5 +1,5 @@
 /* config.h.  Generated from config.h.in by configure.  */
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define if libevent should build without support for a debug mode */
 /* #undef DISABLE_DEBUG_MODE */
@@ -11,7 +11,7 @@
 /* #undef DISABLE_THREAD_SUPPORT */
 
 /* Define to 1 if you have the `arc4random' function. */
-#define HAVE_ARC4RANDOM 1
+/* #undef HAVE_ARC4RANDOM */
 
 /* Define to 1 if you have the `arc4random_buf' function. */
 /* #undef HAVE_ARC4RANDOM_BUF */
@@ -249,7 +249,7 @@
 /* #undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY */
 
 /* Define to 1 if you have the `sysctl' function. */
-/* #undef HAVE_SYSCTL */
+#define HAVE_SYSCTL 1
 
 /* Define to 1 if you have the <sys/devpoll.h> header file. */
 /* #undef HAVE_SYS_DEVPOLL_H */
@@ -303,7 +303,7 @@
 #define HAVE_SYS_WAIT_H 1
 
 /* Define if TAILQ_FOREACH is defined in <sys/queue.h> */
-/* #undef TAILQ_FOREACH */
+#define HAVE_TAILQFOREACH 1
 
 /* Define if timeradd is defined in <sys/time.h> */
 #define HAVE_TIMERADD 1
@@ -354,11 +354,8 @@
    */
 #define LT_OBJDIR ".libs/"
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
-
 /* Numeric representation of the version */
-#define NUMERIC_VERSION 0x02001500
+#define NUMERIC_VERSION 0x02001600
 
 /* Name of package */
 #define PACKAGE "libevent"
@@ -394,6 +391,9 @@
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
 
+/* The size of `off_t', as computed by sizeof. */
+#define SIZEOF_OFF_T 8
+
 /* The size of `pthread_t', as computed by sizeof. */
 #define SIZEOF_PTHREAD_T 8
 
@@ -413,7 +413,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "2.0.21-stable"
+#define VERSION "2.0.22-stable"
 
 /* Define to appropriate substitue if compiler doesnt have __func__ */
 /* #undef __func__ */

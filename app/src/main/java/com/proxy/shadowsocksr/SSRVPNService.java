@@ -11,8 +11,8 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 
-import com.google.android.gms.analytics.Tracker;
 import com.proxy.shadowsocksr.impl.SSRLocal;
 import com.proxy.shadowsocksr.impl.SSRTunnel;
 import com.proxy.shadowsocksr.impl.UDPRelayServer;
@@ -55,12 +55,8 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
     private SSRTunnel tunnel = null;
     private UDPRelayServer udprs = null;
 
-    private Tracker tracker;
-
     @Override public IBinder onBind(Intent intent)
     {
-        SSRApplication application = (SSRApplication) getApplication();
-        tracker = application.getDefaultTracker();
         return binder;
     }
 
@@ -112,7 +108,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         @Override public void start(ConnectProfile cp) throws RemoteException
         {
             connProfile = cp;
-            if(checkDaemonFile())
+            if (checkDaemonFile())
             {
                 startRunner();
             }
@@ -285,6 +281,9 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                             NotificationCompat.Builder notificationBuilder
                                     = new NotificationCompat.Builder(SSRVPNService.this);
                             notificationBuilder.setWhen(0)
+                                               .setColor(ContextCompat.getColor(
+                                                       SSRVPNService.this,
+                                                       R.color.material_accent_500))
                                                .setTicker("VPN service started")
                                                .setContentTitle(getString(R.string.app_name))
                                                .setContentText(connProfile.label)
@@ -430,7 +429,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                .addDnsServer("8.8.8.8")
                .addDnsServer("8.8.4.4");
 
-        if(connProfile.ipv6Route)
+        if (connProfile.ipv6Route)
         {
             builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
             builder.addRoute("::", 0);

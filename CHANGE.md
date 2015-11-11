@@ -2,6 +2,7 @@
 
 + Reduce RAM usage.
 + Improve crypt operating speed.
++ Update tun2socks from shadowsocks/tun2socks repo.
 + ```May be contains many bug, even not work properly```.
 
 ##1.1.0 Test

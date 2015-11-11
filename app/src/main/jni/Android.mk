@@ -148,6 +148,7 @@ TUN2SOCKS_SOURCES := \
         base/BLog_syslog.c \
         system/BReactor_badvpn.c \
         system/BSignal.c \
+        system/BConnection_common.c \
         system/BConnection_unix.c \
         system/BTime.c \
         system/BUnixSignal.c \

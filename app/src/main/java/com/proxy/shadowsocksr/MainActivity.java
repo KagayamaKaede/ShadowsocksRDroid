@@ -29,7 +29,6 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.Spinner;
 
-import com.google.android.gms.analytics.Tracker;
 import com.orhanobut.hawk.Hawk;
 import com.proxy.shadowsocksr.adapter.ToolbarSpinnerAdapter;
 import com.proxy.shadowsocksr.fragment.PrefFragment;
@@ -68,9 +67,6 @@ public final class MainActivity extends AppCompatActivity
     private VPNServiceCallBack callback = null;
     private ISSRService ssrs = null;
 
-    //
-    private Tracker tracker;
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -88,9 +84,6 @@ public final class MainActivity extends AppCompatActivity
         }
 
         bindService(new Intent(this, SSRVPNService.class), this, Context.BIND_AUTO_CREATE);
-        //
-        SSRApplication application = (SSRApplication) getApplication();
-        tracker = application.getDefaultTracker();
     }
 
     @Override protected void onPostCreate(Bundle savedInstanceState)

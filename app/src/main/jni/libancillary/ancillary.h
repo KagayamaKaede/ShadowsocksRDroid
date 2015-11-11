@@ -1,13 +1,13 @@
 /***************************************************************************
  * libancillary - black magic on Unix domain sockets
  * (C) Nicolas George
- * ancillary.c - public header
+ * ancillary.h - public header
  ***************************************************************************/
 
 /*
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *  1. Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *  2. Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
@@ -46,7 +46,7 @@ extern "C" {
  */
 
 extern int
-ancil_send_fds_with_buffer(int, const int *, unsigned, void *);
+        ancil_send_fds_with_buffer(int, const int *, unsigned, void *);
 /*
  * ancil_send_fds_with_buffer(sock, n_fds, fds, buffer)
  *
@@ -58,7 +58,7 @@ ancil_send_fds_with_buffer(int, const int *, unsigned, void *);
  */
 
 extern int
-ancil_recv_fds_with_buffer(int, int *, unsigned, void *);
+        ancil_recv_fds_with_buffer(int, int *, unsigned, void *);
 /*
  * ancil_recv_fds_with_buffer(sock, n_fds, fds, buffer)
  *
@@ -85,7 +85,7 @@ ancil_recv_fds_with_buffer(int, int *, unsigned, void *);
  */
 
 extern int
-ancil_send_fds(int, const int *, unsigned);
+        ancil_send_fds(int, const int *, unsigned);
 /*
  * ancil_send_fds(sock, n_fds, fds)
  *
@@ -96,7 +96,7 @@ ancil_send_fds(int, const int *, unsigned);
  */
 
 extern int
-ancil_recv_fds(int, int *, unsigned);
+        ancil_recv_fds(int, int *, unsigned);
 /*
  * ancil_recv_fds(sock, n_fds, fds)
  *
@@ -109,7 +109,7 @@ ancil_recv_fds(int, int *, unsigned);
 
 
 extern int
-ancil_send_fd(int, int);
+        ancil_send_fd(int, int);
 /* ancil_recv_fd(sock, fd);
  *
  * Sends the file descriptor fd on the socket sock.
@@ -117,7 +117,7 @@ ancil_send_fd(int, int);
  */
 
 extern int
-ancil_recv_fd(int, int *);
+        ancil_recv_fd(int, int *);
 /* ancil_send_fd(sock, &fd);
  *
  * Receives the file descriptor fd from the socket sock.
