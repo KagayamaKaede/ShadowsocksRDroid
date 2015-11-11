@@ -21,26 +21,27 @@ import java.util.concurrent.Executors;
 public final class SSRTunnel extends Thread
 {
     private ServerSocketChannel ssc;
-    private String remoteIP;
-    private String localIP;
-    private int remotePort;
-    private int localPort;
-    private int dnsPort;
-    private String tcpProtocol;
-    private String obfsMethod;
-    private String obfsParam;
+    private final String remoteIP;
+    private final String localIP;
+    private final int remotePort;
+    private final int localPort;
+    private final int dnsPort;
+    private final String pwd;
+    private final String cryptMethod;
+    private final String tcpProtocol;
+    private final String obfsMethod;
+    private final String obfsParam;
 
     private byte[] dnsIp;
 
-    private String pwd;
-    private String cryptMethod;
+    private ExecutorService localThreadPool;
+    private ExecutorService remoteThreadPool;
 
-    private ExecutorService exec;
     private volatile boolean isRunning = true;
 
     private OnNeedProtectTCPListener onNeedProtectTCPListener;
 
-    private HashMap<String, Object> shareParam;
+    private final HashMap<String, Object> shareParam;
 
     public SSRTunnel(String remoteIP, String localIP, String dnsIP, int remotePort,
             int localPort, int dnsPort, String cryptMethod, String tcpProtocol,
@@ -56,6 +57,8 @@ public final class SSRTunnel extends Thread
         this.tcpProtocol = tcpProtocol;
         this.obfsMethod = obfsMethod;
         this.obfsParam = obfsParam;
+
+        shareParam = new HashMap<>();
 
         try
         {
@@ -87,8 +90,8 @@ public final class SSRTunnel extends Thread
 
     @Override public void run()
     {
-        shareParam = new HashMap<>();
-        exec = Executors.newCachedThreadPool();
+        localThreadPool = Executors.newCachedThreadPool();
+        remoteThreadPool = Executors.newCachedThreadPool();
         //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 
         while (isRunning)//When tcp server crashed, restart it.
@@ -96,19 +99,18 @@ public final class SSRTunnel extends Thread
             try
             {
                 ssc = ServerSocketChannel.open();
-                ssc.configureBlocking(true);
+                //default is block
                 ssc.socket().bind(new InetSocketAddress(localIP, localPort));
                 while (isRunning)
                 {
                     ChannelAttach attach = new ChannelAttach();
                     attach.localSkt = ssc.accept();
-                    exec.submit(new LocalSocketHandler(attach));
+                    localThreadPool.execute(new LocalSocketHandler(attach));
                 }
             }
             catch (Exception ignored)
             {
             }
-            //
             try
             {
                 ssc.close();
@@ -132,7 +134,7 @@ public final class SSRTunnel extends Thread
         {
             try
             {
-                attach.localSkt.configureBlocking(true);
+                //default is block
                 attach.localSkt.socket().setTcpNoDelay(true);
                 attach.localSkt.socket().setReuseAddress(true);
                 //
@@ -145,7 +147,7 @@ public final class SSRTunnel extends Thread
                 attach.localReadBuf.put((byte) 1).put(dnsIp).put((byte) ((dnsPort >> 8) & 0xFF))
                                    .put((byte) (dnsPort & 0xFF));
                 //
-                new Thread(new RemoteSocketHandler(attach)).start();
+                remoteThreadPool.execute(new RemoteSocketHandler(attach));
                 //
                 while (isRunning)
                 {
@@ -159,9 +161,8 @@ public final class SSRTunnel extends Thread
                     {
                         break;
                     }
-                    Log.e("EXC", "READ LOC CNT: " + rcnt);
-                    attach.localReadBuf.flip();
-                    byte[] recv = new byte[attach.localReadBuf.limit()];
+
+                    byte[] recv = new byte[attach.localReadBuf.flip().limit()];
                     attach.localReadBuf.get(recv);
                     //
                     recv = attach.proto.beforeEncrypt(recv);
@@ -172,9 +173,8 @@ public final class SSRTunnel extends Thread
                     attach.localReadBuf.clear();
                 }
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
-                Log.e("EXC", "LOCAL EXEC: " + e.getMessage());
             }
             cleanSession(attach);
         }
@@ -184,7 +184,7 @@ public final class SSRTunnel extends Thread
     throws Exception
     {
         attach.remoteSkt = SocketChannel.open();
-        attach.remoteSkt.configureBlocking(true);
+        //default is block
         attach.remoteSkt.socket().setReuseAddress(true);
         attach.remoteSkt.socket().setTcpNoDelay(true);
         boolean success = onNeedProtectTCPListener.onNeedProtectTCP(attach.remoteSkt.socket());
@@ -199,9 +199,7 @@ public final class SSRTunnel extends Thread
     private boolean checkSessionAlive(ChannelAttach attach)
     {
         return attach.localSkt != null &&
-               attach.remoteSkt != null &&
-               attach.localSkt.socket().isConnected() &&
-               attach.remoteSkt.socket().isConnected();
+               attach.remoteSkt != null;
     }
 
     private void cleanSession(ChannelAttach attach)
@@ -216,6 +214,9 @@ public final class SSRTunnel extends Thread
         }
         attach.remoteSkt = null;
         attach.localSkt = null;
+        attach.obfs = null;
+        attach.proto = null;
+        attach.crypto = null;
         attach.localReadBuf = null;
         attach.remoteReadBuf = null;
     }
@@ -230,13 +231,13 @@ public final class SSRTunnel extends Thread
         catch (Exception ignored)
         {
         }
-        exec.shutdown();
+        localThreadPool.shutdown();
         ssc = null;
     }
 
     class RemoteSocketHandler implements Runnable
     {
-        private ChannelAttach attach;
+        private final ChannelAttach attach;
 
         public RemoteSocketHandler(ChannelAttach attach)
         {
@@ -255,11 +256,10 @@ public final class SSRTunnel extends Thread
                         break;
                     }
                     int rcnt = attach.remoteSkt.read(attach.remoteReadBuf);
-                    if (rcnt < 1)
+                    if (rcnt < 0)
                     {
                         break;
                     }
-                    Log.e("EXC", "READ RMT CNT: " + rcnt);
                     attach.remoteReadBuf.flip();
                     byte[] recv = new byte[rcnt];
                     attach.remoteReadBuf.get(recv);
@@ -272,9 +272,8 @@ public final class SSRTunnel extends Thread
                     attach.remoteReadBuf.clear();
                 }
             }
-            catch (Exception e)
+            catch (Exception ignored)
             {
-                Log.e("EXC", "REMOTE EXEC: T" + e.getMessage());
             }
             cleanSession(attach);
         }

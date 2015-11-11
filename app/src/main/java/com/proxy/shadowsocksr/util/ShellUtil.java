@@ -48,15 +48,15 @@ public final class ShellUtil
         shl.close();
     }
 
-    public static void runRootCmd(String cmd)
-    {
-        runRootCmd(new String[]{cmd});
-    }
-
-    public static void runRootCmd(String cmd, String cxt)
-    {
-        runRootCmd(new String[]{cmd}, cxt);
-    }
+//    public static void runRootCmd(String cmd)
+//    {
+//        runRootCmd(new String[]{cmd});
+//    }
+//
+//    public static void runRootCmd(String cmd, String cxt)
+//    {
+//        runRootCmd(new String[]{cmd}, cxt);
+//    }
 
     public static void runRootCmd(String[] cmds)
     {

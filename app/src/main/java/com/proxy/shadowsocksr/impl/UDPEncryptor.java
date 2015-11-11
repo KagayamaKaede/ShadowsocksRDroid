@@ -1,6 +1,5 @@
 package com.proxy.shadowsocksr.impl;
 
-import com.proxy.shadowsocksr.impl.crypto.CryptoInfo;
 import com.proxy.shadowsocksr.impl.crypto.crypto.AbsCrypto;
 import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoManager;
 
@@ -14,8 +13,8 @@ public final class UDPEncryptor
 
     public UDPEncryptor(String pwd, String cryptMethod)
     {
-        cryptMethodInfo = new CryptoInfo().getCipherInfo(cryptMethod);
-        crypto = CryptoManager.getMatchCrypto(cryptMethod, pwd);
+        cryptMethodInfo = CryptoManager.getManager().getCipherInfo(cryptMethod);
+        crypto = CryptoManager.getManager().getMatchCrypto(cryptMethod, pwd);
     }
 
     public int getIVLen()

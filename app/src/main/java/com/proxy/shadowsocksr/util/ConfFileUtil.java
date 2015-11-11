@@ -35,7 +35,7 @@ public final class ConfFileUtil
     //            "}";
 
     //TODO must split line?
-    public static String PdNSdLocal =
+    public final static String PdNSdLocal =
             "global {" + Consts.lineSept +
             " perm_cache = 2048;" + Consts.lineSept +
             " cache_dir = \"/data/data/com.proxy.shadowsocksr\";" + Consts.lineSept +

@@ -51,6 +51,7 @@ public final class AddressUtils
         return addr;
     }
 
+    //TODO How to optimized cidr range check
     public static boolean checkInCIDRRange(int ip, List<String> cidrs)
     {
         Matcher matcher;
@@ -77,8 +78,8 @@ public final class AddressUtils
                     netmask |= (1 << 31 - j);
                 }
 
-                network = (address & netmask);
-                broadcast = network | ~(netmask);
+                network = address & netmask;
+                broadcast = network | ~netmask;
                 //
                 long addLong = ip & UNSIGNED_INT_MASK;
                 long lowLong =

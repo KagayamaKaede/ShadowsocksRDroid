@@ -18,19 +18,19 @@ public final class UDPRelayServer extends Thread
     private DatagramChannel udpServer;
     private InetSocketAddress isaLocal;
     private InetSocketAddress isaRemote;
-    private UDPEncryptor crypto;
+    private final UDPEncryptor crypto;
 
-    private String remoteIP;
-    private String localIP;
-    private int remotePort;
-    private int localPort;
+    private final String remoteIP;
+    private final String localIP;
+    private final int remotePort;
+    private final int localPort;
 
     private final int ivLen;
 
     private ExecutorService exec;
     private volatile boolean isRunning = true;
 
-    private LruCache<SocketAddress, UDPRemoteDataHandler> cache;
+    private final LruCache<SocketAddress, UDPRemoteDataHandler> cache;
 
     private OnNeedProtectUDPListener onNeedProtectUDPListener;
 
@@ -41,7 +41,7 @@ public final class UDPRelayServer extends Thread
         this.localIP = localIP;
         this.remotePort = remotePort;
         this.localPort = localPort;
-        cache = new LruCache<>(64);//save ram
+        cache = new LruCache<>(64);
         crypto = new UDPEncryptor(pwd, cryptMethod);
         ivLen = crypto.getIVLen();
     }
@@ -63,10 +63,7 @@ public final class UDPRelayServer extends Thread
         catch (Exception ignored)
         {
         }
-        if (cache.size() > 0)
-        {
-            cache.evictAll();
-        }
+        cache.evictAll();
         udpServer = null;
         exec.shutdown();
     }
@@ -135,7 +132,7 @@ public final class UDPRelayServer extends Thread
                         {
                             handler = new UDPRemoteDataHandler(localAddress, remoteChannel);
                             cache.put(localAddress, handler);
-                            exec.submit(handler);
+                            exec.execute(handler);
                         }
                         else
                         {
@@ -165,7 +162,7 @@ public final class UDPRelayServer extends Thread
 
     class UDPRemoteDataHandler implements Runnable
     {
-        public SocketAddress localAddress;
+        public final SocketAddress localAddress;
         public DatagramChannel remoteChannel;
 
         public ByteBuffer remoteReadBuf = ByteBuffer.allocate(1500);
@@ -203,9 +200,9 @@ public final class UDPRelayServer extends Thread
             catch (Exception e)
             {
                 Log.e("EXC", "UDP REMOTE EXC: " + e.getMessage());
-                cache.remove(localAddress);
                 try
                 {
+                    cache.remove(localAddress);
                     remoteChannel.close();
                 }
                 catch (IOException ignored)

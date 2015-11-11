@@ -1,8 +1,5 @@
 package com.proxy.shadowsocksr.impl;
 
-import android.util.Log;
-
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Random;
 import java.util.zip.CRC32;
@@ -63,38 +60,6 @@ public final class Utils
         return bs;
     }
 
-    //
-    public static void fillIntAsBytes(int i, byte[] dst, int dstOff)
-    {
-        dst[dstOff] = (byte) (i);
-        dst[dstOff + 1] = (byte) (i >> 8);
-        dst[dstOff + 2] = (byte) (i >> 16);
-        dst[dstOff + 3] = (byte) (i >> 24);
-    }
-
-    //
-    public static void bytesHexDmp(String tag, byte[] bytes)
-    {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes)
-        {
-            sb.append(String.format("%02X ", b));
-        }
-        Log.e(tag, sb.toString());
-    }
-
-    public static void bufHexDmp(String tag, ByteBuffer bb)
-    {
-        StringBuilder sb = new StringBuilder();
-        int st = bb.position();
-        int cnt = bb.limit();
-        for (; st < cnt; st++)
-        {
-            sb.append(String.format("%02X ", bb.get(st)));
-        }
-        Log.e(tag, sb.toString());
-    }
-
     public static void fillEpoch(byte[] dst, int dstOff)
     {
         long cur = (System.currentTimeMillis() / 1000L);//not use high 32bit,need not mask it.
@@ -103,4 +68,36 @@ public final class Utils
         dst[dstOff + 2] = (byte) (cur >> 16);
         dst[dstOff + 3] = (byte) (cur >> 24);
     }
+
+    //
+    //    public static void fillIntAsBytes(int i, byte[] dst, int dstOff)
+    //    {
+    //        dst[dstOff] = (byte) (i);
+    //        dst[dstOff + 1] = (byte) (i >> 8);
+    //        dst[dstOff + 2] = (byte) (i >> 16);
+    //        dst[dstOff + 3] = (byte) (i >> 24);
+    //    }
+
+    //
+    //    public static void bytesHexDmp(String tag, byte[] bytes)
+    //    {
+    //        StringBuilder sb = new StringBuilder();
+    //        for (byte b : bytes)
+    //        {
+    //            sb.append(String.format("%02X ", b));
+    //        }
+    //        Log.e(tag, sb.toString());
+    //    }
+    //
+    //    public static void bufHexDmp(String tag, ByteBuffer bb)
+    //    {
+    //        StringBuilder sb = new StringBuilder();
+    //        int st = bb.position();
+    //        int cnt = bb.limit();
+    //        for (; st < cnt; st++)
+    //        {
+    //            sb.append(String.format("%02X ", bb.get(st)));
+    //        }
+    //        Log.e(tag, sb.toString());
+    //    }
 }
