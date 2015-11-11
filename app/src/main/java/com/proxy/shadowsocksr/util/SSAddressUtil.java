@@ -37,7 +37,8 @@ public final class SSAddressUtil
                     cfg.obfsMethod.equals("plain") ? "" : cfg.obfsMethod + ":",
                     cfg.tcpProtocol.equals("origin") ? "" : cfg.tcpProtocol + ":",
                     cfg.cryptMethod, cfg.passwd, cfg.server, cfg.remotePort,
-                    cfg.obfsParam.equals("") ? "" : "/" + URLEncoder.encode(cfg.obfsParam, "UTF-8"),
+                    (cfg.obfsParam == null || cfg.obfsParam.equals("")) ? "" :
+                    "/" + URLEncoder.encode(cfg.obfsParam, "UTF-8"),
                     remarks.equals("") ? "" : "#" + URLEncoder.encode(remarks, "UTF-8"));
             return "ss://" + Base64.encodeToString(path.getBytes(), Base64.NO_PADDING);
         }
@@ -47,7 +48,7 @@ public final class SSAddressUtil
         return null;
     }
 
-    public SSRProfile parse(String address,StringBuilder sb)
+    public SSRProfile parse(String address, StringBuilder sb)
     {
         SSRProfile ssp = null;
         try
