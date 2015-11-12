@@ -145,7 +145,6 @@ public final class SSRLocal extends Thread
                     // TODO need optimize cidr check speed.
                     if (AddressUtils.checkInCIDRRange(AddressUtils.ipv4BytesToInt(ip), aclList))
                     {
-                        Log.e("EXC", "IN");
                         attach.isDirect = true;
                         if (!prepareRemote(attach, AddressUtils.ipv4BytesToIp(ip), port))
                         {
@@ -155,7 +154,6 @@ public final class SSRLocal extends Thread
                     }
                     else
                     {
-                        Log.e("EXC", "NOT IN");
                         if (!prepareRemote(attach, rmtIP, rmtPort))
                         {
                             return;
@@ -241,15 +239,12 @@ public final class SSRLocal extends Thread
                     cleanSession(attach);
                     return;
                 }
-                Log.e("EXC", "AUTH OK");
-
                 if (!processCMD(attach))
                 {
                     Log.e("EXC", "CMD FAILED");
                     cleanSession(attach);
                     return;
                 }
-                Log.e("EXC", "CMD OK");
                 handleData();
             }
             catch (Exception ignored)
