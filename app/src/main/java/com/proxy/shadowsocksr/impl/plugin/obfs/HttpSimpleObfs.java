@@ -29,9 +29,10 @@ public class HttpSimpleObfs extends AbsObfs
         }
         //
         headSent = true;
-        if (data.length > 64)
+        int headSize = Utils.Companion.findRightHeadSize(data, 30);
+        if (data.length - headSize > 64)
         {
-            int headLen = Utils.randomInt(64) + 1;
+            int headLen = headSize + Utils.Companion.randomInt(65);
             byte[] out = encodeHead(Arrays.copyOfRange(data, 0, headLen));
             byte[] end = new byte[out.length + (data.length - headLen)];
             System.arraycopy(out, 0, end, 0, out.length);
@@ -44,14 +45,14 @@ public class HttpSimpleObfs extends AbsObfs
     private byte[] encodeHead(byte[] data)
     {
         StringBuilder sb = new StringBuilder();
-        sb.append("GET /");
+        sb.append("GET /submit.aspx?");
         for (byte b : data)
         {
             sb.append('%').append(String.format("%02x", b & 0xFF));
         }
         sb.append(" HTTP/1.1\r\n")
           .append("Host: ").append(obfsParam).append(':').append(remotePort).append("\r\n")
-          .append("User-Agent: ").append(ua[Utils.randomInt(2)]).append("\r\n")
+          .append("User-Agent: ").append(ua[Utils.Companion.randomInt(2)]).append("\r\n")
           .append("Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nDNT: 1\r\nConnection: keep-alive\r\n\r\n");
         return sb.toString().getBytes();
     }
@@ -75,7 +76,7 @@ public class HttpSimpleObfs extends AbsObfs
                 pos = i + 4;
             }
         }
-        if (pos == -1 || pos==data.length)
+        if (pos == -1 || pos == data.length)
         {
             return new byte[0];
         }
