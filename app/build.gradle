@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 apply plugin: 'com.google.osdetector'
 
 android {
@@ -21,7 +22,7 @@ android {
                 stl "stlport_static"
                 abiFilters "armeabi-v7a", "x86"
             }
-            minifyEnabled true
+            minifyEnabled false
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -46,6 +47,7 @@ android {
             jni.srcDirs = []
             jniLibs.srcDirs = ['libs']
         }
+        main.java.srcDirs += 'src/main/kotlin'
     }
 
     //noinspection GroovyAssignabilityCheck
@@ -92,6 +94,7 @@ def getNdkDir() {
 
 repositories {
     maven { url "https://jitpack.io" }
+    mavenCentral()
 }
 
 dependencies {
@@ -109,6 +112,17 @@ dependencies {
     compile files('libs/org.xbill.dns_2.1.7.jar')
     //Crypto
     compile 'com.madgag.spongycastle:core:1.53.0.0'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     //mem leak check
     //debugCompile 'com.squareup.leakcanary:leakcanary-android:1.3'
+    compile files('libs/commons-checksum-0.9.jar')
+}
+buildscript {
+    ext.kotlin_version = '1.0.0-beta-1103'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
 }

@@ -20,6 +20,8 @@
 
 -keep public class * extends android.app.backup.** { *; }
 
+-keep kotlin.** { *; }
+
 # 不混淆 下面类及其子类
 -keep public class * extends android.app.Fragment
 -keep public class * extends android.app.Activity

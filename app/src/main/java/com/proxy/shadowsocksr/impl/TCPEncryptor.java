@@ -1,7 +1,7 @@
 package com.proxy.shadowsocksr.impl;
 
+import com.proxy.shadowsocksr.impl.crypto.CryptoManager;
 import com.proxy.shadowsocksr.impl.crypto.crypto.AbsCrypto;
-import com.proxy.shadowsocksr.impl.crypto.crypto.CryptoManager;
 
 import java.util.Arrays;
 
@@ -15,9 +15,9 @@ public final class TCPEncryptor
 
     public TCPEncryptor(String pwd, String cryptMethod)
     {
-        int[] cryptMethodInfo = CryptoManager.getManager().getCipherInfo(cryptMethod);
-        eIV = Utils.srandomBytes(cryptMethodInfo[1]);
-        crypto = CryptoManager.getManager().getMatchCrypto(cryptMethod, pwd);
+        int[] cryptMethodInfo = CryptoManager.Companion.getCipherInfo(cryptMethod);
+        eIV = Utils.Companion.srandomBytes(cryptMethodInfo[1]);
+        crypto = CryptoManager.Companion.getMatchCrypto(cryptMethod, pwd);
     }
 
     public byte[] encrypt(byte[] buf)

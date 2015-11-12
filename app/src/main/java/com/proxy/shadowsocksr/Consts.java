@@ -15,7 +15,7 @@ public final class Consts
     //
     //TODO: should not use hard-coded
     @SuppressLint("SdCardPath") public final static String baseDir
-            = "/data/data/com.proxy.shadowsocksr/";
+    = "/data/data/com.proxy.shadowsocksr/";
     //
     //
     public final static int STATUS_CONNECTED = 0;
