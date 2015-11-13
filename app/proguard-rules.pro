@@ -14,13 +14,13 @@
 -keepattributes *Annotation*,Exceptions,Signature,SourceFile,LineNumberTable,InnerClass,EnclosingMethod
 -dontskipnonpubliclibraryclasses -dontskipnonpubliclibraryclassmembers
 
+-keep class com.proxy.shadowsocksr.impl.** { *; }
+-keep class com.proxy.shadowsocksr.util.** { *; }
 -keep class com.proxy.shadowsocksr.items.SSRProfile { *; }
 -keep class com.proxy.shadowsocksr.items.GlobalProfile { *; }
 -keep class com.proxy.shadowsocksr.preference.** { *; }
 
 -keep public class * extends android.app.backup.** { *; }
-
--keep kotlin.** { *; }
 
 # 不混淆 下面类及其子类
 -keep public class * extends android.app.Fragment

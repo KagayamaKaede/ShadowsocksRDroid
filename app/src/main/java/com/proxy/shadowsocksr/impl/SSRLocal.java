@@ -69,8 +69,9 @@ public final class SSRLocal extends Thread
         public ByteBuffer localReadBuf = ByteBuffer.allocate(8224);
         public ByteBuffer remoteReadBuf = ByteBuffer.allocate(8224);
         public TCPEncryptor crypto = new TCPEncryptor(pwd, cryptMethod);
-        public AbsObfs obfs = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam);
-        public AbsProtocol proto = ProtocolChooser
+        public AbsObfs obfs = ObfsChooser.Companion
+                .getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam);
+        public AbsProtocol proto = ProtocolChooser.Companion
                 .getProtocol(tcpProtocol, rmtIP, rmtPort, 1440, shareParam);
         public SocketChannel localSkt;
         public SocketChannel remoteSkt;
@@ -143,10 +144,11 @@ public final class SSRLocal extends Thread
                     attach.localReadBuf.get(ip);
                     port = attach.localReadBuf.getShort();
                     // TODO need optimize cidr check speed.
-                    if (AddressUtils.checkInCIDRRange(AddressUtils.ipv4BytesToInt(ip), aclList))
+                    if (AddressUtils.Companion.checkInCIDRRange(
+                            AddressUtils.Companion.ipv4BytesToInt(ip), aclList))
                     {
                         attach.isDirect = true;
-                        if (!prepareRemote(attach, AddressUtils.ipv4BytesToIp(ip), port))
+                        if (!prepareRemote(attach, AddressUtils.Companion.ipv4BytesToIp(ip), port))
                         {
                             return;
                         }

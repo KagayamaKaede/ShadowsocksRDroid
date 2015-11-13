@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">影梭R</string>
-    <string name="add_server">手动添加服务器</string>
+    <string name="manually_add_server">手动添加服务器</string>
     <string name="del_current_server">删除当前服务器</string>
     <string name="fresh_dns_cache">刷新DNS缓存(需要root)</string>
     <string name="proxy_tip">勾选的应用将通过代理访问互联网。</string>
@@ -57,4 +57,5 @@
     <string name="forwarding_ipv6_traffic_to_remote">转发 IPv6 流量到远程服务器</string>
     <string name="ipv6_route">IPv6 路由</string>
     <string name="obfs_param">混淆参数</string>
+    <string name="add_server">添加服务器</string>
 </resources>

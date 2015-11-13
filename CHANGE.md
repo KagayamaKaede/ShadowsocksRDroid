@@ -4,7 +4,7 @@
 + Improve crypt operating speed.
 + Update tun2socks from shadowsocks/tun2socks repo.
 + Add backupagent, this only worked on android6+
-+ Clean code.
++ Clean code, using some Kotlin language.
 + ```May be contains many bug, even not work properly```.
 
 ##1.1.0 Test

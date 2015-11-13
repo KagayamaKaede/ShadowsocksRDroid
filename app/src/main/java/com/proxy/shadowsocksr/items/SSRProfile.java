@@ -19,8 +19,8 @@ public final class SSRProfile implements Serializable
     public boolean udpOverTcp;
 
     public SSRProfile(String server, int remotePort, String cryptMethod,
-            String passwd, String tcpProtocol, String obfsMethod,
-            String obfsParam, boolean tcpOverUdp, boolean udpOverTcp)
+    String passwd, String tcpProtocol, String obfsMethod,
+    String obfsParam, boolean tcpOverUdp, boolean udpOverTcp)
     {
         this.server = server;
         this.remotePort = remotePort;

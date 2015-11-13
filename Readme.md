@@ -2,7 +2,7 @@
 
 [中文版本介绍](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/Readme.cn.md)
 
-A ShadowsocksR client for Android4.0+(API Level 14+,and support 64bit cpu), written in Java and some Kotlin.
+A ShadowsocksR client for Android4.0+(API Level 14+,and support 64bit cpu), written in Kotlin and some Java.
 Compatible Shadowsocks protocol and support some ShadowsocksR function.
 
 ##Plans

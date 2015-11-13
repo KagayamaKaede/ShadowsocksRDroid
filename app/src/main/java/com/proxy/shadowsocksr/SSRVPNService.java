@@ -162,14 +162,14 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
             {
                 if (!f.canRead() || !f.canExecute())
                 {
-                    ShellUtil.runCmd("chmod 755 " + f.getAbsolutePath());
+                    new ShellUtil().runCmd("chmod 755 " + f.getAbsolutePath());
                 }
             }
             else
             {
                 if (copyDaemonBin(fn, f))
                 {
-                    ShellUtil.runCmd("chmod 755 " + f.getAbsolutePath());
+                    new ShellUtil().runCmd("chmod 755 " + f.getAbsolutePath());
                     return true;
                 }
                 return false;
@@ -219,8 +219,8 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         {
             @Override public void run()
             {
-                if (!InetAddressUtil.isIPv4Address(connProfile.server) &&
-                    !InetAddressUtil.isIPv6Address(connProfile.server))
+                if (!InetAddressUtil.Companion.isIPv4Address(connProfile.server) &&
+                    !InetAddressUtil.Companion.isIPv6Address(connProfile.server))
                 {
                     DNSUtil du = new DNSUtil();
                     String ip = du.resolve(connProfile.server, true);
@@ -372,14 +372,14 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         local.setOnNeedProtectTCPListener(this);
         local.start();
 
-//        if (connProfile.dnsForward)
-//        {
-//            udprs = new UDPRelayServer(connProfile.server, "127.0.0.1", connProfile.remotePort,
-//                                       connProfile.localPort, connProfile.cryptMethod,
-//                                       connProfile.passwd);
-//            udprs.setOnNeedProtectUDPListener(this);
-//            udprs.start();
-//        }
+        //        if (connProfile.dnsForward)
+        //        {
+        //            udprs = new UDPRelayServer(connProfile.server, "127.0.0.1", connProfile.remotePort,
+        //                                       connProfile.localPort, connProfile.cryptMethod,
+        //                                       connProfile.passwd);
+        //            udprs.setOnNeedProtectUDPListener(this);
+        //            udprs.start();
+        //        }
     }
 
     private void startDnsTunnel()
@@ -414,10 +414,10 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                                   connProfile.ipv6Route ? "" : "reject = ::/0;");
         }
 
-        ConfFileUtil.writeToFile(pdnsd, new File(Consts.baseDir + "pdnsd-vpn.conf"));
+        ConfFileUtil.Companion.writeToFile(pdnsd, new File(Consts.baseDir + "pdnsd-vpn.conf"));
 
         String cmd = Consts.baseDir + "pdnsd -c " + Consts.baseDir + "pdnsd-vpn.conf";
-        ShellUtil.runCmd(cmd);
+        new ShellUtil().runCmd(cmd);
     }
 
     private int startVpn()
@@ -511,7 +511,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
             cmd += String.format(" --dnsgw %s:8153", String.format(PRIVATE_VLAN, "1"));
         }
 
-        ShellUtil.runCmd(cmd);
+        new ShellUtil().runCmd(cmd);
 
         return fd;
     }
@@ -546,7 +546,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         }
         cmdarr = new String[cmds.size()];
         cmds.toArray(cmdarr);
-        ShellUtil.runCmd(cmdarr);
+        new ShellUtil().runCmd(cmdarr);
         cmds.clear();
 
         for (String t : tasks)
@@ -565,6 +565,6 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         }
         cmdarr = new String[cmds.size()];
         cmds.toArray(cmdarr);
-        ShellUtil.runCmd(cmdarr);
+        new ShellUtil().runCmd(cmdarr);
     }
 }
