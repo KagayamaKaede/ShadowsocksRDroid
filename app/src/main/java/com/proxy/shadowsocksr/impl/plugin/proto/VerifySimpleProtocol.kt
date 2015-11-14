@@ -98,5 +98,4 @@ class VerifySimpleProtocol(rmtIP: String, rmtPort: Int, tcpMss: Int, shareParam:
         bb.get(out)
         return out
     }
-
 }

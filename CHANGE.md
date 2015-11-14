@@ -1,10 +1,13 @@
 ##1.1.1 Test
 
-+ Reduce RAM usage.
 + Improve crypt operating speed.
++ Reduce RAM usage.
 + Update tun2socks from shadowsocks/tun2socks repo.
 + Add backupagent, this only worked on android6+
-+ Clean code, using some Kotlin language.
++ Clean code, convert many code to Kotlin language.
++ Update http\_simple.
++ Update UI.
++ Change plane fly to North-West.
 + ```May be contains many bug, even not work properly```.
 
 ##1.1.0 Test

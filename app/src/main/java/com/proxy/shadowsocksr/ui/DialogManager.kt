@@ -8,7 +8,6 @@ class DialogManager private constructor()
     companion object
     {
         private var manager: DialogManager? = null
-
         private var pd: ProgressDialog? = null
 
         val instance: DialogManager

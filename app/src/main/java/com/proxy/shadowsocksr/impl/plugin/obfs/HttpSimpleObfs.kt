@@ -6,19 +6,20 @@ import java.util.*
 class HttpSimpleObfs(usrParamStr: String, rmtIP: String, rmtPort: Int, tcpMss: Int) : AbsObfs(
         usrParamStr, rmtIP, rmtPort, tcpMss)
 {
-    val ua: Array<String> = arrayOf(
+    private val ua: Array<String> = arrayOf(
             "Mozilla/5.0 (Linux; U; en-us; KFAPWI Build/JDQ39) AppleWebKit/535.19 (KHTML, like Gecko) Silk/3.13 Safari/535.19 Silk-Accelerated=true",
             "Mozilla/5.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/600.1.3 (KHTML, like Gecko) Version/8.0 Mobile/12A4345d Safari/600.1.4",
             "Mozilla/5.0 (Linux; Android 5.1.1; Nexus 6 Build/LYZ28E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.20 Mobile Safari/537.36")
 
     init
     {
-        obfsParam = if (usrParamStr == "") "mvnrepository.com" else usrParamStr
+        obfsParam = if (usrParamStr == "") "cloudfront.com" else usrParamStr
     }
 
     private var headSent = false
     private var headRecv = false
 
+    @Throws(Exception::class)
     override fun afterEncrypt(data: ByteArray): ByteArray
     {
         if (headSent)
@@ -43,7 +44,7 @@ class HttpSimpleObfs(usrParamStr: String, rmtIP: String, rmtPort: Int, tcpMss: I
     private fun encodeHead(data: ByteArray): ByteArray
     {
         val sb = StringBuilder()
-        sb.append("GET /submitarg.aspx?")
+        sb.append("GET /submit.aspx?")
         for (b in data)
         {
             sb.append('%').append("%02x".format(b.toInt() and 0xFF))
@@ -55,6 +56,7 @@ class HttpSimpleObfs(usrParamStr: String, rmtIP: String, rmtPort: Int, tcpMss: I
         return sb.toString().toByteArray()
     }
 
+    @Throws(Exception::class)
     override fun beforeDecrypt(data: ByteArray, needsendback: Boolean): ByteArray
     {
         if (headRecv)

@@ -58,4 +58,5 @@
     <string name="ipv6_route">IPv6 路由</string>
     <string name="obfs_param">混淆参数</string>
     <string name="add_server">添加服务器</string>
+    <string name="wait_load_list">请等待列表加载…</string>
 </resources>

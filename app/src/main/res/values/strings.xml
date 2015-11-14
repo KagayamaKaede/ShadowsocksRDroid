@@ -45,6 +45,7 @@
     <string name="add_success">Add Success</string>
     <string name="add_canceled">Add Canceled</string>
     <string name="add_failed">Add Failed</string>
+    <string name="wait_load_list">Please wait load list…</string>
     <string name="show_qr">Show current QRCode</string>
     <string name="ssr_feature_configuration">SSR Feature Configuration</string>
     <string name="protocol_type">Protocol Type</string>

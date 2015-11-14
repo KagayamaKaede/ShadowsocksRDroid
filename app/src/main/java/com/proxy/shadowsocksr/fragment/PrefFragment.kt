@@ -45,13 +45,13 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
     private var prefUdpDNS: CheckBoxPreference? = null
     private var prefAuto: CheckBoxPreference? = null
 
-    private var pm: PreferenceManager?=null
+    private var pm: PreferenceManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         addPreferencesFromResource(R.xml.pref)
-        pm=preferenceManager
+        pm = preferenceManager
         //
         prefLbl = findPreference("label") as SummaryEditTextPreference
         prefSvr = findPreference("server") as SummaryEditTextPreference
@@ -87,20 +87,20 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         }
     }
 
-//    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-//                              savedInstanceState: Bundle?): View?
-//    {
-//        val v = super.onCreateView(inflater, container, savedInstanceState)
-//
-//        if (v != null)
-//        {
-//            val lv = v.findViewById(android.R.id.list) as ListView
-//            ViewCompat.setNestedScrollingEnabled(lv, true)
-//            lv.clipToPadding = false
-//            //lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
-//        }
-//        return super.onCreateView(inflater, container, savedInstanceState)
-//    }
+    //    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+    //                              savedInstanceState: Bundle?): View?
+    //    {
+    //        val v = super.onCreateView(inflater, container, savedInstanceState)
+    //
+    //        if (v != null)
+    //        {
+    //            val lv = v.findViewById(android.R.id.list) as ListView
+    //            ViewCompat.setNestedScrollingEnabled(lv, true)
+    //            lv.clipToPadding = false
+    //            //lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
+    //        }
+    //        return super.onCreateView(inflater, container, savedInstanceState)
+    //    }
 
     override fun onResume()
     {
@@ -197,10 +197,10 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
             }
 
             "server" -> ss.server = sp.getString(key, Consts.defaultIP)
-            "remote_port" -> ss.remotePort = Integer.valueOf(
-                    sp.getString(key, Consts.defaultRemotePort.toString()))!!
-            "local_port" -> ss.localPort = Integer.valueOf(
-                    sp.getString(key, Consts.defaultLocalPort.toString()))!!
+            "remote_port" -> ss.remotePort = Integer.valueOf(sp.getString(
+                    key, Consts.defaultRemotePort.toString()))!!
+            "local_port" -> ss.localPort = Integer.valueOf(sp.getString(
+                    key, Consts.defaultLocalPort.toString()))!!
             "crypt_method" -> ss.cryptMethod = sp.getString(key, Consts.defaultCryptMethod)
             "password" -> ss.passwd = sp.getString(key, "")
             "protocol_type" -> ss.tcpProtocol = sp.getString(key, Consts.defaultTcpProtocol)

@@ -13,12 +13,11 @@ import com.proxy.shadowsocksr.adapter.items.AppItem
 
 class AppsAdapter(private val appLst: List<AppItem>) : RecyclerView.Adapter<AppsAdapter.ViewHolder>()
 {
-    private var onItemClickListener: OnItemClickListener? = null
+    var onItemClickListener: OnItemClickListener? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder
     {
-        val v = LayoutInflater.from(parent.context).inflate(
-                R.layout.list_app_item, parent, false)
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.list_app_item, parent, false)
         return ViewHolder(v)
     }
 
@@ -35,7 +34,7 @@ class AppsAdapter(private val appLst: List<AppItem>) : RecyclerView.Adapter<Apps
         return appLst.size
     }
 
-    internal inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener
+    public inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v), View.OnClickListener
     {
         var iv: ImageView
         var tv: TextView
@@ -53,8 +52,8 @@ class AppsAdapter(private val appLst: List<AppItem>) : RecyclerView.Adapter<Apps
         {
             if (onItemClickListener != null)
             {
-                appLst[adapterPosition].checked = !cb.isChecked
                 cb.isChecked = !cb.isChecked
+                appLst[adapterPosition].checked = cb.isChecked
                 onItemClickListener!!.onItemClick(v, adapterPosition)
             }
         }
@@ -63,10 +62,5 @@ class AppsAdapter(private val appLst: List<AppItem>) : RecyclerView.Adapter<Apps
     interface OnItemClickListener
     {
         fun onItemClick(v: View, pos: Int)
-    }
-
-    fun setOnItemClickListener(onItemClickListener: OnItemClickListener)
-    {
-        this.onItemClickListener = onItemClickListener
     }
 }

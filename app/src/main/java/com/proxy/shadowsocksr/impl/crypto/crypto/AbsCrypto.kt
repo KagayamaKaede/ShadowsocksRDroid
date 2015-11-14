@@ -2,6 +2,8 @@ package com.proxy.shadowsocksr.impl.crypto.crypto;
 
 /*
  * If you need add new Crypto, just extends this class, and change CryptoManager class.
+ *
+ * If you need using C/C++ impl crypto, please in CryptoManager init it.
  */
 abstract class AbsCrypto(val cryptMethod: String, val key: ByteArray)
 {

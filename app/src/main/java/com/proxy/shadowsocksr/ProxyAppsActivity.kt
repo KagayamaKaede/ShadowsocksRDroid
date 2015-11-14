@@ -1,11 +1,7 @@
 package com.proxy.shadowsocksr
 
-import android.app.AlertDialog
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.support.v7.app.ActionBar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -16,6 +12,7 @@ import android.view.View
 import com.orhanobut.hawk.Hawk
 import com.proxy.shadowsocksr.adapter.AppsAdapter
 import com.proxy.shadowsocksr.adapter.items.AppItem
+import com.proxy.shadowsocksr.ui.DialogManager
 
 import java.util.ArrayList
 
@@ -43,7 +40,7 @@ class ProxyAppsActivity : AppCompatActivity(), AppsAdapter.OnItemClickListener
         rvApps!!.setHasFixedSize(true)
         appLst = ArrayList<AppItem>()
         appsAdapter = AppsAdapter(appLst!!)
-        appsAdapter!!.setOnItemClickListener(this)
+        appsAdapter!!.onItemClickListener = this
         rvApps!!.adapter = appsAdapter
         //rvApps.setClipToPadding(false);
         //rvApps.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(this).y);
@@ -66,8 +63,7 @@ class ProxyAppsActivity : AppCompatActivity(), AppsAdapter.OnItemClickListener
     override fun onResume()
     {
         super.onResume()
-        val ad = AlertDialog.Builder(this).setCancelable(false).setMessage(
-                "Please wait load list...").show()
+        DialogManager.instance.showTipDialog(this, R.string.wait_load_list);
         //
         Thread(object : Runnable
         {
@@ -97,7 +93,7 @@ class ProxyAppsActivity : AppCompatActivity(), AppsAdapter.OnItemClickListener
                     override fun run()
                     {
                         appsAdapter!!.notifyDataSetChanged()
-                        ad.dismiss()
+                        DialogManager.instance.dismissTipDialog()
                     }
                 })
             }
