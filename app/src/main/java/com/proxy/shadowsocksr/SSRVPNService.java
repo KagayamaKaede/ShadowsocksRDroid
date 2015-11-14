@@ -372,14 +372,14 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         local.setOnNeedProtectTCPListener(this);
         local.start();
 
-        //        if (connProfile.dnsForward)
-        //        {
-        //            udprs = new UDPRelayServer(connProfile.server, "127.0.0.1", connProfile.remotePort,
-        //                                       connProfile.localPort, connProfile.cryptMethod,
-        //                                       connProfile.passwd);
-        //            udprs.setOnNeedProtectUDPListener(this);
-        //            udprs.start();
-        //        }
+        if (connProfile.dnsForward)
+        {
+            udprs = new UDPRelayServer(connProfile.server, "127.0.0.1", connProfile.remotePort,
+                                       connProfile.localPort, connProfile.cryptMethod,
+                                       connProfile.passwd);
+            udprs.setOnNeedProtectUDPListener(this);
+            udprs.start();
+        }
     }
 
     private void startDnsTunnel()

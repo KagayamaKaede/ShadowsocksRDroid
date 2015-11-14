@@ -33,7 +33,7 @@ android {
                 stl "stlport_static"
                 abiFilters "armeabi-v7a", "x86"
             }
-            minifyEnabled true
+            minifyEnabled false
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
