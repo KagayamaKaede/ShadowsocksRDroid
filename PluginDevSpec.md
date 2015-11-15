@@ -4,6 +4,14 @@
 
 ####开发步骤
 
+#####准备：
+
+1. 挑选您熟悉的语言：C，C++，Java，Kotlin。
+
+2. 如果使用C/C++则需要利用JNI间接调用。
+
+3. 如果使用Java或Kotlin则可以直接上手了。
+
 #####协议插件：
 
 1. 协议插件应写在com.proxy.shadowsocksr.impl.plugin.proto包下，并继承AbsProtocol类。根据协议类型，类名以Verify或Auth开头，以Protocol结尾。如：AuthSimpleProtocol。

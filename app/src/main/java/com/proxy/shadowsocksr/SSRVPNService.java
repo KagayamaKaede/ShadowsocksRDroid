@@ -12,6 +12,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.proxy.shadowsocksr.impl.SSRLocal;
 import com.proxy.shadowsocksr.impl.SSRTunnel;
@@ -33,7 +34,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 public final class SSRVPNService extends VpnService implements OnNeedProtectTCPListener,
         OnNeedProtectUDPListener
@@ -42,6 +42,9 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
     private final String PRIVATE_VLAN = "27.27.27.%s";
     private final String PRIVATE_VLAN6 = "fdfe:dcba:9875::%s";
     private ParcelFileDescriptor conn;
+
+    private int pdnsdPID = 0;
+    private int tun2socksPID = 0;
 
     private ConnectProfile connProfile;
 
@@ -397,21 +400,20 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
             String reject = getResources().getString(R.string.reject);
             String blklst = getResources().getString(R.string.black_list);
 
-            pdnsd = String.format(ConfFileUtil.PdNSdDirect, "0.0.0.0", 8153,
-                                  Consts.baseDir + "pdnsd-vpn.pid", reject, blklst, 8163,
+            pdnsd = String.format(ConfFileUtil.PdNSdDirect, "0.0.0.0", 8153, reject, blklst, 8163,
                                   connProfile.getIpv6Route() ? "" : "reject = ::/0;");
         }
         else
         {
-            pdnsd = String.format(ConfFileUtil.PdNSdLocal, "0.0.0.0", 8153,
-                                  Consts.baseDir + "pdnsd-vpn.pid", 8163,
+            pdnsd = String.format(ConfFileUtil.PdNSdLocal, "0.0.0.0", 8153, 8163,
                                   connProfile.getIpv6Route() ? "" : "reject = ::/0;");
         }
 
         ConfFileUtil.Companion.writeToFile(pdnsd, new File(Consts.baseDir + "pdnsd-vpn.conf"));
 
         String cmd = Consts.baseDir + "pdnsd -c " + Consts.baseDir + "pdnsd-vpn.conf";
-        new ShellUtil().runCmd(cmd);
+
+        pdnsdPID = Jni.exec(cmd);
     }
 
     private int startVpn()
@@ -486,10 +488,9 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                                    + " --socks-server-addr 127.0.0.1:%d"
                                    + " --tunfd %d"
                                    + " --tunmtu %d"
-                                   + " --loglevel 0"
-                                   + " --pid %stun2socks-vpn.pid",
+                                   + " --loglevel 0",
                                    String.format(PRIVATE_VLAN, "2"),
-                                   connProfile.getLocalPort(), fd, VPN_MTU, Consts.baseDir);
+                                   connProfile.getLocalPort(), fd, VPN_MTU);
 
         if (connProfile.getIpv6Route())
         {
@@ -505,7 +506,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
             cmd += String.format(" --dnsgw %s:8153", String.format(PRIVATE_VLAN, "1"));
         }
 
-        new ShellUtil().runCmd(cmd);
+        tun2socksPID = Jni.exec(cmd);
 
         return fd;
     }
@@ -529,36 +530,24 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
             udprs.stopUDPRelayServer();
             udprs = null;
         }
-
-        final String[] tasks = new String[]{"pdnsd", "tun2socks"};
-        List<String> cmds = new ArrayList<>();
-        String[] cmdarr;
-
-        for (String task : tasks)
+        //
+        try
         {
-            cmds.add(String.format("chmod 666 %s%s-vpn.pid", Consts.baseDir, task));
+            android.os.Process.killProcess(pdnsdPID);
         }
-        cmdarr = new String[cmds.size()];
-        cmds.toArray(cmdarr);
-        new ShellUtil().runCmd(cmdarr);
-        cmds.clear();
-
-        for (String t : tasks)
+        catch (Exception e)
         {
-            try
-            {
-                File pidf = new File(Consts.baseDir + t + "-vpn.pid");
-                int pid = new Scanner(pidf).useDelimiter("\\Z").nextInt();
-                android.os.Process.killProcess(pid);
-            }
-            catch (Exception ignored)
-            {
-            }
-            cmds.add(String.format("rm -f %s%s-vpn.conf", Consts.baseDir, t));
-            cmds.add(String.format("rm -f %s%s-vpn.pid", Consts.baseDir, t));
+            Log.e("EXC", "PDNSD KILL FAILED: " + e.getMessage());
         }
-        cmdarr = new String[cmds.size()];
-        cmds.toArray(cmdarr);
-        new ShellUtil().runCmd(cmdarr);
+        try
+        {
+            android.os.Process.killProcess(tun2socksPID);
+        }
+        catch (Exception e)
+        {
+            Log.e("EXC", "TUN2SOCKS KILL FAILED: " + e.getMessage());
+        }
+        //
+        new ShellUtil().runCmd(String.format("rm -f %spdnsd-vpn.conf", Consts.baseDir));
     }
 }

@@ -20,8 +20,7 @@ class ConfFileUtil
  min_ttl = 15m;
  max_ttl = 1w;
  timeout = 10;
- daemon = on;
- pid_file = %s;
+ daemon = off;
 }
 
 server {
@@ -51,8 +50,7 @@ rr {
  min_ttl = 15m;
  max_ttl = 1w;
  timeout = 10;
- daemon = on;
- pid_file = %s;
+ daemon = off;
 }
 
 server {

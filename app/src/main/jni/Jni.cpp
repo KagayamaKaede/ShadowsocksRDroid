@@ -13,12 +13,29 @@
 
 #include "jni.h"
 
-//void Java_com_proxy_shadowsocksr_Jni_exec
-//        (JNIEnv *env, jobject thiz, jstring cmd) {
-//    const char *str = env->GetStringUTFChars(cmd, 0);
-//    system(str);
-//    env->ReleaseStringUTFChars(cmd, str);
-//}
+jint Java_com_proxy_shadowsocksr_Jni_exec
+        (JNIEnv *env, jobject thiz, jstring cmd) {
+    const char *cmd_str  = env->GetStringUTFChars(cmd, 0);
+
+    pid_t pid;
+
+    /*  Fork off the parent process */
+    pid = fork();
+    if (pid < 0) {
+        env->ReleaseStringUTFChars(cmd, cmd_str);
+        return -1;
+    }
+
+    if (pid > 0) {
+        env->ReleaseStringUTFChars(cmd, cmd_str);
+        return pid;
+    }
+
+    execl("/system/bin/sh", "sh", "-c", cmd_str, NULL);
+    env->ReleaseStringUTFChars(cmd, cmd_str);
+
+    return 1;
+}
 
 jstring Java_com_proxy_shadowsocksr_Jni_getABI
         (JNIEnv *env, jobject thiz) {
@@ -74,8 +91,8 @@ static const char *classPathName = "com/proxy/shadowsocksr/Jni";
 static JNINativeMethod method_table[] = {
         {"sendFd",   "(I)I",
                 (void *) Java_com_proxy_shadowsocksr_Jni_sendFd},
-//        {"exec",     "(Ljava/lang/String;)V",
-//                (void *) Java_com_proxy_shadowsocksr_Jni_exec},
+        {"exec",     "(Ljava/lang/String;)I",
+                (void *) Java_com_proxy_shadowsocksr_Jni_exec},
         {"getABI",   "()Ljava/lang/String;",
                 (void *) Java_com_proxy_shadowsocksr_Jni_getABI}
 };

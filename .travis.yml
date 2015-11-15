@@ -1,3 +1,5 @@
+# Current can't use.......................
+
 language: android
 
 jdk: oraclejdk8
@@ -19,3 +21,5 @@ script:
     - echo "ndk.dir=${ANDROID_NDK_HOME}" >> local.properties
     - ./gradlew assemble
     - ./gradlew check
+
+# Current can't use.
