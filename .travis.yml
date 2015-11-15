@@ -11,6 +11,9 @@ android:
     - build-tools-23.0.1
     - android-23
 
+before_install:
+ - chmod +x gradlew
+
 script:
-    ./gradlew assemble
+    ./gradlew assemble && \
     ./gradlew check
