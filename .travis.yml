@@ -1,5 +1,7 @@
 language: android
-jdk: oraclejdk7
+
+jdk: oraclejdk8
+
 env:
   matrix:
     - ANDROID_TARGET=android-23  ANDROID_ABI=armeabi-v7a x86
@@ -9,4 +11,6 @@ android:
     - build-tools-23.0.1
     - android-23
 
-script: ./gradlew connectedAndroidTest
+script:
+    ./gradlew assemble
+    ./gradlew check
