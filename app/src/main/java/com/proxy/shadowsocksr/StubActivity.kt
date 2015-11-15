@@ -101,7 +101,7 @@ class StubActivity : Activity(), ServiceConnection
                 val label = Hawk.get<String>("CurrentServer")
                 val ssp = Hawk.get<SSRProfile>(label)
                 val gp = Hawk.get<GlobalProfile>("GlobalProfile")
-                var proxyApps: List<String>? = null
+                var proxyApps: List<String> = listOf()
                 if (!gp.globalProxy)
                 {
                     proxyApps = Hawk.get<List<String>>("PerAppProxy")
@@ -109,9 +109,8 @@ class StubActivity : Activity(), ServiceConnection
                 val cp = ConnectProfile(label, ssp, gp, proxyApps)
                 ssrs!!.start(cp)
             }
-            catch (e: RemoteException)
+            catch (ignored: RemoteException)
             {
-                e.printStackTrace()
             }
 
             finish()

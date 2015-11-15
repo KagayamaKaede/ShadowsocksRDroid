@@ -50,13 +50,13 @@ class SSRApplication : Application()
                     Consts.defaultTcpProtocol,
                     Consts.defaultObfsMethod, "",
                     false, false)
-            Hawk.put("Sample", dftSSRProfile)
+            Hawk.put(Consts.defaultLabel, dftSSRProfile)
 
             val svrLst = ArrayList<String>()
-            svrLst.add("Sample")
+            svrLst.add(Consts.defaultLabel)
             Hawk.put("ServerList", svrLst)
 
-            Hawk.put("CurrentServer", "Sample")
+            Hawk.put("CurrentServer", Consts.defaultLabel)
 
             Hawk.put("PerAppProxy", ArrayList<Any>())
 

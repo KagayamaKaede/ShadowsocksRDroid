@@ -180,7 +180,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
                 val lst = Hawk.get<ArrayList<String>>("ServerList")
                 if (lst.contains(changed))
                 {
-                    changed += ("-" + System.currentTimeMillis())
+                    changed += ("-${System.currentTimeMillis()}")
                 }
 
                 Hawk.remove(currentSvr)

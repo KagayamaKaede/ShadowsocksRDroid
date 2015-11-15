@@ -21,12 +21,12 @@ class SSAddressUtil
                     if (cfg.obfsMethod == "plain") "" else cfg.obfsMethod + ":",
                     if (cfg.tcpProtocol == "origin") "" else cfg.tcpProtocol + ":", cfg.cryptMethod,
                     cfg.passwd, cfg.server, cfg.remotePort,
-                    if ((cfg.obfsParam == null || cfg.obfsParam == ""))
+                    if (cfg.obfsParam == "")
                         ""
                     else
                         "/" + URLEncoder.encode(cfg.obfsParam, "UTF-8"),
                     if (remarks == "") "" else "#" + URLEncoder.encode(remarks, "UTF-8"))
-            return "ss://" + Base64.encodeToString(path.toByteArray(), Base64.NO_PADDING)
+            return "ss://${Base64.encodeToString(path.toByteArray(), Base64.NO_PADDING)}"
         }
         catch (ignored: UnsupportedEncodingException)
         {
@@ -50,7 +50,7 @@ class SSAddressUtil
                         "(.*:){0,2}(.*):(.+)@(.+):(\\d{1,5})(/[^#]+)?(#.+)?")
                 val m = p.matcher(path)
                 //
-                var remarks = "svr-" + System.currentTimeMillis()
+                var remarks = "svr-${System.currentTimeMillis()/100}"
                 var obfsParam = ""
 
                 val rmtPort: Int

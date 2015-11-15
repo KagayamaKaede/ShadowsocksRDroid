@@ -219,11 +219,11 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         {
             @Override public void run()
             {
-                if (!InetAddressUtil.Companion.isIPv4Address(connProfile.server) &&
-                    !InetAddressUtil.Companion.isIPv6Address(connProfile.server))
+                if (!InetAddressUtil.Companion.isIPv4Address(connProfile.getServer()) &&
+                    !InetAddressUtil.Companion.isIPv6Address(connProfile.getServer()))
                 {
                     DNSUtil du = new DNSUtil();
-                    String ip = du.resolve(connProfile.server, true);
+                    String ip = du.resolve(connProfile.getServer(), true);
                     if (ip == null)
                     {
                         stopRunner();
@@ -239,11 +239,11 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                         }
                         return;
                     }
-                    connProfile.server = ip;
+                    connProfile.setServer(ip);
                 }
                 //
                 startSSRDaemon();
-                if (!connProfile.dnsForward)
+                if (!connProfile.getDnsForward())
                 {
                     startDnsTunnel();
                     startDnsDaemon();
@@ -286,7 +286,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                                                        R.color.material_accent_500))
                                                .setTicker("VPN service started")
                                                .setContentTitle(getString(R.string.app_name))
-                                               .setContentText(connProfile.label)
+                                               .setContentText(connProfile.getLabel())
                                                .setContentIntent(open)
                                                .setPriority(NotificationCompat.PRIORITY_MIN)
                                                .setSmallIcon(R.drawable.ic_stat_shadowsocks);
@@ -345,9 +345,9 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
     private void startSSRDaemon()
     {
         List<String> aclList = new ArrayList<>();
-        if (!connProfile.route.equals("all"))
+        if (!connProfile.getRoute().equals("all"))
         {
-            switch (connProfile.route)
+            switch (connProfile.getRoute())
             {
             case "bypass-lan":
                 aclList = Arrays.asList(
@@ -359,24 +359,20 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
             }
         }
 
-        local = new SSRLocal("127.0.0.1", connProfile.server,
-                             connProfile.remotePort,
-                             connProfile.localPort,
-                             connProfile.passwd,
-                             connProfile.cryptMethod,
-                             connProfile.tcpProtocol,
-                             connProfile.obfsMethod,
-                             connProfile.obfsParam,
+        local = new SSRLocal("127.0.0.1", connProfile.getServer(), connProfile.getRemotePort(),
+                             connProfile.getLocalPort(), connProfile.getPasswd(),
+                             connProfile.getCryptMethod(), connProfile.getTcpProtocol(),
+                             connProfile.getObfsMethod(), connProfile.getObfsParam(),
                              aclList);
 
         local.setOnNeedProtectTCPListener(this);
         local.start();
 
-        if (connProfile.dnsForward)
+        if (connProfile.getDnsForward())
         {
-            udprs = new UDPRelayServer(connProfile.server, "127.0.0.1", connProfile.remotePort,
-                                       connProfile.localPort, connProfile.cryptMethod,
-                                       connProfile.passwd);
+            udprs = new UDPRelayServer(connProfile.getServer(), "127.0.0.1",
+                                       connProfile.getRemotePort(), connProfile.getLocalPort(),
+                                       connProfile.getCryptMethod(), connProfile.getPasswd());
             udprs.setOnNeedProtectUDPListener(this);
             udprs.start();
         }
@@ -384,12 +380,10 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
 
     private void startDnsTunnel()
     {
-        tunnel = new SSRTunnel(connProfile.server, "127.0.0.1", "8.8.8.8", connProfile.remotePort,
-                               8163, 53, connProfile.cryptMethod,
-                               connProfile.tcpProtocol,
-                               connProfile.obfsMethod,
-                               connProfile.obfsParam,
-                               connProfile.passwd);
+        tunnel = new SSRTunnel(connProfile.getServer(), "127.0.0.1", "8.8.8.8",
+                               connProfile.getRemotePort(), 8163, 53, connProfile.getCryptMethod(),
+                               connProfile.getTcpProtocol(), connProfile.getObfsMethod(),
+                               connProfile.getObfsParam(), connProfile.getPasswd());
 
         tunnel.setOnNeedProtectTCPListener(this);
         tunnel.start();
@@ -398,20 +392,20 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
     private void startDnsDaemon()
     {
         String pdnsd;
-        if (connProfile.route.equals("bypass-lan-and-list"))
+        if (connProfile.getRoute().equals("bypass-lan-and-list"))
         {
             String reject = getResources().getString(R.string.reject);
             String blklst = getResources().getString(R.string.black_list);
 
             pdnsd = String.format(ConfFileUtil.PdNSdDirect, "0.0.0.0", 8153,
                                   Consts.baseDir + "pdnsd-vpn.pid", reject, blklst, 8163,
-                                  connProfile.ipv6Route ? "" : "reject = ::/0;");
+                                  connProfile.getIpv6Route() ? "" : "reject = ::/0;");
         }
         else
         {
             pdnsd = String.format(ConfFileUtil.PdNSdLocal, "0.0.0.0", 8153,
                                   Consts.baseDir + "pdnsd-vpn.pid", 8163,
-                                  connProfile.ipv6Route ? "" : "reject = ::/0;");
+                                  connProfile.getIpv6Route() ? "" : "reject = ::/0;");
         }
 
         ConfFileUtil.Companion.writeToFile(pdnsd, new File(Consts.baseDir + "pdnsd-vpn.conf"));
@@ -423,13 +417,13 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
     private int startVpn()
     {
         Builder builder = new Builder();
-        builder.setSession(connProfile.label)
+        builder.setSession(connProfile.getLabel())
                .setMtu(VPN_MTU)
                .addAddress(String.format(PRIVATE_VLAN, "1"), 24)
                .addDnsServer("8.8.8.8")
                .addDnsServer("8.8.4.4");
 
-        if (connProfile.ipv6Route)
+        if (connProfile.getIpv6Route())
         {
             builder.addAddress(String.format(PRIVATE_VLAN6, "1"), 126);
             builder.addRoute("::", 0);
@@ -439,9 +433,9 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
-            if (!connProfile.globalProxy)
+            if (!connProfile.getGlobalProxy())
             {
-                for (String pkg : connProfile.proxyApps)
+                for (String pkg : connProfile.getProxyApps())
                 {
                     try
                     {
@@ -454,7 +448,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
             }
         }
 
-        if (connProfile.route.equals("all"))
+        if (connProfile.getRoute().equals("all"))
         {
             builder.addRoute("0.0.0.0", 0);
         }
@@ -495,14 +489,14 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                                    + " --loglevel 0"
                                    + " --pid %stun2socks-vpn.pid",
                                    String.format(PRIVATE_VLAN, "2"),
-                                   connProfile.localPort, fd, VPN_MTU, Consts.baseDir);
+                                   connProfile.getLocalPort(), fd, VPN_MTU, Consts.baseDir);
 
-        if (connProfile.ipv6Route)
+        if (connProfile.getIpv6Route())
         {
             cmd += " --netif-ip6addr " + String.format(PRIVATE_VLAN6, "2");
         }
 
-        if (connProfile.dnsForward)
+        if (connProfile.getDnsForward())
         {
             cmd += " --enable-udprelay";
         }

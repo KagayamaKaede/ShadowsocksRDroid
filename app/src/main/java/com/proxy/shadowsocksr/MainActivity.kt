@@ -30,6 +30,7 @@ import android.widget.Spinner
 import com.orhanobut.hawk.Hawk
 import com.proxy.shadowsocksr.adapter.ToolbarSpinnerAdapter
 import com.proxy.shadowsocksr.fragment.PrefFragment
+import com.proxy.shadowsocksr.impl.Utils
 import com.proxy.shadowsocksr.items.ConnectProfile
 import com.proxy.shadowsocksr.items.GlobalProfile
 import com.proxy.shadowsocksr.items.SSRProfile
@@ -39,8 +40,11 @@ import com.proxy.shadowsocksr.util.ScreenUtil
 import com.proxy.shadowsocksr.util.ShellUtil
 
 import net.glxn.qrgen.android.QRCode
+import java.net.InetSocketAddress
+import java.nio.channels.SocketChannel
 
 import java.util.ArrayList
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnItemSelectedListener, ServiceConnection
 {
@@ -376,7 +380,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                     val label = Hawk.get<String>("CurrentServer")
                     val ssp = Hawk.get<SSRProfile>(label)
                     val gp = Hawk.get<GlobalProfile>("GlobalProfile")
-                    var proxyApps: List<String>? = null
+                    var proxyApps: List<String> = listOf()
                     if (!gp.globalProxy)
                     {
                         proxyApps = Hawk.get<List<String>>("PerAppProxy")

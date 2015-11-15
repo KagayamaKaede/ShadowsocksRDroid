@@ -10,7 +10,7 @@ class ConfFileUtil
 {
     companion object
     {
-        val PdNSdLocal = """global {
+        @JvmStatic const val PdNSdLocal = """global {
  perm_cache = 2048;
  cache_dir = "/data/data/com.proxy.shadowsocksr";
  server_ip = %s;
@@ -41,7 +41,7 @@ rr {
  owner=localhost;
  soa=localhost,root.localhost,42,86400,900,86400,86400;
 }"""
-        val PdNSdDirect = """global {
+        @JvmStatic const val PdNSdDirect = """global {
  perm_cache = 2048;
  cache_dir = \"/data/data/com.proxy.shadowsocksr\";
  server_ip = %s;
@@ -85,7 +85,7 @@ rr {
  soa=localhost,root.localhost,42,86400,900,86400,86400;
 }"""
 
-        fun writeToFile(c: String, f: File)
+        @JvmStatic fun writeToFile(c: String, f: File)
         {
             try
             {
