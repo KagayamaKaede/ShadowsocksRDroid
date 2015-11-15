@@ -4,7 +4,7 @@ jdk: oraclejdk8
 
 env:
   matrix:
-    - ANDROID_TARGET=android-23  ANDROID_ABI=armeabi-v7a x86
+    - ANDROID_TARGET=android-23
 
 android:
   components:
@@ -15,5 +15,7 @@ before_install:
  - chmod +x gradlew
 
 script:
-    ./gradlew assemble && \
-    ./gradlew check
+    - echo "sdk.dir=$ANDROID_HOME" > local.properties
+    - echo "ndk.dir=${ANDROID_NDK_HOME}" >> local.properties
+    - ./gradlew assemble
+    - ./gradlew check
