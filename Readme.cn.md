@@ -10,8 +10,8 @@
 * 完成 Kotlin 版本的 Shadowsocks.
 * 完善材料设计UI.
 * 提升性能，降低内存和电池使用率。
-* 修复bug。
-* 写 Kotlin 版本的 ShadowsocksR 插件.
+* 修复bug.
+* 写 Kotlin 版本的 ShadowsocksR 插件。
 
 ##开发
 

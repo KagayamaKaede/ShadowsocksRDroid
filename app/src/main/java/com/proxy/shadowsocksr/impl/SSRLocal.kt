@@ -14,9 +14,9 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class SSRLocal(val  locIP: String, val rmtIP: String, val rmtPort: Int, val locPort: Int, val  pwd: String,
-              val cryptMethod: String, val tcpProtocol: String, val obfsMethod: String, val obfsParam: String,
-              val aclList: List<String>) : Thread()
+class SSRLocal(private val  locIP: String, private val rmtIP: String, private val rmtPort: Int, private val locPort: Int, private val  pwd: String,
+               private val cryptMethod: String, private val tcpProtocol: String, private val obfsMethod: String, private val obfsParam: String,
+               private var isVPN: Boolean, private val aclList: List<String>) : Thread()
 {
     private var ssc: ServerSocketChannel? = null
 
@@ -315,10 +315,13 @@ class SSRLocal(val  locIP: String, val rmtIP: String, val rmtPort: Int, val locP
         //default is block
         attach.remoteSkt!!.socket().reuseAddress = true;
         attach.remoteSkt!!.socket().tcpNoDelay = true;
-        var success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket());
-        if (!success)
+        if (isVPN)
         {
-            return false;
+            var success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket());
+            if (!success)
+            {
+                return false;
+            }
         }
         attach.remoteSkt!!.connect(InetSocketAddress(remoteIP, remotePort));
         return attach.remoteSkt!!.isConnected;

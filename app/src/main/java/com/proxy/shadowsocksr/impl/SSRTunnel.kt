@@ -20,7 +20,7 @@ import java.util.concurrent.Executors
 
 class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP: String, private val remotePort: Int,
                 private val localPort: Int, private val dnsPort: Int, private val cryptMethod: String, private val tcpProtocol: String,
-                private val obfsMethod: String, private val obfsParam: String, private val pwd: String) : Thread()
+                private val obfsMethod: String, private val obfsParam: String, private val pwd: String, private var isVPN: Boolean) : Thread()
 {
     private var ssc: ServerSocketChannel? = null
 
@@ -33,7 +33,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
 
     private var onNeedProtectTCPListener: OnNeedProtectTCPListener? = null
 
-    private val shareParam: HashMap<String, Any> =hashMapOf()
+    private val shareParam: HashMap<String, Any> = hashMapOf()
 
     init
     {
@@ -160,10 +160,13 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
         //default is block
         attach.remoteSkt!!.socket().reuseAddress = true
         attach.remoteSkt!!.socket().tcpNoDelay = true
-        val success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket())
-        if (!success)
+        if(isVPN)
         {
-            return false
+            val success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket())
+            if (!success)
+            {
+                return false
+            }
         }
         attach.remoteSkt!!.connect(InetSocketAddress(remoteIP, remotePort))
         return attach.remoteSkt!!.isConnected
