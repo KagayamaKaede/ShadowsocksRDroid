@@ -64,6 +64,11 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".SSRNatService"
+            android:exported="false"
+            android:process=":nat"/>
+
         <receiver
             android:name=".SSRBootReceiver"
             android:enabled="true">

@@ -1,5 +1,6 @@
 package com.proxy.shadowsocksr.fragment
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.preference.CheckBoxPreference
@@ -41,6 +42,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
     //Global
     private var prefRoute: SummaryListPreference? = null
     private var prefIPv6: CheckBoxPreference? = null
+    private var prefWorkMode: CheckBoxPreference? = null
     private var prefGlobal: CheckBoxPreference? = null
     private var prefUdpDNS: CheckBoxPreference? = null
     private var prefAuto: CheckBoxPreference? = null
@@ -68,6 +70,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         //Global
         prefRoute = findPreference("route") as SummaryListPreference
         prefIPv6 = findPreference("ipv6_route") as CheckBoxPreference
+        prefWorkMode = findPreference("proxy_work_mode") as CheckBoxPreference
         prefGlobal = findPreference("global_proxy") as CheckBoxPreference
         prefUdpDNS = findPreference("udp_dns") as CheckBoxPreference
         prefAuto = findPreference("auto_connect") as CheckBoxPreference
@@ -143,6 +146,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         //Global
         prefRoute!!.isEnabled = isEnable
         prefIPv6!!.isEnabled = isEnable
+        prefWorkMode!!.isEnabled = isEnable
         prefGlobal!!.isEnabled = isEnable
         prefUdpDNS!!.isEnabled = isEnable
         prefAuto!!.isEnabled = isEnable
@@ -158,6 +162,8 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         {
             "route" -> globalProfile!!.route = sp.getString(key, "bypass-lan")
             "ipv6_route" -> globalProfile!!.ipv6Route = sp.getBoolean("ipv6_route", false)
+            "proxy_work_mode" ->
+                globalProfile!!.proxyWorkMode = sp.getBoolean("proxy_work_mode", true)
             "global_proxy" -> globalProfile!!.globalProxy = sp.getBoolean(key, false)
             "udp_dns" -> globalProfile!!.dnsForward = sp.getBoolean(key, true)
             "auto_connect" -> globalProfile!!.autoConnect = sp.getBoolean(key, false)
@@ -166,6 +172,16 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         if (!jump)
         {
             Hawk.put<GlobalProfile>("GlobalProfile", globalProfile)
+            if(key.equals("proxy_work_mode"))
+            {
+                val intent:Intent = activity.intent;
+                activity.overridePendingTransition(0, 0);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                activity.finish();
+                activity.overridePendingTransition(0, 0);
+                startActivity(intent);
+                //activity.recreate()
+            }
             return
         }
 
@@ -235,6 +251,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         globalProfile = Hawk.get<GlobalProfile>("GlobalProfile")
         prefRoute!!.value = globalProfile!!.route
         prefIPv6!!.isChecked = globalProfile!!.ipv6Route
+        prefWorkMode!!.isChecked = globalProfile!!.proxyWorkMode
         prefGlobal!!.isChecked = globalProfile!!.globalProxy
         prefUdpDNS!!.isChecked = globalProfile!!.dnsForward
         prefAuto!!.isChecked = globalProfile!!.autoConnect

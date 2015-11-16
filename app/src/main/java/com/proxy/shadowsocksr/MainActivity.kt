@@ -20,6 +20,7 @@ import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -61,7 +62,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
     //
     private var pref: PrefFragment? = null
     //
-    private var callback: VPNServiceCallBack? = null
+    private var isVPNMode = true
+    private var callback: RemoteServiceCallBack? = null
     private var ssrs: ISSRService? = null
 
     override fun onCreate(savedInstanceState: Bundle?)
@@ -79,7 +81,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             fragmentManager.beginTransaction().add(R.id.pref, pref).commit()
         }
 
-        bindService(Intent(this, SSRVPNService::class.java), this, Context.BIND_AUTO_CREATE)
+        isVPNMode = (Hawk.get<GlobalProfile>("GlobalProfile")).proxyWorkMode
+        if(isVPNMode)
+        {
+            bindService(Intent(this,SSRVPNService::class.java),this,Context.BIND_AUTO_CREATE)
+        }
+        else
+        {
+            bindService(Intent(this,SSRNatService::class.java),this,Context.BIND_AUTO_CREATE)
+        }
     }
 
     override fun onDestroy()
@@ -105,7 +115,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
     override fun onServiceConnected(name: ComponentName, service: IBinder)
     {
         ssrs = ISSRService.Stub.asInterface(service)
-        callback = VPNServiceCallBack()
+        callback = RemoteServiceCallBack()
         try
         {
             ssrs!!.registerISSRServiceCallBack(callback)
@@ -133,7 +143,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
         switchUI(true)
     }
 
-    internal inner class VPNServiceCallBack : ISSRServiceCallback.Stub()
+    inner class RemoteServiceCallBack : ISSRServiceCallback.Stub()
     {
         @Throws(RemoteException::class)
         override fun onStatusChanged(status: Int)
@@ -349,14 +359,42 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             }
             else
             {
-                val vpn = VpnService.prepare(this)
-                if (vpn != null)
+                if(isVPNMode)
                 {
-                    startActivityForResult(vpn, REQUEST_CODE_CONNECT)
+                    val vpn = VpnService.prepare(this)
+                    if (vpn != null)
+                    {
+                        startActivityForResult(vpn, REQUEST_CODE_CONNECT)
+                    }
+                    else
+                    {
+                        onActivityResult(REQUEST_CODE_CONNECT, Activity.RESULT_OK, null)
+                    }
                 }
                 else
                 {
-                    onActivityResult(REQUEST_CODE_CONNECT, Activity.RESULT_OK, null)
+                    DialogManager.instance.showTipDialog(this, R.string.connecting)
+                    startService(Intent(this, SSRNatService::class.java))
+                    try
+                    {
+                        val label = Hawk.get<String>("CurrentServer")
+                        val ssp = Hawk.get<SSRProfile>(label)
+                        val gp = Hawk.get<GlobalProfile>("GlobalProfile")
+                        var proxyApps: List<String> = listOf()
+                        if (!gp.globalProxy)
+                        {
+                            proxyApps = Hawk.get<List<String>>("PerAppProxy")
+                        }
+                        val cp = ConnectProfile(label, ssp, gp, proxyApps)
+                        ssrs!!.start(cp)
+                    }
+                    catch (e: RemoteException)
+                    {
+                        DialogManager.instance.dismissTipDialog()
+                        switchUI(true)
+                        Snackbar.make(coordinatorLayout, R.string.connect_failed,
+                                Snackbar.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

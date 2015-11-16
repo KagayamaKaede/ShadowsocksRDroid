@@ -39,20 +39,11 @@ class ShellUtil
         shl.close()
     }
 
-    //    public static void runRootCmd(String cmd)
-    //    {
-    //        runRootCmd(new String[]{cmd});
-    //    }
-    //
-    //    public static void runRootCmd(String cmd, String cxt)
-    //    {
-    //        runRootCmd(new String[]{cmd}, cxt);
-    //    }
+    fun runRootCmd(cmd: String): String? = runRootCmd(arrayOf(cmd))
 
-    fun runRootCmd(cmds: Array<String>)
-    {
-        runRootCmd(cmds, "u:r:init_shell:s0")
-    }
+    fun runRootCmd(cmd: String, cxt: String): String? = runRootCmd(arrayOf(cmd), cxt)
+
+    fun runRootCmd(cmds: Array<String>): String? = runRootCmd(cmds, "u:r:init_shell:s0")
 
     fun runRootCmd(cmds: Array<String>, cxt: String): String?
     {

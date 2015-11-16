@@ -66,24 +66,25 @@ include $(BUILD_STATIC_LIBRARY)
 ## redsocks
 ########################################################
 
-#include $(CLEAR_VARS)
+include $(CLEAR_VARS)
 
-#REDSOCKS_SOURCES := base.c dnstc.c http-connect.c \
-#	log.c md5.c socks5.c \
-#	base64.c http-auth.c http-relay.c main.c \
-#	parser.c redsocks.c socks4.c utils.c
+REDSOCKS_SOURCES := base.c http-connect.c \
+	log.c md5.c socks5.c \
+	base64.c http-auth.c http-relay.c main.c \
+	parser.c redsocks.c socks4.c utils.c
 
-#LOCAL_STATIC_LIBRARIES := libevent
+LOCAL_STATIC_LIBRARIES := libevent
 
-#LOCAL_MODULE := redsocks
-#LOCAL_SRC_FILES := $(addprefix redsocks/, $(REDSOCKS_SOURCES))
-#LOCAL_CFLAGS := -pie -fPIE -O2 -std=gnu99 -I$(LOCAL_PATH)/redsocks \
-#	-I$(LOCAL_PATH)/libevent/include \
-#	-I$(LOCAL_PATH)/libevent
+LOCAL_MODULE := redsocks
+LOCAL_SRC_FILES := $(addprefix redsocks/, $(REDSOCKS_SOURCES))
+LOCAL_CFLAGS := -pie -fPIE -O2 -std=gnu99 -DUSE_IPTABLES \
+    -I$(LOCAL_PATH)/redsocks \
+	-I$(LOCAL_PATH)/libevent/include \
+	-I$(LOCAL_PATH)/libevent
 
-#LOCAL_LDFLAGS += -pie -fPIE
+LOCAL_LDFLAGS += -pie -fPIE
 
-#include $(BUILD_EXECUTABLE)
+include $(BUILD_EXECUTABLE)
 
 ########################################################
 ## pdnsd library

@@ -10,6 +10,22 @@ class ConfFileUtil
 {
     companion object
     {
+        @JvmStatic const val RedSocks="""base {
+ log_debug = off;
+ log_info = off;
+ log = stderr;
+ daemon = off;
+ redirector = iptables;
+}
+
+redsocks {
+ local_ip = 127.0.0.1;
+ local_port = 8123;
+ ip = 127.0.0.1;
+ port = %d;
+ type = socks5;
+}
+"""
         @JvmStatic const val PdNSdLocal = """global {
  perm_cache = 2048;
  cache_dir = "/data/data/com.proxy.shadowsocksr";
