@@ -24,7 +24,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
 {
     private var ssc: ServerSocketChannel? = null
 
-    private var dnsIp: ByteArray? = null
+    private var dnsIp: ByteArray?=null
 
     private var localThreadPool: ExecutorService? = null
     private var remoteThreadPool: ExecutorService? = null

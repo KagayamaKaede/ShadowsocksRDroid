@@ -25,6 +25,7 @@ redsocks {
  port = %d;
  type = socks5;
 }
+
 """
         @JvmStatic const val PdNSdLocal = """global {
  perm_cache = 2048;

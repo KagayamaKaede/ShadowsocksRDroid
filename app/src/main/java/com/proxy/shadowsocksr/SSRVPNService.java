@@ -366,7 +366,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                              connProfile.getLocalPort(), connProfile.getPasswd(),
                              connProfile.getCryptMethod(), connProfile.getTcpProtocol(),
                              connProfile.getObfsMethod(), connProfile.getObfsParam(),
-                             true,aclList);
+                             true, aclList);
 
         local.setOnNeedProtectTCPListener(this);
         local.start();
@@ -375,7 +375,8 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         {
             udprs = new UDPRelayServer(connProfile.getServer(), "127.0.0.1",
                                        connProfile.getRemotePort(), connProfile.getLocalPort(),
-                                       connProfile.getCryptMethod(), connProfile.getPasswd());
+                                       false, true, connProfile.getCryptMethod(),
+                                       connProfile.getPasswd(), null, null);
             udprs.setOnNeedProtectUDPListener(this);
             udprs.start();
         }
@@ -383,10 +384,11 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
 
     private void startDnsTunnel()
     {
+
         tunnel = new SSRTunnel(connProfile.getServer(), "127.0.0.1", "8.8.8.8",
                                connProfile.getRemotePort(), 8163, 53, connProfile.getCryptMethod(),
                                connProfile.getTcpProtocol(), connProfile.getObfsMethod(),
-                               connProfile.getObfsParam(), connProfile.getPasswd(),true);
+                               connProfile.getObfsParam(), connProfile.getPasswd(), true);
 
         tunnel.setOnNeedProtectTCPListener(this);
         tunnel.start();

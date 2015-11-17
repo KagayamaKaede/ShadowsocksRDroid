@@ -6,15 +6,18 @@ import android.util.LruCache
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectUDPListener
 
 import java.io.IOException
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.SocketAddress
+import java.net.UnknownHostException
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class UDPRelayServer(private val remoteIP: String, private val localIP: String, private val remotePort: Int, private val localPort: Int,
-                     cryptMethod: String, pwd: String) : Thread()
+                     private val isTunnelMode: Boolean, private val isVPNMode: Boolean,
+                     cryptMethod: String, pwd: String, dnsIp: String?, dnsPort: Int?) : Thread()
 {
     private var udpServer: DatagramChannel? = null
     private var isaLocal: InetSocketAddress? = null
@@ -28,6 +31,9 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
 
     private val cache: LruCache<SocketAddress, UDPRemoteDataHandler>
 
+    private var dnsIp: ByteArray? = null
+    private var dnsPort: Int? = null
+
     private var onNeedProtectUDPListener: OnNeedProtectUDPListener? = null
 
     init
@@ -35,6 +41,17 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
         cache = LruCache<SocketAddress, UDPRemoteDataHandler>(64)
         crypto = UDPEncryptor(pwd, cryptMethod)
         ivLen = crypto.ivLen
+        if (isTunnelMode)
+        {
+            try
+            {
+                this.dnsIp = InetAddress.getByName(dnsIp).address
+            }
+            catch (ignored: UnknownHostException)
+            {
+            }
+            this.dnsPort = dnsPort
+        }
     }
 
     fun setOnNeedProtectUDPListener(onNeedProtectUDPListener: OnNeedProtectUDPListener)
@@ -93,26 +110,46 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                     val localAddress = udpServer!!.receive(buf)
                     //
                     buf.flip()
+                    //
+                    val dataLocalIn: ByteArray
                     val rcnt = buf.limit()
-                    if (rcnt < 8)
-                    {
-                        Log.e("EXC", "LOCAL RECV SMALL PKG")
-                        buf.clear()//not response small package
-                        continue
-                    }
                     //
-                    if (!(buf.get().toInt() == 0 && //RSV
-                          buf.get().toInt() == 0 && //RSV
-                          buf.get().toInt() == 0))
-                    //FRAG
-                    {
-                        Log.e("EXC", "LOCAL RECV NOT SOCKS5 UDP PKG")
-                        buf.clear()
-                        continue
+                    if (isTunnelMode)
+                    {   //direct build target dns server socks5 request pkg
+                        if (rcnt < 12)
+                        {
+                            Log.e("EXC", "LOCAL RECV SMALL PKG")
+                            buf.clear()//not response small package
+                            continue
+                        }
+                        dataLocalIn = ByteArray(7 + rcnt)
+                        dataLocalIn[0] = 1
+                        System.arraycopy(dnsIp, 0, dataLocalIn, 1, 4)
+                        dataLocalIn[5] = ((dnsPort!!.shr(8)) and 0xFF).toByte()
+                        dataLocalIn[6] = (dnsPort!!.and(0xFF)).toByte()
+                        buf.get(dataLocalIn, 7, dataLocalIn.size)
                     }
-                    //
-                    val dataLocalIn = ByteArray(rcnt - 3)
-                    buf.get(dataLocalIn)
+                    else
+                    {
+                        if (rcnt < 8)
+                        {
+                            Log.e("EXC", "LOCAL RECV SMALL PKG")
+                            buf.clear()//not response small package
+                            continue
+                        }
+                        //
+                        if (!(buf.get().toInt() == 0 && //RSV
+                              buf.get().toInt() == 0 && //RSV
+                              buf.get().toInt() == 0))  //FRAG
+                        {
+                            Log.e("EXC", "LOCAL RECV NOT SOCKS5 UDP PKG")
+                            buf.clear()
+                            continue
+                        }
+                        //
+                        dataLocalIn = ByteArray(rcnt - 3)
+                        buf.get(dataLocalIn)
+                    }
                     val dataRemoteOut = crypto.encrypt(dataLocalIn)
                     //
                     var handler: UDPRemoteDataHandler? = cache.get(localAddress)
@@ -121,18 +158,27 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                         val remoteChannel = DatagramChannel.open()
                         remoteChannel.configureBlocking(true)
                         remoteChannel.connect(isaRemote)
-                        val isProtected = onNeedProtectUDPListener!!.onNeedProtectUDP(
-                                remoteChannel.socket())
-                        if (isProtected)
+                        if (isVPNMode)
                         {
+                            val isProtected = onNeedProtectUDPListener!!.onNeedProtectUDP(
+                                    remoteChannel.socket())
+                            if (isProtected)
+                            {
+                                handler = UDPRemoteDataHandler(localAddress, remoteChannel)
+                                cache.put(localAddress, handler)
+                                exec!!.execute(handler)
+                            }
+                            else
+                            {
+                                buf.clear()
+                                continue
+                            }
+                        }
+                        else
+                        {   //Nat mode need not protect
                             handler = UDPRemoteDataHandler(localAddress, remoteChannel)
                             cache.put(localAddress, handler)
                             exec!!.execute(handler)
-                        }
-                        else
-                        {
-                            buf.clear()
-                            continue
                         }
                     }
                     handler.remoteChannel!!.write(ByteBuffer.wrap(dataRemoteOut))
@@ -152,8 +198,6 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
             catch (ignored: Exception)
             {
             }
-
-            buf.clear()
         }
     }
 
@@ -170,7 +214,8 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                 while (isRunning)
                 {
                     val rcnt = remoteChannel!!.read(remoteReadBuf)
-                    if (rcnt < ivLen + 8)
+                    //
+                    if (rcnt < ivLen + 1)
                     {
                         remoteReadBuf.clear()//not response small package, just drop.
                         continue
@@ -197,7 +242,6 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                 catch (ignored: IOException)
                 {
                 }
-
                 remoteChannel = null
             }
 

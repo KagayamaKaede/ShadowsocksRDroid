@@ -16,6 +16,7 @@ import android.util.Log
 import android.util.SparseArray
 import com.proxy.shadowsocksr.impl.SSRLocal
 import com.proxy.shadowsocksr.impl.SSRTunnel
+import com.proxy.shadowsocksr.impl.UDPRelayServer
 import com.proxy.shadowsocksr.items.ConnectProfile
 import com.proxy.shadowsocksr.util.*
 import java.io.File
@@ -35,6 +36,7 @@ class SSRNatService : Service()
 
     private var local: SSRLocal? = null
     private var tunnel: SSRTunnel? = null
+    private var udprs: UDPRelayServer? = null
 
     private var connProfile: ConnectProfile? = null
     @Volatile private var isNATConnected = false
@@ -136,20 +138,19 @@ class SSRNatService : Service()
         return true;
     }
 
+    @Throws(Exception::class)
     private fun copyDaemonBin(file: String, out: File): Boolean
     {
-        val am: AssetManager = assets;
         val abi: String = Jni.getABI();
         val buf: ByteArray = ByteArray(
                 1024 * 32);//most tf card have 16k or 32k logic unit size, may be 32k buffer is better
         try
         {
-            var create = out.createNewFile();
-            if (!create)
+            if (!out.createNewFile())
             {
                 throw IOException("Create File Failed!");
             }
-            val fis = am.open(abi + File.separator + file);
+            val fis = assets.open(abi + File.separator + file);
             val fos = FileOutputStream(out);
             var length: Int = fis.read(buf);
             while (length > 0)
@@ -271,11 +272,20 @@ class SSRNatService : Service()
 
     private fun startTunnel()
     {
-        tunnel = SSRTunnel(connProfile!!.server, "127.0.0.1", "8.8.8.8",
-                connProfile!!.remotePort, 8163, 53, connProfile!!.cryptMethod,
-                connProfile!!.tcpProtocol, connProfile!!.obfsMethod,
-                connProfile!!.obfsParam, connProfile!!.passwd, false)
-        tunnel!!.start()
+        if (connProfile!!.dnsForward)
+        {
+            udprs = UDPRelayServer(connProfile!!.server, "127.0.0.1", connProfile!!.remotePort,
+                    8153, true, false, connProfile!!.cryptMethod, connProfile!!.passwd, "8.8.8.8",
+                    53)
+        }
+        else
+        {
+            tunnel = SSRTunnel(connProfile!!.server, "127.0.0.1", "8.8.8.8",
+                    connProfile!!.remotePort, 8163, 53, connProfile!!.cryptMethod,
+                    connProfile!!.tcpProtocol, connProfile!!.obfsMethod,
+                    connProfile!!.obfsParam, connProfile!!.passwd, false)
+        }
+        if (udprs == null) tunnel!!.start() else udprs!!.start()
     }
 
     private fun startDnsDaemon()
@@ -320,6 +330,11 @@ class SSRNatService : Service()
         {
             tunnel!!.stopTunnel()
             tunnel = null
+        }
+        if (udprs != null)
+        {
+            udprs!!.stopUDPRelayServer()
+            udprs = null
         }
         try
         {
@@ -371,11 +386,10 @@ class SSRNatService : Service()
                 try
                 {
                     val ai = pm.getApplicationInfo(app, PackageManager.GET_ACTIVITIES)
-                    Log.e("EXC","${ai.uid}")
+                    Log.e("EXC", "${ai.uid}")
                     uidSet.add(ai.uid)
-                    http_sb.add(
-                            (CommonUtils.iptables + CMD_IPTABLES_DNAT_ADD_SOCKS).replace("-t nat",
-                                    "-t nat -m owner --uid-owner ${ai.uid}"))
+                    http_sb.add((CommonUtils.iptables + CMD_IPTABLES_DNAT_ADD_SOCKS)
+                            .replace("-t nat", "-t nat -m owner --uid-owner ${ai.uid}"))
                 }
                 catch(ignored: Exception)
                 {
@@ -426,8 +440,8 @@ class SSRNatService : Service()
             //
             flushDns()
             //
-            val open = PendingIntent.getActivity(this@SSRNatService, -1, Intent(
-                    this@SSRNatService, MainActivity::class.java), 0)
+            val open = PendingIntent.getActivity(this@SSRNatService, -1,
+                    Intent(this@SSRNatService, MainActivity::class.java), 0)
             val notificationBuilder = NotificationCompat.Builder(this@SSRNatService)
             notificationBuilder
                     .setWhen(0)
@@ -463,7 +477,14 @@ class SSRNatService : Service()
         {
             stopSelf()
         }
-
+        ShellUtil().runCmd(arrayOf("rm -f ${Consts.baseDir}pdnsd-nat.conf",
+                "rm -f ${Consts.baseDir}redsocks-nat.conf"));
         stopForeground(true)
+    }
+
+    override fun onDestroy()
+    {
+        stopRunner()
+        super.onDestroy()
     }
 }
