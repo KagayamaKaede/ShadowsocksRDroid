@@ -32,12 +32,13 @@ object AddressUtils
     {
         var matcher: Matcher
         //var time:Long=System.currentTimeMillis()
+        var netmask = 0
+        var address = 0
+        var network = 0
+        var broadcast = 0
         for (cidr in cidrs)
         {
-            var netmask = 0
-            var address = 0
-            var network = 0
-            var broadcast = 0
+
             matcher = cidrPattern.matcher(cidr)
             if (matcher.matches())
             {
@@ -70,6 +71,10 @@ object AddressUtils
                     return true;
                 }
             }
+            netmask = 0
+            address = 0
+            network = 0
+            broadcast = 0
         }
         //Log.e("EXC", "CIDR full check need time: " + (System.currentTimeMillis() - time));
         return false;

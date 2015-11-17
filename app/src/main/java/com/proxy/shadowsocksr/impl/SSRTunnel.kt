@@ -24,40 +24,30 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
 {
     private var ssc: ServerSocketChannel? = null
 
-    private var dnsIp: ByteArray?=null
+    private var dnsIp: ByteArray? = null
 
     private var localThreadPool: ExecutorService? = null
     private var remoteThreadPool: ExecutorService? = null
 
     @Volatile private var isRunning = true
 
-    private var onNeedProtectTCPListener: OnNeedProtectTCPListener? = null
+    var onNeedProtectTCPListener: OnNeedProtectTCPListener? = null
 
     private val shareParam: HashMap<String, Any> = hashMapOf()
 
     init
     {
-        try
-        {
-            dnsIp = InetAddress.getByName(dnsIP).address
-        }
-        catch (ignored: UnknownHostException)
-        {
-        }
+        //UnknownHostException? don't be silly
+        dnsIp = InetAddress.getByName(dnsIP).address
     }
 
-    fun setOnNeedProtectTCPListener(
-            onNeedProtectTCPListener: OnNeedProtectTCPListener)
+    inner class ChannelAttach
     {
-        this.onNeedProtectTCPListener = onNeedProtectTCPListener
-    }
-
-    internal inner class ChannelAttach()
-    {
-        var localReadBuf: ByteBuffer? = ByteBuffer.allocate(8192)
-        var remoteReadBuf: ByteBuffer? = ByteBuffer.allocate(8192)
+        var localReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
+        var remoteReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
         var crypto: TCPEncryptor? = TCPEncryptor(pwd, cryptMethod)
-        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, remoteIP, remotePort, 1440, obfsParam,shareParam)
+        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, remoteIP, remotePort, 1440, obfsParam,
+                shareParam)
         var proto: AbsProtocol? = ProtocolChooser.getProtocol(tcpProtocol, remoteIP, remotePort,
                 1440, shareParam)
         var localSkt: SocketChannel? = null
@@ -65,7 +55,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
 
         init
         {
-            shareParam.put("IV LEN",crypto!!.ivLen)
+            shareParam.put("IV LEN", crypto!!.ivLen)
         }
     }
 
@@ -75,8 +65,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
         remoteThreadPool = Executors.newCachedThreadPool()
         //new ThreadPoolExecutor(1, Integer.MAX_VALUE, 300L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
 
-        while (isRunning)
-        //When tcp server crashed, restart it.
+        while (isRunning)//When tcp server crashed, restart it.
         {
             try
             {
@@ -101,7 +90,6 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
             catch (ignored: Exception)
             {
             }
-
         }
     }
 
@@ -121,8 +109,10 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
                     return
                 }
                 //
-                attach.localReadBuf!!.put((1).toByte()).put(dnsIp).put(
-                        ((dnsPort shr 8) and 0xFF).toByte()).put((dnsPort and 0xFF).toByte())
+                attach.localReadBuf!!.put((1).toByte())
+                        .put(dnsIp)
+                        .put(((dnsPort shr 8) and 0xFF).toByte())
+                        .put((dnsPort and 0xFF).toByte())
                 //
                 remoteThreadPool!!.execute(RemoteSocketHandler(attach))
                 //
@@ -165,7 +155,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
         //default is block
         attach.remoteSkt!!.socket().reuseAddress = true
         attach.remoteSkt!!.socket().tcpNoDelay = true
-        if(isVPN)
+        if (isVPN)
         {
             val success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket())
             if (!success)
@@ -177,22 +167,25 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
         return attach.remoteSkt!!.isConnected
     }
 
-    private fun checkSessionAlive(attach: ChannelAttach): Boolean
-    {
-        return attach.localSkt != null && attach.remoteSkt != null
-    }
+    private fun checkSessionAlive(attach: ChannelAttach): Boolean =
+            attach.localSkt != null && attach.remoteSkt != null
 
     private fun cleanSession(attach: ChannelAttach)
     {
         try
         {
             attach.remoteSkt!!.close()
+        }
+        catch (ignored: Exception)
+        {
+        }
+        try
+        {
             attach.localSkt!!.close()
         }
         catch (ignored: Exception)
         {
         }
-
         attach.remoteSkt = null
         attach.localSkt = null
         attach.obfs = null

@@ -35,29 +35,19 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
     private var dnsIp: ByteArray? = null
     private var dnsPort: Int? = null
 
-    private var onNeedProtectUDPListener: OnNeedProtectUDPListener? = null
+    var onNeedProtectUDPListener: OnNeedProtectUDPListener? = null
 
     init
     {
-        cache = LruCache<SocketAddress, UDPRemoteDataHandler>(64)
+        cache = LruCache<SocketAddress, UDPRemoteDataHandler>(48)
         crypto = UDPEncryptor(pwd, cryptMethod)
         ivLen = crypto.ivLen
         if (isTunnelMode)
         {
-            try
-            {
-                this.dnsIp = InetAddress.getByName(dnsIp).address
-            }
-            catch (ignored: UnknownHostException)
-            {
-            }
+            //UnknownHostException? don't be silly
+            this.dnsIp = InetAddress.getByName(dnsIp).address
             this.dnsPort = dnsPort
         }
-    }
-
-    fun setOnNeedProtectUDPListener(onNeedProtectUDPListener: OnNeedProtectUDPListener)
-    {
-        this.onNeedProtectUDPListener = onNeedProtectUDPListener
     }
 
     fun stopUDPRelayServer()
