@@ -1,6 +1,6 @@
 package com.proxy.shadowsocksr.impl.plugin.obfs
 
-import com.proxy.shadowsocksr.impl.Utils
+import com.proxy.shadowsocksr.impl.ImplUtils
 import java.util.*
 
 class HttpSimpleObfs(usrParamStr: String, rmtIP: String, rmtPort: Int, tcpMss: Int, shareParam: HashMap<String, Any>) : AbsObfs(
@@ -31,10 +31,10 @@ class HttpSimpleObfs(usrParamStr: String, rmtIP: String, rmtPort: Int, tcpMss: I
         }
         //
         headSent = true
-        val headSize = Utils.findRightHeadSize(data, 30) + ivLen
+        val headSize = ImplUtils.findRightHeadSize(data, 30) + ivLen
         if (data.size - headSize > 64)
         {
-            val headLen = headSize + Utils.randomInt(65)
+            val headLen = headSize + ImplUtils.randomInt(65)
             val out = encodeHead(Arrays.copyOfRange(data, 0, headLen))
             val end = ByteArray(out.size + (data.size - headLen))
             System.arraycopy(out, 0, end, 0, out.size)
@@ -54,7 +54,7 @@ class HttpSimpleObfs(usrParamStr: String, rmtIP: String, rmtPort: Int, tcpMss: I
         }
         sb.append(" HTTP/1.1\r\n").append("Host: ").append(obfsParam).append(':')
                 .append(remotePort).append("\r\n").append("User-Agent: ")
-                .append(ua[Utils.randomInt(2)]).append("\r\n")
+                .append(ua[ImplUtils.randomInt(2)]).append("\r\n")
                 .append("Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nAccept-Language: en-US,en;q=0.8\r\nAccept-Encoding: gzip, deflate\r\nDNT: 1\r\nConnection: keep-alive\r\n\r\n")
         return sb.toString().toByteArray()
     }

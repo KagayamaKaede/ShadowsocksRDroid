@@ -63,40 +63,32 @@ class ProxyAppsActivity : AppCompatActivity(), AppsAdapter.OnItemClickListener
     override fun onResume()
     {
         super.onResume()
-        DialogManager.instance.showTipDialog(this, R.string.wait_load_list);
+        DialogManager.showTipDialog(this, R.string.wait_load_list);
         //
-        Thread(object : Runnable
-        {
-            override fun run()
+        Thread(Runnable {
+            proxyApps = Hawk.get<ArrayList<String>>("PerAppProxy")
+            //
+            val pm = packageManager
+            val i = Intent(Intent.ACTION_MAIN)
+            i.addCategory(Intent.CATEGORY_LAUNCHER)
+            val lst = pm.getInstalledApplications(0)
+            val self = packageName
+            for (appI in lst)
             {
-                proxyApps = Hawk.get<ArrayList<String>>("PerAppProxy")
-                //
-                val pm = packageManager
-                val i = Intent(Intent.ACTION_MAIN)
-                i.addCategory(Intent.CATEGORY_LAUNCHER)
-                val lst = pm.getInstalledApplications(0)
-                val self = packageName
-                for (appI in lst)
+                if (appI.uid < 10000 || appI.packageName == self)
                 {
-                    if (appI.uid < 10000 || appI.packageName == self)
-                    {
-                        continue
-                    }
-                    val ai = AppItem(appI.loadIcon(pm),
-                            appI.loadLabel(pm).toString(),
-                            appI.packageName,
-                            proxyApps!!.contains(appI.packageName))
-                    appLst!!.add(ai)
+                    continue
                 }
-                this@ProxyAppsActivity.runOnUiThread(object : Runnable
-                {
-                    override fun run()
-                    {
-                        appsAdapter!!.notifyDataSetChanged()
-                        DialogManager.instance.dismissTipDialog()
-                    }
-                })
+                val ai = AppItem(appI.loadIcon(pm),
+                        appI.loadLabel(pm).toString(),
+                        appI.packageName,
+                        proxyApps!!.contains(appI.packageName))
+                appLst!!.add(ai)
             }
+            this@ProxyAppsActivity.runOnUiThread({
+                appsAdapter!!.notifyDataSetChanged()
+                DialogManager.dismissTipDialog()
+            })
         }).start()
     }
 

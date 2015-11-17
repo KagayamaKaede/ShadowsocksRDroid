@@ -25,15 +25,13 @@ class AesCFBCrypto(cryptoMethod: String, key: ByteArray) : AbsCrypto(cryptoMetho
 
     override fun encrypt(data: ByteArray): ByteArray
     {
-        val out: ByteArray = ByteArray(data.size)
-        aesE.processBytes(data, 0, data.size, out, 0)
-        return out
+        aesE.processBytes(data, 0, data.size, data, 0)
+        return data
     }
 
     override fun decrypt(data: ByteArray): ByteArray
     {
-        val out: ByteArray = ByteArray(data.size)
-        aesD.processBytes(data, 0, data.size, out, 0)
-        return out
+        aesD.processBytes(data, 0, data.size, data, 0)
+        return data
     }
 }

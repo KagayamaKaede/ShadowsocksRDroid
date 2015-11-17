@@ -24,15 +24,13 @@ class SalsaCrypto(cryptMethod: String, key: ByteArray) : AbsCrypto(cryptMethod, 
 
     override fun encrypt(data: ByteArray): ByteArray
     {
-        val out: ByteArray = ByteArray(data.size)
-        salsaE.processBytes(data, 0, data.size, out, 0)
-        return out
+        salsaE.processBytes(data, 0, data.size, data, 0)
+        return data
     }
 
     override fun decrypt(data: ByteArray): ByteArray
     {
-        val out: ByteArray = ByteArray(data.size)
-        salsaD.processBytes(data, 0, data.size, out, 0)
-        return out
+        salsaD.processBytes(data, 0, data.size, data, 0)
+        return data
     }
 }

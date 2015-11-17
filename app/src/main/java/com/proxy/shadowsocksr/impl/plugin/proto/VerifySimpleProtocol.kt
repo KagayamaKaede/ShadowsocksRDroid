@@ -1,6 +1,6 @@
 package com.proxy.shadowsocksr.impl.plugin.proto
 
-import com.proxy.shadowsocksr.impl.Utils
+import com.proxy.shadowsocksr.impl.ImplUtils
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -20,7 +20,7 @@ class VerifySimpleProtocol(rmtIP: String, rmtPort: Int, tcpMss: Int, shareParam:
         var i = 0
         while (i < data.size)
         {
-            rndLen = Utils.randomInt(16) //0~15
+            rndLen = ImplUtils.randomInt(16) //0~15
             dtLen = data.size - i
             dtLen = if (dtLen >= UNIT_SIZE) UNIT_SIZE else dtLen
             bt = ByteArray(2 + 1 + rndLen + dtLen)
@@ -28,9 +28,9 @@ class VerifySimpleProtocol(rmtIP: String, rmtPort: Int, tcpMss: Int, shareParam:
             bt[0] = ((realLen ushr 8) and 0xFF).toByte()
             bt[1] = (realLen and 0xFF).toByte()
             bt[2] = (rndLen + 1).toByte() //include this byte
-            System.arraycopy(Utils.randomBytes(rndLen), 0, bt, 3, rndLen)
+            System.arraycopy(ImplUtils.randomBytes(rndLen), 0, bt, 3, rndLen)
             System.arraycopy(data, i, bt, 2 + 1 + rndLen, dtLen)
-            buf.put(bt).put(Utils.getCRC32(bt))
+            buf.put(bt).put(ImplUtils.getCRC32(bt))
             i += dtLen
         }
         val out = ByteArray(buf.flip().limit())
@@ -85,7 +85,7 @@ class VerifySimpleProtocol(rmtIP: String, rmtPort: Int, tcpMss: Int, shareParam:
             //
             dat = Arrays.copyOfRange(buf, i, i + len - 4)
             if (Arrays.equals(Arrays.copyOfRange(buf, i + len - 4, i + len),
-                    Utils.getCRC32(dat)))
+                    ImplUtils.getCRC32(dat)))
             {
                 bb.put(Arrays.copyOfRange(dat, 2 + (dat[2].toInt() and 255), dat.size))
                 i += len

@@ -25,14 +25,10 @@ class ShellUtil
     fun runCmd(cmd: Array<String>)
     {
         val shl = openShell()
-        shl.addCommand(cmd, 0, object : Shell.OnCommandResultListener
-        {
-            override fun onCommandResult(commandCode: Int, exitCode: Int, output: List<String>)
+        shl.addCommand(cmd, 0, { commandCode, exitCode, output ->
+            if (exitCode < 0)
             {
-                if (exitCode < 0)
-                {
-                    shl.close()
-                }
+                shl.close()
             }
         })
         shl.waitForIdle()
@@ -54,20 +50,16 @@ class ShellUtil
 
         val shl = openRootShell(cxt)
         val sb = StringBuilder()
-        shl.addCommand(cmds, 0, object : Shell.OnCommandResultListener
-        {
-            override fun onCommandResult(commandCode: Int, exitCode: Int, output: List<String>)
+        shl.addCommand(cmds, 0, { commandCode, exitCode, output ->
+            if (exitCode < 0)
             {
-                if (exitCode < 0)
+                shl.close()
+            }
+            else
+            {
+                for (str in output)
                 {
-                    shl.close()
-                }
-                else
-                {
-                    for (str in output)
-                    {
-                        sb.append(str).append(Consts.lineSept)
-                    }
+                    sb.append(str).append(Consts.lineSept)
                 }
             }
         })

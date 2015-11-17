@@ -34,7 +34,8 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         var localReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
         var remoteReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
         var crypto: TCPEncryptor? = TCPEncryptor(pwd, cryptMethod)
-        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam,shareParam)
+        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam,
+                shareParam)
         var proto: AbsProtocol? = ProtocolChooser.getProtocol(tcpProtocol, rmtIP, rmtPort, 1440,
                 shareParam)
         var localSkt: SocketChannel? = null
@@ -43,7 +44,7 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
 
         init
         {
-            shareParam.put("IV LEN",crypto!!.ivLen)
+            shareParam.put("IV LEN", crypto!!.ivLen)
         }
     }
 
@@ -101,11 +102,11 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                     attach.localReadBuf!!.get(ip);
                     val port = attach.localReadBuf!!.short.toInt();
                     // TODO need optimize cidr check speed.
-                    if (AddressUtils.Companion.checkInCIDRRange(
-                            AddressUtils.Companion.ipv4BytesToInt(ip), aclList))
+                    if (AddressUtils.checkInCIDRRange(
+                            AddressUtils.ipv4BytesToInt(ip), aclList))
                     {
                         attach.isDirect = true;
-                        if (!prepareRemote(attach, AddressUtils.Companion.ipv4BytesToIp(ip), port))
+                        if (!prepareRemote(attach, AddressUtils.ipv4BytesToIp(ip), port))
                         {
                             return;
                         }

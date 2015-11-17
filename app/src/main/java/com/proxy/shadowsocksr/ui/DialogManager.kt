@@ -3,23 +3,9 @@ package com.proxy.shadowsocksr.ui
 import android.app.ProgressDialog
 import android.content.Context
 
-class DialogManager private constructor()
+object DialogManager
 {
-    companion object
-    {
-        private var manager: DialogManager? = null
-        private var pd: ProgressDialog? = null
-
-        val instance: DialogManager
-            get()
-            {
-                if (manager == null)
-                {
-                    manager = DialogManager()
-                }
-                return manager!!
-            }
-    }
+    private var pd: ProgressDialog? = null
 
     fun showTipDialog(cxt: Context, resid: Int)
     {
@@ -35,7 +21,7 @@ class DialogManager private constructor()
         if (pd != null)
         {
             pd!!.dismiss()
-            manager = null
+            pd = null
         }
     }
 }

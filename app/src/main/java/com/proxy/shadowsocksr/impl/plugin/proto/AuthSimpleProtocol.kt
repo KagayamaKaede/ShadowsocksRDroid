@@ -1,6 +1,6 @@
 package com.proxy.shadowsocksr.impl.plugin.proto
 
-import com.proxy.shadowsocksr.impl.Utils
+import com.proxy.shadowsocksr.impl.ImplUtils
 
 import java.util.Arrays
 import java.util.HashMap
@@ -19,11 +19,11 @@ class AuthSimpleProtocol(rmtIP: String, rmtPort: Int, tcpMss: Int,
         vsp = VerifySimpleProtocol(rmtIP, rmtPort, tcpMss, shareParam)
         if (!shareParam.containsKey(CONN_ID))
         {
-            shareParam.put(CONN_ID, (Utils.randomInt(16777216).toLong()) and 0xFFFFFFFFL)
+            shareParam.put(CONN_ID, (ImplUtils.randomInt(16777216).toLong()) and 0xFFFFFFFFL)
         }
         if (!shareParam.containsKey(CLI_ID))
         {
-            shareParam.put(CLI_ID, Utils.randomBytes(4))
+            shareParam.put(CLI_ID, ImplUtils.randomBytes(4))
         }
     }
 
@@ -33,9 +33,9 @@ class AuthSimpleProtocol(rmtIP: String, rmtPort: Int, tcpMss: Int,
     override fun beforeEncrypt(data: ByteArray): ByteArray
     {
         var dt = data
-        val dataLen = Math.min(dt.size, Utils.randomInt(32) + Utils.findRightHeadSize(dt, 30))
+        val dataLen = Math.min(dt.size, ImplUtils.randomInt(32) + ImplUtils.findRightHeadSize(dt, 30))
         var firstPkg = ByteArray(12 + dataLen)
-        Utils.fillEpoch(firstPkg, 0)//utc
+        ImplUtils.fillEpoch(firstPkg, 0)//utc
         //
         var connId: Long = 0L
         var clientId: ByteArray = ByteArray(0)
@@ -45,9 +45,9 @@ class AuthSimpleProtocol(rmtIP: String, rmtPort: Int, tcpMss: Int,
             clientId = shareParam[CLI_ID] as ByteArray
             if (connId > 0xFF000000L)
             {
-                clientId = Utils.randomBytes(4)
+                clientId = ImplUtils.randomBytes(4)
                 shareParam.put(CLI_ID, clientId)
-                connId = (Utils.randomInt(16777216).toLong()) and 0xFFFFFFFFL
+                connId = (ImplUtils.randomInt(16777216).toLong()) and 0xFFFFFFFFL
                 headSent = false//need send new head.
             }
             shareParam.put(CONN_ID, ++connId)

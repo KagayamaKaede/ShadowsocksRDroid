@@ -31,7 +31,7 @@ import android.widget.Spinner
 import com.orhanobut.hawk.Hawk
 import com.proxy.shadowsocksr.adapter.ToolbarSpinnerAdapter
 import com.proxy.shadowsocksr.fragment.PrefFragment
-import com.proxy.shadowsocksr.impl.Utils
+import com.proxy.shadowsocksr.impl.ImplUtils
 import com.proxy.shadowsocksr.items.ConnectProfile
 import com.proxy.shadowsocksr.items.GlobalProfile
 import com.proxy.shadowsocksr.items.SSRProfile
@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             {
                 override fun run()
                 {
-                    DialogManager.instance.dismissTipDialog()
+                    DialogManager.dismissTipDialog()
                     when (status)
                     {
                         Consts.STATUS_CONNECTED ->
@@ -354,7 +354,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             fab!!.isEnabled = false
             if (ssrs!!.status())
             {
-                DialogManager.instance.showTipDialog(this, R.string.disconnecting)
+                DialogManager.showTipDialog(this, R.string.disconnecting)
                 ssrs!!.stop()
             }
             else
@@ -373,7 +373,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                 }
                 else
                 {
-                    DialogManager.instance.showTipDialog(this, R.string.connecting)
+                    DialogManager.showTipDialog(this, R.string.connecting)
                     startService(Intent(this, SSRNatService::class.java))
                     try
                     {
@@ -390,7 +390,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                     }
                     catch (e: RemoteException)
                     {
-                        DialogManager.instance.dismissTipDialog()
+                        DialogManager.dismissTipDialog()
                         switchUI(true)
                         Snackbar.make(coordinatorLayout, R.string.connect_failed,
                                 Snackbar.LENGTH_SHORT).show()
@@ -411,7 +411,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
         {
             REQUEST_CODE_CONNECT -> if (resultCode == Activity.RESULT_OK)
             {
-                DialogManager.instance.showTipDialog(this, R.string.connecting)
+                DialogManager.showTipDialog(this, R.string.connecting)
                 startService(Intent(this, SSRVPNService::class.java))
                 try
                 {
@@ -428,7 +428,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                 }
                 catch (e: RemoteException)
                 {
-                    DialogManager.instance.dismissTipDialog()
+                    DialogManager.dismissTipDialog()
                     switchUI(true)
                     Snackbar.make(coordinatorLayout, R.string.connect_failed,
                             Snackbar.LENGTH_SHORT).show()

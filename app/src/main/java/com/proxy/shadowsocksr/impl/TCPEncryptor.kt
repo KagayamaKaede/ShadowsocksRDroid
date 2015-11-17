@@ -18,7 +18,7 @@ class TCPEncryptor(pwd: String, cryptMethod: String)
     init
     {
         val cryptMethodInfo = CryptoManager.getCipherInfo(cryptMethod)
-        eIV = Utils.srandomBytes(cryptMethodInfo[1])
+        eIV = ImplUtils.srandomBytes(cryptMethodInfo[1])
         crypto = CryptoManager.getMatchCrypto(cryptMethod, pwd)
     }
 

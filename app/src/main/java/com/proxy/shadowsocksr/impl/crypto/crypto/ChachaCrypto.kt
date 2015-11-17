@@ -22,17 +22,30 @@ class ChachaCrypto(cryptMethod: String, key: ByteArray) : AbsCrypto(cryptMethod,
         chachaD.init(false, ParametersWithIV(KeyParameter(key), iv))
     }
 
+    //    override fun encrypt(data: ByteArray): ByteArray
+    //    {
+    //        val out: ByteArray = ByteArray(data.size)
+    //        chachaE.processBytes(data, 0, data.size, out, 0)
+    //        return out
+    //    }
+
     override fun encrypt(data: ByteArray): ByteArray
     {
-        val out: ByteArray = ByteArray(data.size)
-        chachaE.processBytes(data, 0, data.size, out, 0)
-        return out
+        /*  for source impl, this operating should be safe  */
+        chachaE.processBytes(data, 0, data.size, data, 0)
+        return data
     }
+
+    //    override fun decrypt(data: ByteArray): ByteArray
+    //    {
+    //        val out: ByteArray = ByteArray(data.size)
+    //        chachaD.processBytes(data, 0, data.size, out, 0)
+    //        return out
+    //    }
 
     override fun decrypt(data: ByteArray): ByteArray
     {
-        val out: ByteArray = ByteArray(data.size)
-        chachaD.processBytes(data, 0, data.size, out, 0)
-        return out
+        chachaD.processBytes(data, 0, data.size, data, 0)
+        return data
     }
 }

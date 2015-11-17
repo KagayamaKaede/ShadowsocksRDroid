@@ -22,7 +22,7 @@ class UDPEncryptor(pwd: String, cryptMethod: String)
     fun encrypt(buf: ByteArray): ByteArray
     {
         var bf = buf
-        val iv = Utils.srandomBytes(cryptMethodInfo[1])
+        val iv = ImplUtils.srandomBytes(cryptMethodInfo[1])
         crypto.updateEncryptIV(iv)
         bf = crypto.encrypt(bf)
         val data = ByteArray(iv.size + bf.size)
