@@ -29,17 +29,22 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
 
     private val shareParam: HashMap<String, Any> = hashMapOf()
 
-    inner class ChannelAttach
+    inner class ChannelAttach()
     {
         var localReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
         var remoteReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
         var crypto: TCPEncryptor? = TCPEncryptor(pwd, cryptMethod)
-        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam)
+        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam,shareParam)
         var proto: AbsProtocol? = ProtocolChooser.getProtocol(tcpProtocol, rmtIP, rmtPort, 1440,
                 shareParam)
         var localSkt: SocketChannel? = null
         var remoteSkt: SocketChannel? = null
         @Volatile var isDirect = false//bypass acl list
+
+        init
+        {
+            shareParam.put("IV LEN",crypto!!.ivLen)
+        }
     }
 
     override fun run()

@@ -52,16 +52,21 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
         this.onNeedProtectTCPListener = onNeedProtectTCPListener
     }
 
-    internal inner class ChannelAttach
+    internal inner class ChannelAttach()
     {
         var localReadBuf: ByteBuffer? = ByteBuffer.allocate(8192)
         var remoteReadBuf: ByteBuffer? = ByteBuffer.allocate(8192)
         var crypto: TCPEncryptor? = TCPEncryptor(pwd, cryptMethod)
-        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, remoteIP, remotePort, 1440, obfsParam)
+        var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, remoteIP, remotePort, 1440, obfsParam,shareParam)
         var proto: AbsProtocol? = ProtocolChooser.getProtocol(tcpProtocol, remoteIP, remotePort,
                 1440, shareParam)
         var localSkt: SocketChannel? = null
         var remoteSkt: SocketChannel? = null
+
+        init
+        {
+            shareParam.put("IV LEN",crypto!!.ivLen)
+        }
     }
 
     override fun run()
@@ -214,7 +219,6 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
 
     internal inner class RemoteSocketHandler(private val attach: ChannelAttach) : Runnable
     {
-
         override fun run()
         {
             try
@@ -246,7 +250,6 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
             catch (ignored: Exception)
             {
             }
-
             cleanSession(attach)
         }
     }

@@ -92,8 +92,8 @@
             android:title="@string/auto_connect"/>
         <CheckBoxPreference
             android:key="proxy_work_mode"
-            android:summary="@string/proxy_work_mode_summary"
-            android:title="@string/proxy_work_mode"/>
+            android:summary="@string/vpn_mode_summary"
+            android:title="@string/vpn_mode"/>
         <CheckBoxPreference
             android:disableDependentsState="true"
             android:key="global_proxy"

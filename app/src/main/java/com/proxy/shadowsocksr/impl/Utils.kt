@@ -1,5 +1,6 @@
 package com.proxy.shadowsocksr.impl
 
+import android.util.Log
 import com.google.code.commons.checksum.ChecksumUtils
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -16,9 +17,9 @@ class Utils
         {
             val crc = ChecksumUtils.crc32(src)//BE,need to invert
             dst[dstOff] = (crc[3].toInt()).inv().toByte()
-            dst[dstOff+1] = (crc[2].toInt()).inv().toByte()
-            dst[dstOff+2] = (crc[1].toInt()).inv().toByte()
-            dst[dstOff+3] = (crc[0].toInt()).inv().toByte()
+            dst[dstOff + 1] = (crc[2].toInt()).inv().toByte()
+            dst[dstOff + 2] = (crc[1].toInt()).inv().toByte()
+            dst[dstOff + 3] = (crc[0].toInt()).inv().toByte()
         }
 
         fun getCRC32(src: ByteArray): ByteArray

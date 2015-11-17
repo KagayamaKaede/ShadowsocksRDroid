@@ -15,7 +15,7 @@ object CommonUtils
             {
                 checkIptables()
             }
-            Log.e("EXC","IPTABLES: "+field)
+            Log.e("EXC", "IPTABLES: " + field)
             return field
         }
 
@@ -37,9 +37,9 @@ object CommonUtils
         {
             compatible = true
         }
-        if(lines.contains("v1.4."))
+        if (lines.contains("v1.4."))
         {
-            version=true
+            version = true
         }
         if (!compatible || !version)
         {

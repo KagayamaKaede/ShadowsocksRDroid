@@ -58,6 +58,6 @@
     <string name="forwarding_ipv6_traffic_to_remote">Forwarding IPv6 traffic to remote</string>
     <string name="ipv6_route">IPv6 Route</string>
     <string name="obfs_param">Obfs Param</string>
-    <string name="proxy_work_mode">Proxy Work Mode</string>
-    <string name="proxy_work_mode_summary">Check to use VPN Mode,Uncheck to use NAT mode</string>
+    <string name="vpn_mode">VPN Mode</string>
+    <string name="vpn_mode_summary">Uncheck to use NAT Mode(NAT need root)</string>
 </resources>

@@ -13,6 +13,8 @@ class TCPEncryptor(pwd: String, cryptMethod: String)
 
     private val crypto: AbsCrypto
 
+    val ivLen: Int get() = eIV.size
+
     init
     {
         val cryptMethodInfo = CryptoManager.getCipherInfo(cryptMethod)
