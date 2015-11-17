@@ -118,7 +118,7 @@ dependencies {
     compile files('libs/commons-checksum-0.9.jar')
 }
 buildscript {
-    ext.kotlin_version = '1.0.0-beta-1103'
+    ext.kotlin_version = '1.0.0-beta-2423'
     repositories {
         mavenCentral()
     }
