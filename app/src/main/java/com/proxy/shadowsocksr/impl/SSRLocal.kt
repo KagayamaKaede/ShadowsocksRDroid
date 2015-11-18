@@ -1,6 +1,7 @@
 package com.proxy.shadowsocksr.impl
 
 import android.util.Log
+import com.proxy.shadowsocksr.impl.crypto.CryptoManager
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener
 import com.proxy.shadowsocksr.impl.plugin.obfs.AbsObfs
 import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser
@@ -10,6 +11,7 @@ import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -44,6 +46,10 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
 
         init
         {
+            val cryptMethodInfo = CryptoManager.getCipherInfo(cryptMethod)
+            val key = ByteArray(cryptMethodInfo[0])
+            ImplUtils.EVP_BytesToKey(pwd.toByteArray(Charset.forName("UTF-8")), key)
+            shareParam.put("KEY", key)
             shareParam.put("IV LEN", crypto!!.ivLen)
         }
     }
@@ -214,6 +220,7 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
     @Throws(Exception::class)
     private fun doAuth(attach: ChannelAttach): Boolean
     {
+        /* If transplanted to other platforms, you may need to modify this method */
         attach.localReadBuf!!.limit(1 + 1 + 1)
         val rcnt = attach.localSkt!!.read(attach.localReadBuf)
         if (rcnt < 3)
@@ -225,7 +232,9 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         val recv = ByteArray(3)
         attach.localReadBuf!!.get(recv)
         val resp = byteArrayOf(0x05, 0x0)
-        if (recv[0] != 0x05.toByte() || recv[1] != 0x01.toByte() || recv[2] != 0x00.toByte())
+        if (recv[0] != 0x05.toByte() ||
+            recv[1] != 0x01.toByte() ||
+            recv[2] != 0x00.toByte())
         {
             resp[1] = 0xFF.toByte()
         }
@@ -291,7 +300,7 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                 return true
             }
         //0x02
-            else -> //not support BIND
+            else -> //not support BIND or etc. CMD
             {
                 attach.localSkt!!.write(ByteBuffer.wrap(byteArrayOf(5, 7, 0, 0, 0, 0, 0, 0, 0, 0)))
                 return false

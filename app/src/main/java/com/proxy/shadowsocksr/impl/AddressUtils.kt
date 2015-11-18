@@ -1,5 +1,6 @@
 package com.proxy.shadowsocksr.impl
 
+import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -38,7 +39,6 @@ object AddressUtils
         var broadcast = 0
         for (cidr in cidrs)
         {
-
             matcher = cidrPattern.matcher(cidr)
             if (matcher.matches())
             {

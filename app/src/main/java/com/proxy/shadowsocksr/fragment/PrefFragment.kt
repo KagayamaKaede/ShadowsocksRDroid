@@ -7,11 +7,6 @@ import android.preference.CheckBoxPreference
 import android.preference.Preference
 import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
-import android.support.v4.view.ViewCompat
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ListView
 
 import com.orhanobut.hawk.Hawk
 import com.proxy.shadowsocksr.Consts
@@ -80,13 +75,9 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
 
     private fun configSpecialPref()
     {
-        prefObfsMethod!!.onPreferenceChangeListener = object : Preference.OnPreferenceChangeListener
-        {
-            override fun onPreferenceChange(pref: Preference, `val`: Any): Boolean
-            {
-                prefObfsParam!!.isEnabled = `val` == "http_simple"
-                return true
-            }
+        prefObfsMethod!!.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { pref, value ->
+            prefObfsParam!!.isEnabled = value == "http_simple"
+            true
         }
     }
 
@@ -172,9 +163,9 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         if (!jump)
         {
             Hawk.put<GlobalProfile>("GlobalProfile", globalProfile)
-            if(key.equals("proxy_work_mode"))
+            if (key.equals("proxy_work_mode"))
             {
-                val intent:Intent = activity.intent;
+                val intent: Intent = activity.intent;
                 activity.overridePendingTransition(0, 0);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
                 activity.finish();
@@ -257,8 +248,5 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         prefAuto!!.isChecked = globalProfile!!.autoConnect
     }
 
-    private fun cleanTempPref()
-    {
-        pm!!.sharedPreferences.edit().clear().apply()
-    }
+    private fun cleanTempPref() = pm!!.sharedPreferences.edit().clear().apply()
 }

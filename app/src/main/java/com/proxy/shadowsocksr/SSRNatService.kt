@@ -43,8 +43,8 @@ class SSRNatService : Service()
 
     val myUid = android.os.Process.myUid()
 
-    var redsocksPID: Int = 0;
-    var pdnsdPID: Int = 0;
+    var redsocksPID: Int = 0
+    var pdnsdPID: Int = 0
 
     private val dnsAddressCache = SparseArray<String>()
 
@@ -122,51 +122,50 @@ class SSRNatService : Service()
             {
                 if (!f.canRead() || !f.canExecute())
                 {
-                    ShellUtil().runCmd("chmod 755 " + f.absolutePath);
+                    ShellUtil().runCmd("chmod 755 " + f.absolutePath)
                 }
             }
             else
             {
                 if (copyDaemonBin(fn, f))
                 {
-                    ShellUtil().runCmd("chmod 755 " + f.absolutePath);
-                    return true;
+                    ShellUtil().runCmd("chmod 755 " + f.absolutePath)
+                    return true
                 }
-                return false;
+                return false
             }
         }
-        return true;
+        return true
     }
 
-    @Throws(Exception::class)
     private fun copyDaemonBin(file: String, out: File): Boolean
     {
-        val abi: String = Jni.getABI();
+        val abi: String = Jni.getABI()
         val buf: ByteArray = ByteArray(
-                1024 * 32);//most tf card have 16k or 32k logic unit size, may be 32k buffer is better
+                1024 * 32)//most tf card have 16k or 32k logic unit size, may be 32k buffer is better
         try
         {
             if (!out.createNewFile())
             {
-                throw IOException("Create File Failed!");
+                return false
             }
-            val fis = assets.open(abi + File.separator + file);
-            val fos = FileOutputStream(out);
-            var length: Int = fis.read(buf);
+            val fis = assets.open(abi + File.separator + file)
+            val fos = FileOutputStream(out)
+            var length: Int = fis.read(buf)
             while (length > 0)
             {
-                fos.write(buf, 0, length);
-                length = fis.read(buf);
+                fos.write(buf, 0, length)
+                length = fis.read(buf)
             }
-            fos.flush();
-            fos.close();
-            fis.close();
-            return true;
+            fos.flush()
+            fos.close()
+            fis.close()
+            return true
         }
         catch (ignored: IOException)
         {
         }
-        return false;
+        return false
     }
 
     //    private fun getNetId(network: Network): Int = network.javaClass
@@ -356,11 +355,9 @@ class SSRNatService : Service()
 
     private fun setupIptables()
     {
-        val init_sb: ArrayList<String> = arrayListOf()
+        val init_sb: ArrayList<String> = arrayListOf("ulimit -n 4096",
+                "${CommonUtils.iptables} -t nat -F OUTPUT")
         val http_sb: ArrayList<String> = arrayListOf()
-
-        init_sb.add("ulimit -n 4096")
-        init_sb.add("${CommonUtils.iptables} -t nat -F OUTPUT")
 
         val cmd_bypass = "${CommonUtils.iptables}$CMD_IPTABLES_RETURN"
 
@@ -380,7 +377,7 @@ class SSRNatService : Service()
         }
         else
         {
-            val pm = packageManager;
+            val pm = packageManager
             val uidSet: MutableSet<Int> = hashSetOf()
             connProfile!!.proxyApps.forEach({ app ->
                 try
@@ -424,7 +421,7 @@ class SSRNatService : Service()
                         {
                         }
                     }
-                    return@Thread;
+                    return@Thread
                 }
                 connProfile!!.server = ip
             }
@@ -465,7 +462,7 @@ class SSRNatService : Service()
                 {
                 }
             }
-        }).start();
+        }).start()
     }
 
     private fun stopRunner()
@@ -478,7 +475,7 @@ class SSRNatService : Service()
             stopSelf()
         }
         ShellUtil().runCmd(arrayOf("rm -f ${Consts.baseDir}pdnsd-nat.conf",
-                "rm -f ${Consts.baseDir}redsocks-nat.conf"));
+                "rm -f ${Consts.baseDir}redsocks-nat.conf"))
         stopForeground(true)
     }
 

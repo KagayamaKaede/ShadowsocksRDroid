@@ -245,7 +245,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
                     connProfile.setServer(ip);
                 }
                 //
-                startSSRDaemon();
+                startSSRLocal();
                 if (!connProfile.getDnsForward())
                 {
                     startDnsTunnel();
@@ -345,7 +345,7 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         }
     }
 
-    private void startSSRDaemon()
+    private void startSSRLocal()
     {
         List<String> aclList = new ArrayList<>();
         if (!connProfile.getRoute().equals("all"))
