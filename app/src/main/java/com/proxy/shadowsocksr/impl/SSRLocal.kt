@@ -17,8 +17,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class SSRLocal(private val  locIP: String, private val rmtIP: String, private val rmtPort: Int, private val locPort: Int, private val  pwd: String,
-               private val cryptMethod: String, private val tcpProtocol: String, private val obfsMethod: String, private val obfsParam: String,
-               private var isVPNMode: Boolean, private val aclList: List<String>) : Thread()
+        private val cryptMethod: String, private val tcpProtocol: String, private val obfsMethod: String, private val obfsParam: String,
+        private var isVPNMode: Boolean, private val aclList: List<String>) : Thread()
 {
     private var ssc: ServerSocketChannel? = null
 
@@ -195,6 +195,7 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                 //default is block
                 attach.localSkt!!.socket().tcpNoDelay = true
                 attach.localSkt!!.socket().reuseAddress = true
+                attach.localSkt!!.socket().soTimeout = 600 * 1000
                 //
                 if (!doAuth(attach))
                 {
@@ -233,8 +234,8 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         attach.localReadBuf!!.get(recv)
         val resp = byteArrayOf(0x05, 0x0)
         if (recv[0] != 0x05.toByte() ||
-            recv[1] != 0x01.toByte() ||
-            recv[2] != 0x00.toByte())
+                recv[1] != 0x01.toByte() ||
+                recv[2] != 0x00.toByte())
         {
             resp[1] = 0xFF.toByte()
         }
@@ -315,6 +316,7 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         //default is block
         attach.remoteSkt!!.socket().reuseAddress = true
         attach.remoteSkt!!.socket().tcpNoDelay = true
+        attach.remoteSkt!!.socket().soTimeout = 600 * 1000
         if (isVPNMode)
         {
             var success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket())

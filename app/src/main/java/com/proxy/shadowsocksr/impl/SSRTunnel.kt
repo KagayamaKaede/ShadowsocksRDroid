@@ -7,6 +7,7 @@ import com.proxy.shadowsocksr.impl.plugin.obfs.AbsObfs
 import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser
 import com.proxy.shadowsocksr.impl.plugin.proto.AbsProtocol
 import com.proxy.shadowsocksr.impl.plugin.proto.ProtocolChooser
+import com.proxy.shadowsocksr.util.CommonUtils
 
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -18,13 +19,13 @@ import java.util.HashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP: String, private val remotePort: Int,
-                private val localPort: Int, private val dnsPort: Int, private val cryptMethod: String, private val tcpProtocol: String,
-                private val obfsMethod: String, private val obfsParam: String, private val pwd: String, private var isVPN: Boolean) : Thread()
+class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp: String, private val remotePort: Int,
+        private val localPort: Int, dnsPort: Int, private val cryptMethod: String, private val tcpProtocol: String,
+        private val obfsMethod: String, private val obfsParam: String, private val pwd: String, private var isVPN: Boolean) : Thread()
 {
     private var ssc: ServerSocketChannel? = null
 
-    private var dnsIp: ByteArray? = null
+    private val targetDnsHead = ByteArray(7)
 
     private var localThreadPool: ExecutorService? = null
     private var remoteThreadPool: ExecutorService? = null
@@ -38,7 +39,12 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
     init
     {
         //UnknownHostException? don't be silly
-        dnsIp = InetAddress.getByName(dnsIP).address
+        val dnsIP = InetAddress.getByName(dnsIp).address
+        //
+        targetDnsHead[0] = 1
+        System.arraycopy(dnsIP, 0, targetDnsHead, 1, 4)
+        targetDnsHead[5] = ((dnsPort shr 8) and 0xFF).toByte()
+        targetDnsHead[6] = (dnsPort and 0xFF).toByte()
     }
 
     inner class ChannelAttach
@@ -102,6 +108,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
                 //default is block
                 attach.localSkt!!.socket().tcpNoDelay = true
                 attach.localSkt!!.socket().reuseAddress = true
+                attach.localSkt!!.socket().soTimeout = 600 * 1000
                 //
                 if (!prepareRemote(attach, remoteIP, remotePort))
                 {
@@ -109,10 +116,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
                     return
                 }
                 //
-                attach.localReadBuf!!.put((1).toByte())
-                        .put(dnsIp)
-                        .put(((dnsPort shr 8) and 0xFF).toByte())
-                        .put((dnsPort and 0xFF).toByte())
+                attach.localReadBuf!!.put(targetDnsHead)
                 //
                 remoteThreadPool!!.execute(RemoteSocketHandler(attach))
                 //
@@ -155,6 +159,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIP
         //default is block
         attach.remoteSkt!!.socket().reuseAddress = true
         attach.remoteSkt!!.socket().tcpNoDelay = true
+        attach.remoteSkt!!.socket().soTimeout = 10 * 1000
         if (isVPN)
         {
             val success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket())

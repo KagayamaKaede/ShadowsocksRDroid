@@ -16,9 +16,10 @@ import java.nio.channels.DatagramChannel
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class UDPRelayServer(private val remoteIP: String, private val localIP: String, private val remotePort: Int, private val localPort: Int,
-                     private val isTunnelMode: Boolean, private val isVPNMode: Boolean,
-                     cryptMethod: String, pwd: String, dnsIp: String?, dnsPort: Int?) : Thread()
+class UDPRelayServer(
+        private val remoteIP: String, private val localIP: String, private val remotePort: Int, private val localPort: Int,
+        private val isTunnelMode: Boolean, private val isVPNMode: Boolean,
+        cryptMethod: String, pwd: String, dnsIp: String?, dnsPort: Int?) : Thread()
 {
     private var udpServer: DatagramChannel? = null
     private var isaLocal: InetSocketAddress? = null
@@ -32,8 +33,7 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
 
     private val cache: LruCache<SocketAddress, UDPRemoteDataHandler>
 
-    private var dnsIp: ByteArray? = null
-    private var dnsPort: Int? = null
+    private val targetDnsHead = ByteArray(7)
 
     var onNeedProtectUDPListener: OnNeedProtectUDPListener? = null
 
@@ -45,8 +45,12 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
         if (isTunnelMode)
         {
             //UnknownHostException? don't be silly
-            this.dnsIp = InetAddress.getByName(dnsIp).address
-            this.dnsPort = dnsPort
+            var dnsIP = InetAddress.getByName(dnsIp).address
+            //
+            targetDnsHead[0] = 1
+            System.arraycopy(dnsIP, 0, targetDnsHead, 1, 4)
+            targetDnsHead[5] = ((dnsPort!!.shr(8)) and 0xFF).toByte()
+            targetDnsHead[6] = (dnsPort and 0xFF).toByte()
         }
     }
 
@@ -89,7 +93,7 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
             }
             catch (e: Exception)
             {
-                Log.e("EXC", "UDPRealyServer Init Failed!")
+                Log.e("EXC", "UDPRelayServer Init Failed!")
                 return
             }
             //
@@ -114,10 +118,7 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                             continue
                         }
                         dataLocalIn = ByteArray(7 + rcnt)
-                        dataLocalIn[0] = 1
-                        System.arraycopy(dnsIp, 0, dataLocalIn, 1, 4)
-                        dataLocalIn[5] = ((dnsPort!!.shr(8)) and 0xFF).toByte()
-                        dataLocalIn[6] = (dnsPort!!.and(0xFF)).toByte()
+                        System.arraycopy(targetDnsHead, 0, dataLocalIn, 0, 7)
                         buf.get(dataLocalIn, 7, dataLocalIn.size - 7)
                     }
                     else
@@ -130,8 +131,8 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                         }
                         //
                         if (!(buf.get().toInt() == 0 && //RSV
-                              buf.get().toInt() == 0 && //RSV
-                              buf.get().toInt() == 0))  //FRAG
+                                buf.get().toInt() == 0 && //RSV
+                                buf.get().toInt() == 0))  //FRAG
                         {
                             Log.e("EXC", "LOCAL RECV NOT SOCKS5 UDP PKG")
                             buf.clear()
@@ -194,7 +195,7 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
     }
 
     internal inner class UDPRemoteDataHandler(val localAddress: SocketAddress,
-                                              var remoteChannel: DatagramChannel?) : Runnable
+            var remoteChannel: DatagramChannel?) : Runnable
     {
 
         var remoteReadBuf = ByteBuffer.allocate(1500)
@@ -209,8 +210,9 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                     //
                     if (rcnt < ivLen + 1)
                     {
-                        remoteReadBuf.clear()//not response small package, just drop.
-                        continue
+                        remoteReadBuf.clear()
+                        //continue
+                        break
                     }
                     remoteReadBuf.flip()
                     var dataRemoteIn = ByteArray(rcnt)
@@ -228,8 +230,7 @@ class UDPRelayServer(private val remoteIP: String, private val localIP: String, 
                         System.arraycopy(dataRemoteIn, 0, dataLocalOut, 3, dataRemoteIn.size)
                     }
                     //
-                    val wcnt = udpServer!!.send(ByteBuffer.wrap(dataLocalOut), localAddress)
-                    Log.e("EXC - wcnt", "$wcnt$$")
+                    udpServer!!.send(ByteBuffer.wrap(dataLocalOut), localAddress)
                     //
                     remoteReadBuf.clear()
                 }

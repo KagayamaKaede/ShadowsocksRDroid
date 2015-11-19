@@ -1,7 +1,6 @@
 package com.proxy.shadowsocksr.impl
 
 import android.util.Log
-import com.google.code.commons.checksum.ChecksumUtils
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
@@ -12,11 +11,13 @@ object ImplUtils
 {
     fun fillCRC32(src: ByteArray, dst: ByteArray, dstOff: Int)
     {
-        val crc = ChecksumUtils.crc32(src)//BE,need to invert
-        dst[dstOff] = (crc[3].toInt()).inv().toByte()
-        dst[dstOff + 1] = (crc[2].toInt()).inv().toByte()
-        dst[dstOff + 2] = (crc[1].toInt()).inv().toByte()
-        dst[dstOff + 3] = (crc[0].toInt()).inv().toByte()
+        val crc32 = CRC32()
+        crc32.update(src)
+        val value = crc32.value.inv()
+        dst[dstOff] = value.toByte()
+        dst[dstOff + 1] = (value shr 8).toByte()
+        dst[dstOff + 2] = (value shr 16).toByte()
+        dst[dstOff + 3] = (value shr 24).toByte()
     }
 
     fun getCRC32(src: ByteArray): ByteArray
@@ -102,23 +103,23 @@ object ImplUtils
         }
     }
 
-    //        fun fillIntAsBytes(i: Int, dst: ByteArray, dstOff: Int)
-    //        {
-    //            dst[dstOff] = i.toByte()
-    //            dst[dstOff + 1] = (i shr 8).toByte()
-    //            dst[dstOff + 2] = (i shr 16).toByte()
-    //            dst[dstOff + 3] = (i shr 24).toByte()
-    //        }
-    //
-    //        fun bytesHexDmp(tag: String, bytes: ByteArray)
-    //        {
-    //            val sb = StringBuilder()
-    //            for (b in bytes)
-    //            {
-    //                sb.append("%02X ".format(b))
-    //            }
-    //            Log.e(tag, sb.toString())
-    //        }
+            fun fillIntAsBytes(i: Int, dst: ByteArray, dstOff: Int)
+            {
+                dst[dstOff] = i.toByte()
+                dst[dstOff + 1] = (i shr 8).toByte()
+                dst[dstOff + 2] = (i shr 16).toByte()
+                dst[dstOff + 3] = (i shr 24).toByte()
+            }
+
+            fun bytesHexDmp(tag: String, bytes: ByteArray)
+            {
+                val sb = StringBuilder()
+                for (b in bytes)
+                {
+                    sb.append("%02X ".format(b))
+                }
+                Log.e(tag, sb.toString())
+            }
     //
     //        fun bufHexDmp(tag: String, bb: ByteBuffer)
     //        {

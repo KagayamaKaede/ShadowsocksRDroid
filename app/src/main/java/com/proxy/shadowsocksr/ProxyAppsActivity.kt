@@ -79,10 +79,8 @@ class ProxyAppsActivity : AppCompatActivity(), AppsAdapter.OnItemClickListener
                 {
                     continue
                 }
-                val ai = AppItem(appI.loadIcon(pm),
-                        appI.loadLabel(pm).toString(),
-                        appI.packageName,
-                        proxyApps!!.contains(appI.packageName))
+                val ai = AppItem(appI.loadIcon(pm), appI.loadLabel(pm).toString(),
+                        appI.packageName, proxyApps!!.contains(appI.packageName))
                 appLst!!.add(ai)
             }
             this@ProxyAppsActivity.runOnUiThread({

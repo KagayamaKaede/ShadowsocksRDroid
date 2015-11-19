@@ -176,7 +176,7 @@ class SSRNatService : Service()
     //        val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     //        val networks = manager.allNetworks ?: return
     //
-    //        val cmdBuf: ArrayList<String> = arrayListOf()
+    //        val cmdBuf: MutableList<String> = arrayListOf()
     //        networks.forEach { network ->
     //            val netId = getNetId(network)
     //            val oldDns = dnsAddressCache.get(netId)
@@ -197,7 +197,7 @@ class SSRNatService : Service()
     //        val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     //        val networks = manager.allNetworks ?: return
     //
-    //        val cmdBuf: ArrayList<String> = arrayListOf()
+    //        val cmdBuf: MutableList<String> = arrayListOf()
     //        networks.forEach({ network ->
     //            val networkInfo = manager.getNetworkInfo(network)
     //            networkInfo ?: return
@@ -229,7 +229,7 @@ class SSRNatService : Service()
         {
             val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val networks = manager.allNetworks
-            val cmdBuf: ArrayList<String> = arrayListOf()
+            val cmdBuf: MutableList<String> = arrayListOf()
             networks.forEach({ network ->
                 val networkInfo = manager.getNetworkInfo(network)
                 if (networkInfo.isAvailable)
@@ -249,7 +249,7 @@ class SSRNatService : Service()
 
     private fun startSSRLocal()
     {
-        var aclList: List<String> = ArrayList()
+        var aclList: MutableList<String> = arrayListOf()
         if (connProfile!!.route != "all")
         {
             when (connProfile!!.route)
@@ -281,8 +281,8 @@ class SSRNatService : Service()
         {
             tunnel = SSRTunnel(connProfile!!.server, "127.0.0.1", "8.8.8.8",
                     connProfile!!.remotePort, 8163, 53, connProfile!!.cryptMethod,
-                    connProfile!!.tcpProtocol, connProfile!!.obfsMethod,
-                    connProfile!!.obfsParam, connProfile!!.passwd, false)
+                    connProfile!!.tcpProtocol, connProfile!!.obfsMethod, connProfile!!.obfsParam,
+                    connProfile!!.passwd, false)
         }
         if (udprs == null) tunnel!!.start() else udprs!!.start()
     }
@@ -355,9 +355,9 @@ class SSRNatService : Service()
 
     private fun setupIptables()
     {
-        val init_sb: ArrayList<String> = arrayListOf("ulimit -n 4096",
+        val init_sb: MutableList<String> = arrayListOf("ulimit -n 4096",
                 "${CommonUtils.iptables} -t nat -F OUTPUT")
-        val http_sb: ArrayList<String> = arrayListOf()
+        val http_sb: MutableList<String> = arrayListOf()
 
         val cmd_bypass = "${CommonUtils.iptables}$CMD_IPTABLES_RETURN"
 
@@ -404,7 +404,7 @@ class SSRNatService : Service()
         //
         Thread({
             if (!InetAddressUtil.Companion.isIPv4Address(connProfile!!.server) &&
-                !InetAddressUtil.Companion.isIPv6Address(connProfile!!.server))
+                    !InetAddressUtil.Companion.isIPv6Address(connProfile!!.server))
             {
                 val du: DNSUtil = DNSUtil()
                 var ip = du.resolve(connProfile!!.server, true)

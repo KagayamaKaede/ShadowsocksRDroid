@@ -165,12 +165,15 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
             Hawk.put<GlobalProfile>("GlobalProfile", globalProfile)
             if (key.equals("proxy_work_mode"))
             {
-                val intent: Intent = activity.intent;
-                activity.overridePendingTransition(0, 0);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                activity.finish();
-                activity.overridePendingTransition(0, 0);
-                startActivity(intent);
+                activity.unbindService(activity as MainActivity)
+                (activity as MainActivity).bindService()
+                //val intent: Intent = activity.intent;
+                //activity.overridePendingTransition(0, 0);
+                //intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                //activity.finish();
+                //activity.overridePendingTransition(0, 0);
+                //startActivity(intent);
+                //
                 //activity.recreate()
             }
             return
