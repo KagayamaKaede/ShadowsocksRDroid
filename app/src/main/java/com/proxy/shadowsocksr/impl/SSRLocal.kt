@@ -7,10 +7,12 @@ import com.proxy.shadowsocksr.impl.plugin.obfs.AbsObfs
 import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser
 import com.proxy.shadowsocksr.impl.plugin.proto.AbsProtocol
 import com.proxy.shadowsocksr.impl.plugin.proto.ProtocolChooser
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.InetSocketAddress
-import java.nio.ByteBuffer
+import java.net.ServerSocket
+import java.net.Socket
 import java.nio.channels.ServerSocketChannel
-import java.nio.channels.SocketChannel
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -20,7 +22,7 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         private val cryptMethod: String, private val tcpProtocol: String, private val obfsMethod: String, private val obfsParam: String,
         private var isVPNMode: Boolean, private val aclList: List<String>) : Thread()
 {
-    private var ssc: ServerSocketChannel? = null
+    private var ssc: ServerSocket? = null
 
     @Volatile private var isRunning: Boolean = true
 
@@ -33,15 +35,19 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
 
     inner class ChannelAttach
     {
-        var localReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
-        var remoteReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
+        var localReadBuf: ByteArray? = ByteArray(8224)
+        var remoteReadBuf: ByteArray? = ByteArray(8224)
         var crypto: TCPEncryptor? = TCPEncryptor(pwd, cryptMethod)
         var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, rmtIP, rmtPort, 1440, obfsParam,
                 shareParam)
         var proto: AbsProtocol? = ProtocolChooser.getProtocol(tcpProtocol, rmtIP, rmtPort, 1440,
                 shareParam)
-        var localSkt: SocketChannel? = null
-        var remoteSkt: SocketChannel? = null
+        var localSkt: Socket? = null
+        var remoteSkt: Socket? = null
+        var localIS: InputStream? = null
+        var localOS: OutputStream? = null
+        var remoteIS: InputStream? = null
+        var remoteOS: OutputStream? = null
         @Volatile var isDirect = false//bypass acl list
 
         init
@@ -60,8 +66,8 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         {
             try
             {
-                ssc = ServerSocketChannel.open()
-                ssc!!.socket().bind(InetSocketAddress(locIP, locPort))
+                ssc = ServerSocket()
+                ssc!!.bind(InetSocketAddress(locIP, locPort))
                 while (isRunning)
                 {
                     val attach = ChannelAttach()
@@ -86,26 +92,32 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         }
     }
 
+    //
     inner class LocalSocketHandler(val attach: ChannelAttach) : Runnable
     {
         @Throws(Exception::class)
         private fun handleData()
         {
+            var recv: ByteArray
             //ACL Check
             if (aclList.size != 0)
             {
-                val cnt = attach.localSkt!!.read(attach.localReadBuf)
-                if (cnt < 5)
+                var rcnt = attach.localSkt!!.inputStream.read(attach.localReadBuf, 0,
+                        attach.localReadBuf!!.size)
+                if (rcnt < 5)
                 {
                     return
                 }
-                attach.localReadBuf!!.flip()
-                val atype = attach.localReadBuf!!.get()
-                if (atype == (0x01).toByte())
+
+                val atype = attach.localReadBuf!![0].toInt() and 0xFF
+                Log.e("EXC", "ATYPE: " + atype)
+                if (atype == 0x01)
                 {
-                    val ip = ByteArray(4)
-                    attach.localReadBuf!!.get(ip)
-                    val port = attach.localReadBuf!!.short.toInt()
+                    val ip = Arrays.copyOfRange(attach.localReadBuf, 1, 5)
+                    val port: Int = ((attach.localReadBuf!![5].toInt() shl 8) and 0xFF00) or
+                            (attach.localReadBuf!![6].toInt() and 0xFF)
+                    Log.e("EXC", "PORT: " + port)
+                    //
                     // TODO need optimize cidr check speed.
                     if (AddressUtils.checkInCIDRRange(
                             AddressUtils.ipv4BytesToInt(ip), aclList))
@@ -115,7 +127,6 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                         {
                             return
                         }
-                        attach.localReadBuf!!.clear()
                     }
                     else
                     {
@@ -123,19 +134,15 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                         {
                             return
                         }
-                        attach.localReadBuf!!.position(cnt)
-                        attach.localReadBuf!!.limit(attach.localReadBuf!!.capacity())
                     }
                 }
                 //Currently domain operate and ipv6 operate are the same
-                //else if (atype == (0x03).toByte())
+                //else if (atype == 0x03)
                 //{
                 //    if (!prepareRemote(attach, rmtIP, rmtPort))
                 //    {
                 //        return
                 //    }
-                //    attach.localReadBuf!!.position(cnt)
-                //    attach.localReadBuf!!.limit(attach.localReadBuf!!.capacity())
                 //}
                 else//0x04
                 {
@@ -143,11 +150,23 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                     {
                         return
                     }
-                    attach.localReadBuf!!.position(cnt)
-                    attach.localReadBuf!!.limit(attach.localReadBuf!!.capacity())
                     //not ipv6 list yet, but may be bypass loopback ::1, cidr fc00::/7,
                     //and... how to process ipv6 cidr.
                 }
+                //
+                //
+                Log.e("EXC", "REMOTE OK")
+                remoteThreadPool.execute(RemoteSocketHandler(attach))
+                //
+                recv = Arrays.copyOfRange(attach.localReadBuf, 0, rcnt)
+
+                if (!attach.isDirect)
+                {
+                    recv = attach.proto!!.beforeEncrypt(recv)
+                    recv = attach.crypto!!.encrypt(recv)
+                    recv = attach.obfs!!.afterEncrypt(recv)
+                }
+                attach.remoteSkt!!.outputStream.write(recv)
             }
             else
             {
@@ -156,9 +175,8 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                 {
                     return
                 }
+                remoteThreadPool.execute(RemoteSocketHandler(attach))
             }
-            //
-            remoteThreadPool.execute(RemoteSocketHandler(attach))
             //
             while (isRunning)
             {
@@ -167,24 +185,23 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                     Log.e("EXC", "DEAD")
                     break
                 }
-                val rcnt = attach.localSkt!!.read(attach.localReadBuf)
+                var rcnt = attach.localSkt!!.inputStream.read(attach.localReadBuf, 0,
+                        attach.localReadBuf!!.size)
+
                 if (rcnt < 0)
                 {
                     break
                 }
-                //size must be limit, not rcnt.
-                var recv = ByteArray(attach.localReadBuf!!.flip().limit())
-                attach.localReadBuf!!.get(recv)
-
+                //
+                recv = Arrays.copyOfRange(attach.localReadBuf, 0, rcnt)
+                ImplUtils.bytesHexDmp("LRECV", recv)
                 if (!attach.isDirect)
                 {
                     recv = attach.proto!!.beforeEncrypt(recv)
                     recv = attach.crypto!!.encrypt(recv)
                     recv = attach.obfs!!.afterEncrypt(recv)
                 }
-
-                attach.remoteSkt!!.write(ByteBuffer.wrap(recv))
-                attach.localReadBuf!!.clear()
+                attach.remoteSkt!!.outputStream.write(recv)
             }
         }
 
@@ -193,9 +210,11 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
             try
             {
                 //default is block
-                attach.localSkt!!.socket().tcpNoDelay = true
-                attach.localSkt!!.socket().reuseAddress = true
-                attach.localSkt!!.socket().soTimeout = 600 * 1000
+                attach.localSkt!!.tcpNoDelay = true
+                attach.localSkt!!.reuseAddress = true
+                attach.localSkt!!.soTimeout = 600 * 1000
+                //attach.localIS = attach.localSkt!!.inputStream
+                //attach.localOS = attach.localSkt!!.outputStream
                 //
                 if (!doAuth(attach))
                 {
@@ -211,8 +230,11 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                 }
                 handleData()
             }
-            catch (ignored: Exception)
+            catch (e: Exception)
             {
+                e.stackTrace.forEach {
+                    Log.e("EXC - lsh","${it.lineNumber} - ${it.toString()}")
+                }
             }
             cleanSession(attach)
         }
@@ -222,66 +244,55 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
     private fun doAuth(attach: ChannelAttach): Boolean
     {
         /* If transplanted to other platforms, you may need to modify this method */
-        attach.localReadBuf!!.limit(1 + 1 + 1)
-        val rcnt = attach.localSkt!!.read(attach.localReadBuf)
+        val rcnt = attach.localSkt!!.inputStream.read(attach.localReadBuf, 0,
+                attach.localReadBuf!!.size)
         if (rcnt < 3)
         {
             return false
         }
 
-        attach.localReadBuf!!.flip()
-        val recv = ByteArray(3)
-        attach.localReadBuf!!.get(recv)
         val resp = byteArrayOf(0x05, 0x0)
-        if (recv[0] != 0x05.toByte() ||
-                recv[1] != 0x01.toByte() ||
-                recv[2] != 0x00.toByte())
+        if (attach.localReadBuf!![0] != 0x05.toByte() ||
+                attach.localReadBuf!![1] != 0x01.toByte() ||
+                attach.localReadBuf!![2] != 0x00.toByte())
         {
             resp[1] = 0xFF.toByte()
         }
 
-        attach.localSkt!!.write(ByteBuffer.wrap(resp))
+        attach.localSkt!!.outputStream.write(resp, 0, resp.size)
         return resp[1] == 0x0.toByte()
     }
 
     @Throws(Exception::class)
     private fun processCMD(attach: ChannelAttach): Boolean
     {
-        attach.localReadBuf!!.clear()
-        attach.localReadBuf!!.limit(3) //Only Read VER,CMD,RSV
-        val rcnt = attach.localSkt!!.read(attach.localReadBuf)
+        //Only Read VER,CMD,RSV
+        val rcnt = attach.localSkt!!.inputStream.read(attach.localReadBuf, 0, 3)
         if (rcnt < 3)
         {
             return false
         }
 
-        attach.localReadBuf!!.flip()
-        if (attach.localReadBuf!!.get() != (0x05).toByte())//Socks Version
+        if (attach.localReadBuf!![0] != (0x05).toByte() || //Socks Version
+                attach.localReadBuf!![2] != (0x00).toByte())//RSV must be 0
         {
             return false
         }
 
-        val cmd = attach.localReadBuf!!.get()
-        if (attach.localReadBuf!!.get() != (0x00).toByte())
-        {
-            //RSV must be 0
-            return false
-        }
-
-        when (cmd.toInt() and 0xFF)
+        when (attach.localReadBuf!![1].toInt() and 0xFF)
         {
         //Response CMD
             0x01 ->
             {
-                attach.localSkt!!.write(ByteBuffer.wrap(byteArrayOf(5, 0, 0, 1, 0, 0, 0, 0, 0, 0)))
-                attach.localReadBuf!!.clear()
+                attach.localSkt!!.outputStream.write(byteArrayOf(5, 0, 0, 1, 0, 0, 0, 0, 0, 0), 0,
+                        10)
                 return true
             }
 
             0x03 ->
             {
                 Log.e("EXC", "UDP ASSOC")
-                val isa = (attach.localSkt!!.socket().localSocketAddress) as InetSocketAddress
+                val isa = (attach.localSkt!!.localSocketAddress) as InetSocketAddress
                 val addr = isa.address.address
                 val respb = ByteArray(4 + addr.size + 2)
                 respb[0] = 0x05
@@ -296,14 +307,13 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                 System.arraycopy(addr, 0, respb, 4, addr.size)
                 respb[respb.size - 1] = (locPort and 0xFF).toByte()
                 respb[respb.size - 2] = ((locPort shr 8) and 0xFF).toByte()
-                attach.localSkt!!.write(ByteBuffer.wrap(respb))
-                attach.localReadBuf!!.clear()
+                attach.localSkt!!.outputStream.write(respb)
                 return true
             }
         //0x02
             else -> //not support BIND or etc. CMD
             {
-                attach.localSkt!!.write(ByteBuffer.wrap(byteArrayOf(5, 7, 0, 0, 0, 0, 0, 0, 0, 0)))
+                attach.localSkt!!.outputStream.write(byteArrayOf(5, 7, 0, 0, 0, 0, 0, 0, 0, 0))
                 return false
             }
         }
@@ -312,14 +322,16 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
     @Throws(Exception::class)
     private fun prepareRemote(attach: ChannelAttach, remoteIP: String, remotePort: Int): Boolean
     {
-        attach.remoteSkt = SocketChannel.open()
-        //default is block
-        attach.remoteSkt!!.socket().reuseAddress = true
-        attach.remoteSkt!!.socket().tcpNoDelay = true
-        attach.remoteSkt!!.socket().soTimeout = 600 * 1000
+        attach.remoteSkt = Socket()
+        attach.remoteSkt!!.bind(InetSocketAddress(0))
+        attach.remoteSkt!!.reuseAddress = true
+        attach.remoteSkt!!.tcpNoDelay = true
+        attach.remoteSkt!!.soTimeout = 600 * 1000
+        //attach.remoteIS = attach.remoteSkt!!.inputStream
+        //attach.remoteOS = attach.remoteSkt!!.outputStream
         if (isVPNMode)
         {
-            var success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket())
+            var success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!)
             if (!success)
             {
                 return false
@@ -379,20 +391,20 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
             {
                 while (isRunning)
                 {
+                    Log.e("EXC", "RMT")
                     if (!checkSessionAlive(attach))
                     {
                         Log.e("EXC", "DEAD")
                         break
                     }
-                    val rcnt = attach.remoteSkt!!.read(attach.remoteReadBuf)
+                    val rcnt = attach.remoteSkt!!.inputStream.read(attach.remoteReadBuf, 0,
+                            attach.remoteReadBuf!!.size)
                     if (rcnt < 0)
                     {
                         break
                     }
 
-                    attach.remoteReadBuf!!.flip()
-                    var recv = ByteArray(rcnt)
-                    attach.remoteReadBuf!!.get(recv)
+                    var recv = Arrays.copyOfRange(attach.remoteReadBuf, 0, rcnt)//TODO
                     if (!attach.isDirect)
                     {
                         recv = attach.obfs!!.beforeDecrypt(recv, false)//TODO
@@ -400,12 +412,16 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                         recv = attach.proto!!.afterDecrypt(recv)
                     }
 
-                    attach.localSkt!!.write(ByteBuffer.wrap(recv))
-                    attach.remoteReadBuf!!.clear()
+                    ImplUtils.bytesHexDmp("RRECV", recv)
+
+                    attach.localSkt!!.outputStream.write(recv)
                 }
             }
-            catch (ignored: Exception)
+            catch (e: Exception)
             {
+                e.stackTrace.forEach {
+                    Log.e("EXC - rmt","${it.lineNumber} - ${it.toString()}")
+                }
             }
             cleanSession(attach)
         }

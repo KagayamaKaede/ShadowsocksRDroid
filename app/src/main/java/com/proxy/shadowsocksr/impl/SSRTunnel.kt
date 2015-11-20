@@ -1,21 +1,21 @@
 package com.proxy.shadowsocksr.impl
 
 import android.util.Log
-
 import com.proxy.shadowsocksr.impl.interfaces.OnNeedProtectTCPListener
 import com.proxy.shadowsocksr.impl.plugin.obfs.AbsObfs
 import com.proxy.shadowsocksr.impl.plugin.obfs.ObfsChooser
 import com.proxy.shadowsocksr.impl.plugin.proto.AbsProtocol
 import com.proxy.shadowsocksr.impl.plugin.proto.ProtocolChooser
-import com.proxy.shadowsocksr.util.CommonUtils
-
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.UnknownHostException
+import java.net.ServerSocket
+import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
-import java.util.HashMap
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -23,7 +23,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
         private val localPort: Int, dnsPort: Int, private val cryptMethod: String, private val tcpProtocol: String,
         private val obfsMethod: String, private val obfsParam: String, private val pwd: String, private var isVPN: Boolean) : Thread()
 {
-    private var ssc: ServerSocketChannel? = null
+    private var ssc: ServerSocket? = null
 
     private val targetDnsHead = ByteArray(7)
 
@@ -49,15 +49,19 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
 
     inner class ChannelAttach
     {
-        var localReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
-        var remoteReadBuf: ByteBuffer? = ByteBuffer.allocate(8224)
+        var localReadBuf: ByteArray? = ByteArray(8224)
+        var remoteReadBuf: ByteArray? = ByteArray(8224)
         var crypto: TCPEncryptor? = TCPEncryptor(pwd, cryptMethod)
         var obfs: AbsObfs? = ObfsChooser.getObfs(obfsMethod, remoteIP, remotePort, 1440, obfsParam,
                 shareParam)
         var proto: AbsProtocol? = ProtocolChooser.getProtocol(tcpProtocol, remoteIP, remotePort,
                 1440, shareParam)
-        var localSkt: SocketChannel? = null
-        var remoteSkt: SocketChannel? = null
+        var localSkt: Socket? = null
+        var remoteSkt: Socket? = null
+        var localIS: InputStream? = null
+        var localOS: OutputStream? = null
+        var remoteIS: InputStream? = null
+        var remoteOS: OutputStream? = null
 
         init
         {
@@ -75,9 +79,8 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
         {
             try
             {
-                ssc = ServerSocketChannel.open()
-                //default is block
-                ssc!!.socket().bind(InetSocketAddress(localIP, localPort))
+                ssc = ServerSocket()
+                ssc!!.bind(InetSocketAddress(localIP, localPort))
                 while (isRunning)
                 {
                     val attach = ChannelAttach()
@@ -99,16 +102,17 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
         }
     }
 
-    internal inner class LocalSocketHandler(private val attach: ChannelAttach) : Runnable
+    inner class LocalSocketHandler(private val attach: ChannelAttach) : Runnable
     {
         override fun run()
         {
             try
             {
-                //default is block
-                attach.localSkt!!.socket().tcpNoDelay = true
-                attach.localSkt!!.socket().reuseAddress = true
-                attach.localSkt!!.socket().soTimeout = 600 * 1000
+                attach.localSkt!!.tcpNoDelay = true
+                attach.localSkt!!.reuseAddress = true
+                attach.localSkt!!.soTimeout = 600 * 1000
+                //attach.localIS = attach.localSkt!!.inputStream
+                //attach.localOS = attach.localSkt!!.outputStream
                 //
                 if (!prepareRemote(attach, remoteIP, remotePort))
                 {
@@ -116,9 +120,24 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
                     return
                 }
                 //
-                attach.localReadBuf!!.put(targetDnsHead)
-                //
                 remoteThreadPool!!.execute(RemoteSocketHandler(attach))
+                //
+                System.arraycopy(targetDnsHead, 0, attach.localReadBuf, 0, 7)
+                //
+                var rcnt = attach.localSkt!!.inputStream.read(attach.localReadBuf, 7,
+                        attach.localReadBuf!!.size - 7)
+                if (rcnt < 1)
+                {
+                    return
+                }
+
+                var recv = Arrays.copyOfRange(attach.localReadBuf, 0, rcnt + 7)
+                //
+                recv = attach.proto!!.beforeEncrypt(recv)
+                recv = attach.crypto!!.encrypt(recv)
+                recv = attach.obfs!!.afterEncrypt(recv)
+                //
+                attach.remoteSkt!!.outputStream.write(recv)
                 //
                 while (isRunning)
                 {
@@ -127,21 +146,21 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
                         Log.e("EXC", "DEAD")
                         break
                     }
-                    val rcnt = attach.localSkt!!.read(attach.localReadBuf)
+                    rcnt = attach.localSkt!!.inputStream.read(attach.localReadBuf, 0,
+                            attach.localReadBuf!!.size)
                     if (rcnt < 1)
                     {
                         break
                     }
 
-                    var recv = ByteArray(attach.localReadBuf!!.flip().limit())
-                    attach.localReadBuf!!.get(recv)
+                    recv = Arrays.copyOfRange(attach.localReadBuf, 0, rcnt)
+                    ImplUtils.bytesHexDmp("TLRECV", recv)
                     //
                     recv = attach.proto!!.beforeEncrypt(recv)
                     recv = attach.crypto!!.encrypt(recv)
                     recv = attach.obfs!!.afterEncrypt(recv)
                     //
-                    attach.remoteSkt!!.write(ByteBuffer.wrap(recv))
-                    attach.localReadBuf!!.clear()
+                    attach.remoteSkt!!.outputStream.write(recv)
                 }
             }
             catch (ignored: Exception)
@@ -155,14 +174,16 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
     @Throws(Exception::class)
     private fun prepareRemote(attach: ChannelAttach, remoteIP: String, remotePort: Int): Boolean
     {
-        attach.remoteSkt = SocketChannel.open()
-        //default is block
-        attach.remoteSkt!!.socket().reuseAddress = true
-        attach.remoteSkt!!.socket().tcpNoDelay = true
-        attach.remoteSkt!!.socket().soTimeout = 10 * 1000
+        attach.remoteSkt = Socket()
+        attach.remoteSkt!!.bind(InetSocketAddress(0))
+        attach.remoteSkt!!.reuseAddress = true
+        attach.remoteSkt!!.tcpNoDelay = true
+        attach.remoteSkt!!.soTimeout = 10 * 1000
+        //attach.remoteIS = attach.remoteSkt!!.inputStream
+        //attach.remoteOS = attach.remoteSkt!!.outputStream
         if (isVPN)
         {
-            val success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!.socket())
+            val success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!)
             if (!success)
             {
                 return false
@@ -228,21 +249,20 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
                         Log.e("EXC", "DEAD")
                         break
                     }
-                    val rcnt = attach.remoteSkt!!.read(attach.remoteReadBuf)
+                    val rcnt = attach.remoteSkt!!.inputStream.read(attach.remoteReadBuf)
                     if (rcnt < 0)
                     {
                         break
                     }
-                    attach.remoteReadBuf!!.flip()
-                    var recv = ByteArray(rcnt)
-                    attach.remoteReadBuf!!.get(recv)
+                    //
+                    var recv = Arrays.copyOfRange(attach.remoteReadBuf, 0, rcnt)
                     //
                     recv = attach.obfs!!.beforeDecrypt(recv, false)//TODO
                     recv = attach.crypto!!.decrypt(recv)
                     recv = attach.proto!!.afterDecrypt(recv)
+                    ImplUtils.bytesHexDmp("TRRECV", recv)
                     //
-                    attach.localSkt!!.write(ByteBuffer.wrap(recv))
-                    attach.remoteReadBuf!!.clear()
+                    attach.localSkt!!.outputStream.write(recv)
                 }
             }
             catch (ignored: Exception)

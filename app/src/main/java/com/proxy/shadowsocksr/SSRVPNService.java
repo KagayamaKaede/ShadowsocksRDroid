@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -146,12 +147,12 @@ public final class SSRVPNService extends VpnService implements OnNeedProtectTCPL
         }
     }
 
-    @Override public boolean onNeedProtectTCP(Socket socket)
+    @Override public boolean onNeedProtectTCP(@NonNull Socket socket)
     {
         return protect(socket);
     }
 
-    @Override public boolean onNeedProtectUDP(DatagramSocket udps)
+    @Override public boolean onNeedProtectUDP(@NonNull DatagramSocket udps)
     {
         return protect(udps);
     }
