@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
     private var callback: RemoteServiceCallBack? = null
     private var ssrs: ISSRService? = null
 
-    private var startServiceIntent:Intent? =null
+    private var startServiceIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -97,7 +97,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             catch (ignored: RemoteException)
             {
             }
-
         }
         ssrs = null
         callback = null
@@ -108,10 +107,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
 
     fun bindService()
     {
-        isVPNMode = (Hawk.get<GlobalProfile>("GlobalProfile")).proxyWorkMode
+        isVPNMode = (Hawk.get<GlobalProfile>("GlobalProfile")).vpnMode
         if (isVPNMode)
         {
-            bindService(Intent(this, SSRVPNService::class.java), this, Context.BIND_AUTO_CREATE)
+            val b=bindService(Intent(this, SSRVPNService::class.java), this, Context.BIND_AUTO_CREATE)
+            Log.e("EXC",if (b) "T" else "F")
         }
         else
         {
@@ -156,29 +156,29 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
         override fun onStatusChanged(status: Int)
         {
             runOnUiThread({
-                              DialogManager.dismissTipDialog()
-                              when (status)
-                              {
-                                  Consts.STATUS_CONNECTED ->
-                                  {
-                                      switchUI(false)
-                                      Snackbar.make(coordinatorLayout, R.string.connected,
-                                                    Snackbar.LENGTH_SHORT).show()
-                                  }
-                                  Consts.STATUS_FAILED ->
-                                  {
-                                      switchUI(true)
-                                      Snackbar.make(coordinatorLayout, R.string.connect_failed,
-                                                    Snackbar.LENGTH_SHORT).show()
-                                  }
-                                  Consts.STATUS_DISCONNECTED ->
-                                  {
-                                      switchUI(true)
-                                      Snackbar.make(coordinatorLayout, R.string.disconnected,
-                                                    Snackbar.LENGTH_SHORT).show()
-                                  }
-                              }
-                          })
+                DialogManager.dismissTipDialog()
+                when (status)
+                {
+                    Consts.STATUS_CONNECTED    ->
+                    {
+                        switchUI(false)
+                        Snackbar.make(coordinatorLayout, R.string.connected,
+                                Snackbar.LENGTH_SHORT).show()
+                    }
+                    Consts.STATUS_FAILED       ->
+                    {
+                        switchUI(true)
+                        Snackbar.make(coordinatorLayout, R.string.connect_failed,
+                                Snackbar.LENGTH_SHORT).show()
+                    }
+                    Consts.STATUS_DISCONNECTED ->
+                    {
+                        switchUI(true)
+                        Snackbar.make(coordinatorLayout, R.string.disconnected,
+                                Snackbar.LENGTH_SHORT).show()
+                    }
+                }
+            })
         }
     }
 
@@ -215,12 +215,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
     }
 
     private fun addNewServer(label: String?, server: String, rmtPort: Int, method: String,
-                             pwd: String, tcpProtocol: String, obfsMethod: String,
-                             obfsParam: String)
+            pwd: String, tcpProtocol: String, obfsMethod: String,
+            obfsParam: String)
     {
         val lbl = label ?: "Svr-" + System.currentTimeMillis()
         val newPro = SSRProfile(server, rmtPort, method, pwd, tcpProtocol, obfsMethod, obfsParam,
-                                false, false)
+                false, false)
         Hawk.put(lbl, newPro)
 
         val lst = Hawk.get<ArrayList<String>>("ServerList")
@@ -243,7 +243,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             if (ssrs != null && ssrs!!.status())
             {
                 Snackbar.make(coordinatorLayout, "Please disconnect first.",
-                              Snackbar.LENGTH_SHORT).show()
+                        Snackbar.LENGTH_SHORT).show()
                 return true
             }
         }
@@ -253,13 +253,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
 
         when (item.itemId)
         {
-            R.id.action_maunally_add_server ->
+            R.id.action_maunally_add_server    ->
             {
                 addNewServer(null, Consts.defaultIP,
-                             Consts.defaultRemotePort,
-                             Consts.defaultCryptMethod, "",
-                             Consts.defaultTcpProtocol,
-                             Consts.defaultObfsMethod, "")
+                        Consts.defaultRemotePort,
+                        Consts.defaultCryptMethod, "",
+                        Consts.defaultTcpProtocol,
+                        Consts.defaultObfsMethod, "")
                 loadServerList()
                 pref!!.reloadPref()
             }
@@ -267,7 +267,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             {
                 val intent = Intent("com.google.zxing.client.android.SCAN")
                 val activities = packageManager.queryIntentActivities(intent,
-                                                                      PackageManager.COMPONENT_ENABLED_STATE_DEFAULT)
+                        PackageManager.COMPONENT_ENABLED_STATE_DEFAULT)
                 if (activities.size > 0)
                 {
                     intent.putExtra("SCAN_MODE", "QR_CODE_MODE")
@@ -278,19 +278,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                     AlertDialog.Builder(this).setTitle(R.string.req_install_qrscan_app).setMessage(
                             R.string.req_install_qrscan_app_msg).setPositiveButton(
                             android.R.string.ok,
-                            object : DialogInterface.OnClickListener
-                            {
-                                override fun onClick(dialog: DialogInterface, which: Int)
-                                {
-                                    val goToMarket = Intent(Intent.ACTION_VIEW).setData(
-                                            Uri.parse(
-                                                    "market://details?id=com.google.zxing.client.android"))
-                                    startActivity(goToMarket)
-                                }
+                            { dialog, which ->
+                                val goToMarket = Intent(Intent.ACTION_VIEW).setData(
+                                        Uri.parse(
+                                                "market://details?id=com.google.zxing.client.android"))
+                                startActivity(goToMarket)
                             }).setNegativeButton(android.R.string.cancel, null).show()
                 }
             }
-            R.id.action_del_server ->
+            R.id.action_del_server             ->
             {
                 val list = Hawk.get<ArrayList<String>>("ServerList")
                 val del = Hawk.get<String>("CurrentServer")
@@ -300,10 +296,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                 if (list.size == 0)
                 {
                     addNewServer(null, Consts.defaultIP,
-                                 Consts.defaultRemotePort,
-                                 Consts.defaultCryptMethod, "",
-                                 Consts.defaultTcpProtocol,
-                                 Consts.defaultObfsMethod, "")
+                            Consts.defaultRemotePort,
+                            Consts.defaultCryptMethod, "",
+                            Consts.defaultTcpProtocol,
+                            Consts.defaultObfsMethod, "")
                 }
                 else
                 {
@@ -314,9 +310,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                 loadServerList()
                 pref!!.reloadPref()
             }
-            R.id.action_fresh_dns_cache -> ShellUtil().runRootCmd(
+            R.id.action_fresh_dns_cache        -> ShellUtil().runRootCmd(
                     arrayOf("ndc resolver flushdefaultif", "ndc resolver flushif wlan0"))
-            R.id.action_show_current_qrcode ->
+            R.id.action_show_current_qrcode    ->
             {
                 val cur = Hawk.get<String>("CurrentServer")
                 val ssp = Hawk.get<SSRProfile>(cur)
@@ -328,13 +324,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                     val iv = ImageView(this)
                     iv.setImageBitmap(bm)
                     AlertDialog.Builder(this).setView(iv).setPositiveButton(android.R.string.ok,
-                                                                            null).show()
+                            null).show()
                     iv.layoutParams.height = px
                     iv.layoutParams.width = px
                     iv.requestLayout()
                 }
             }
-            R.id.action_about ->
+            R.id.action_about                  ->
             {
                 val about = Intent(Intent.ACTION_VIEW)
                 about.setData(Uri.parse("https://github.com/KagayamaKaede/ShadowsocksRDroid"))
@@ -349,7 +345,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
         if (ssrs == null)
         {
             Snackbar.make(coordinatorLayout, "VPN process not connected",
-                          Snackbar.LENGTH_SHORT).show()
+                    Snackbar.LENGTH_SHORT).show()
             return
         }
         try
@@ -358,7 +354,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
             if (ssrs!!.status())
             {
                 DialogManager.showTipDialog(this, R.string.disconnecting)
-                if(startServiceIntent!=null)
+                if (startServiceIntent != null)
                 {
                     stopService(startServiceIntent)
                 }
@@ -401,7 +397,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                         DialogManager.dismissTipDialog()
                         switchUI(true)
                         Snackbar.make(coordinatorLayout, R.string.connect_failed,
-                                      Snackbar.LENGTH_SHORT).show()
+                                Snackbar.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -410,7 +406,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
         {
             switchUI(true)
         }
-
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
@@ -439,9 +434,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                     DialogManager.dismissTipDialog()
                     switchUI(true)
                     Snackbar.make(coordinatorLayout, R.string.connect_failed,
-                                  Snackbar.LENGTH_SHORT).show()
+                            Snackbar.LENGTH_SHORT).show()
                 }
-
             }
             else
             {
@@ -459,11 +453,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                         if (pro != null)
                         {
                             addNewServer(sb.toString(), pro.server, pro.remotePort, pro.cryptMethod,
-                                         pro.passwd, pro.tcpProtocol, pro.obfsMethod, pro.obfsParam)
+                                    pro.passwd, pro.tcpProtocol, pro.obfsMethod, pro.obfsParam)
                             loadServerList()
                             pref!!.reloadPref()
                             Snackbar.make(coordinatorLayout, R.string.add_success,
-                                          Snackbar.LENGTH_SHORT).show()
+                                    Snackbar.LENGTH_SHORT).show()
                             return
                         }
                     }
@@ -471,7 +465,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
                 else if (resultCode == Activity.RESULT_CANCELED)
                 {
                     Snackbar.make(coordinatorLayout, R.string.add_canceled,
-                                  Snackbar.LENGTH_SHORT).show()
+                            Snackbar.LENGTH_SHORT).show()
                     return
                 }
                 Snackbar.make(coordinatorLayout, R.string.add_failed, Snackbar.LENGTH_SHORT).show()

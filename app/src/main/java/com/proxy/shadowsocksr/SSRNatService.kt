@@ -3,11 +3,9 @@ package com.proxy.shadowsocksr
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.net.Network
 import android.os.IBinder
 import android.content.*
 import android.content.pm.PackageManager
-import android.content.res.AssetManager
 import android.net.ConnectivityManager
 import android.os.RemoteException
 import android.support.v4.app.NotificationCompat
@@ -17,7 +15,6 @@ import android.util.SparseArray
 import com.proxy.shadowsocksr.impl.SSRLocal
 import com.proxy.shadowsocksr.impl.SSRTunnel
 import com.proxy.shadowsocksr.impl.UDPRelayServer
-import com.proxy.shadowsocksr.impl.UDPRelayServer0
 import com.proxy.shadowsocksr.items.ConnectProfile
 import com.proxy.shadowsocksr.util.*
 import java.io.File

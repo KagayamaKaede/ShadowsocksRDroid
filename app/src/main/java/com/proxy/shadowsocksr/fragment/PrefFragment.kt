@@ -154,7 +154,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
             "route" -> globalProfile!!.route = sp.getString(key, "bypass-lan")
             "ipv6_route" -> globalProfile!!.ipv6Route = sp.getBoolean("ipv6_route", false)
             "proxy_work_mode" ->
-                globalProfile!!.proxyWorkMode = sp.getBoolean("proxy_work_mode", true)
+                globalProfile!!.vpnMode = sp.getBoolean("proxy_work_mode", true)
             "global_proxy" -> globalProfile!!.globalProxy = sp.getBoolean(key, false)
             "udp_dns" -> globalProfile!!.dnsForward = sp.getBoolean(key, true)
             "auto_connect" -> globalProfile!!.autoConnect = sp.getBoolean(key, false)
@@ -245,7 +245,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         globalProfile = Hawk.get<GlobalProfile>("GlobalProfile")
         prefRoute!!.value = globalProfile!!.route
         prefIPv6!!.isChecked = globalProfile!!.ipv6Route
-        prefWorkMode!!.isChecked = globalProfile!!.proxyWorkMode
+        prefWorkMode!!.isChecked = globalProfile!!.vpnMode
         prefGlobal!!.isChecked = globalProfile!!.globalProxy
         prefUdpDNS!!.isChecked = globalProfile!!.dnsForward
         prefAuto!!.isChecked = globalProfile!!.autoConnect

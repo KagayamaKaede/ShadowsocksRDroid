@@ -70,19 +70,15 @@ class StubActivity : Activity(), ServiceConnection
     override fun onServiceConnected(name: ComponentName, service: IBinder)
     {
         ssrs = ISSRService.Stub.asInterface(service)
-        runOnUiThread(object : Runnable
-        {
-            override fun run()
+        runOnUiThread({
+            val vpn = VpnService.prepare(this@StubActivity)
+            if (vpn != null)
             {
-                val vpn = VpnService.prepare(this@StubActivity)
-                if (vpn != null)
-                {
-                    startActivityForResult(vpn, 0)
-                }
-                else
-                {
-                    onActivityResult(0, Activity.RESULT_OK, null)
-                }
+                startActivityForResult(vpn, 0)
+            }
+            else
+            {
+                onActivityResult(0, Activity.RESULT_OK, null)
             }
         })
     }
