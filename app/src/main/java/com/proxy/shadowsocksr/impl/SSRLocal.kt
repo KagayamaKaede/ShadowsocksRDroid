@@ -12,7 +12,6 @@ import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.nio.channels.ServerSocketChannel
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -20,7 +19,7 @@ import java.util.concurrent.Executors
 
 class SSRLocal(private val  locIP: String, private val rmtIP: String, private val rmtPort: Int, private val locPort: Int, private val  pwd: String,
         private val cryptMethod: String, private val tcpProtocol: String, private val obfsMethod: String, private val obfsParam: String,
-        private var isVPNMode: Boolean, private val aclList: List<String>) : Thread()
+        private val aclList: List<String>) : Thread()
 {
     private var ssc: ServerSocket? = null
 
@@ -110,13 +109,12 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                 }
 
                 val atype = attach.localReadBuf!![0].toInt() and 0xFF
-                Log.e("EXC", "ATYPE: " + atype)
+
                 if (atype == 0x01)
                 {
                     val ip = Arrays.copyOfRange(attach.localReadBuf, 1, 5)
                     val port: Int = ((attach.localReadBuf!![5].toInt() shl 8) and 0xFF00) or
                             (attach.localReadBuf!![6].toInt() and 0xFF)
-                    Log.e("EXC", "PORT: " + port)
                     //
                     // TODO need optimize cidr check speed.
                     if (AddressUtils.checkInCIDRRange(
@@ -154,8 +152,6 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                     //and... how to process ipv6 cidr.
                 }
                 //
-                //
-                Log.e("EXC", "REMOTE OK")
                 remoteThreadPool.execute(RemoteSocketHandler(attach))
                 //
                 recv = Arrays.copyOfRange(attach.localReadBuf, 0, rcnt)
@@ -230,11 +226,8 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                 }
                 handleData()
             }
-            catch (e: Exception)
+            catch (ignored: Exception)
             {
-                e.stackTrace.forEach {
-                    Log.e("EXC - lsh","${it.lineNumber} - ${it.toString()}")
-                }
             }
             cleanSession(attach)
         }
@@ -329,7 +322,7 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
         attach.remoteSkt!!.soTimeout = 600 * 1000
         //attach.remoteIS = attach.remoteSkt!!.inputStream
         //attach.remoteOS = attach.remoteSkt!!.outputStream
-        if (isVPNMode)
+        if (onNeedProtectTCPListener != null)
         {
             var success = onNeedProtectTCPListener!!.onNeedProtectTCP(attach.remoteSkt!!)
             if (!success)
@@ -391,7 +384,6 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
             {
                 while (isRunning)
                 {
-                    Log.e("EXC", "RMT")
                     if (!checkSessionAlive(attach))
                     {
                         Log.e("EXC", "DEAD")
@@ -417,11 +409,8 @@ class SSRLocal(private val  locIP: String, private val rmtIP: String, private va
                     attach.localSkt!!.outputStream.write(recv)
                 }
             }
-            catch (e: Exception)
+            catch (ignored: Exception)
             {
-                e.stackTrace.forEach {
-                    Log.e("EXC - rmt","${it.lineNumber} - ${it.toString()}")
-                }
             }
             cleanSession(attach)
         }

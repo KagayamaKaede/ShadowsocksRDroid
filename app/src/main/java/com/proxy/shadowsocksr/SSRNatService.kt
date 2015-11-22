@@ -42,22 +42,18 @@ class SSRNatService : Service()
     val myUid = android.os.Process.myUid()
 
     var redsocksPID: Int = 0
+    var redsocksProcess: Process? = null
+    var pdnsdProcess: Process? = null
     var pdnsdPID: Int = 0
 
     private val dnsAddressCache = SparseArray<String>()
 
-    override fun onBind(intent: Intent?): IBinder?
-    {
-        return binder
-    }
+    override fun onBind(intent: Intent?): IBinder? = binder
 
     internal inner class SSRService : ISSRService.Stub()
     {
         @Throws(RemoteException::class)
-        override fun status(): Boolean
-        {
-            return isNATConnected
-        }
+        override fun status(): Boolean = isNATConnected
 
         @Throws(RemoteException::class)
         override fun registerISSRServiceCallBack(cb: ISSRServiceCallback)
@@ -120,17 +116,16 @@ class SSRNatService : Service()
             {
                 if (!f.canRead() || !f.canExecute())
                 {
-                    ShellUtil().runCmd("chmod 755 " + f.absolutePath)
+                    ShellUtil().runCmd("chmod 755 ${f.absolutePath}")
                 }
             }
             else
             {
-                if (copyDaemonBin(fn, f))
+                if (!copyDaemonBin(fn, f))
                 {
-                    ShellUtil().runCmd("chmod 755 " + f.absolutePath)
-                    return true
+                    return false
                 }
-                return false
+                ShellUtil().runCmd("chmod 755 ${f.absolutePath}")
             }
         }
         return true
@@ -143,83 +138,27 @@ class SSRNatService : Service()
                 1024 * 32)//most tf card have 16k or 32k logic unit size, may be 32k buffer is better
         try
         {
-            if (!out.createNewFile())
+            if (out.createNewFile())
             {
-                return false
+                val fis = assets.open(abi + File.separator + file)
+                val fos = FileOutputStream(out)
+                var length: Int = fis.read(buf)
+                while (length > 0)
+                {
+                    fos.write(buf, 0, length)
+                    length = fis.read(buf)
+                }
+                fos.flush()
+                fos.close()
+                fis.close()
+                return true
             }
-            val fis = assets.open(abi + File.separator + file)
-            val fos = FileOutputStream(out)
-            var length: Int = fis.read(buf)
-            while (length > 0)
-            {
-                fos.write(buf, 0, length)
-                length = fis.read(buf)
-            }
-            fos.flush()
-            fos.close()
-            fis.close()
-            return true
         }
         catch (ignored: IOException)
         {
         }
         return false
     }
-
-    //    private fun getNetId(network: Network): Int = network.javaClass
-    //            .getDeclaredField("netId").get(network) as Int
-    //
-    //    private fun restoreDnsForAllNetwork()
-    //    {
-    //        val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    //        val networks = manager.allNetworks ?: return
-    //
-    //        val cmdBuf: MutableList<String> = arrayListOf()
-    //        networks.forEach { network ->
-    //            val netId = getNetId(network)
-    //            val oldDns = dnsAddressCache.get(netId)
-    //            if (oldDns != null)
-    //            {
-    //                cmdBuf.add("ndc resolver setnetdns $netId \"\" $oldDns")
-    //                dnsAddressCache.remove(netId)
-    //            }
-    //        }
-    //        if (cmdBuf.isNotEmpty())
-    //        {
-    //            ShellUtil().runRootCmd(cmdBuf.toTypedArray())
-    //        }
-    //    }
-    //
-    //    private fun setDnsForAllNetwork(dns: String)
-    //    {
-    //        val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    //        val networks = manager.allNetworks ?: return
-    //
-    //        val cmdBuf: MutableList<String> = arrayListOf()
-    //        networks.forEach({ network ->
-    //            val networkInfo = manager.getNetworkInfo(network)
-    //            networkInfo ?: return
-    //            if (networkInfo.isConnected)
-    //            {
-    //                val netId = getNetId(network)
-    //                val curDnsList = manager.getLinkProperties(network).dnsServers
-    //                if (curDnsList != null)
-    //                {
-    //                    val curDns = curDnsList.map({ ip -> ip.hostAddress })
-    //                            .joinToString(separator = " ")
-    //                    if (curDns != dns)
-    //                    {
-    //                        dnsAddressCache.put(netId, curDns)
-    //                        cmdBuf.add("ndc resolver setnetdns $netId \"\" $dns")
-    //                    }
-    //                }
-    //            }
-    //        })
-    //        if (cmdBuf.isNotEmpty())
-    //        {
-    //            ShellUtil().runRootCmd(cmdBuf.toTypedArray())
-    //        }
-    //    }
 
     private fun flushDns()
     {
@@ -252,7 +191,7 @@ class SSRNatService : Service()
         {
             when (connProfile!!.route)
             {
-                "bypass-lan" -> aclList = Arrays.asList(
+                "bypass-lan"          -> aclList = Arrays.asList(
                         *resources.getStringArray(R.array.private_route))
                 "bypass-lan-and-list" -> aclList = Arrays.asList(
                         *resources.getStringArray(R.array.chn_route_full))
@@ -262,7 +201,7 @@ class SSRNatService : Service()
         local = SSRLocal("127.0.0.1", connProfile!!.server, connProfile!!.remotePort,
                 connProfile!!.localPort, connProfile!!.passwd, connProfile!!.cryptMethod,
                 connProfile!!.tcpProtocol, connProfile!!.obfsMethod, connProfile!!.obfsParam,
-                false, aclList)
+                aclList)
 
         local!!.start()
     }
@@ -272,8 +211,7 @@ class SSRNatService : Service()
         if (connProfile!!.dnsForward)
         {
             udprs = UDPRelayServer(connProfile!!.server, "127.0.0.1", connProfile!!.remotePort,
-                    8153, true, false, connProfile!!.cryptMethod, connProfile!!.passwd, "8.8.8.8",
-                    53)
+                    8153, true, connProfile!!.cryptMethod, connProfile!!.passwd, "8.8.8.8", 53)
         }
         else
         {
@@ -300,11 +238,13 @@ class SSRNatService : Service()
             pdnsd = ConfFileUtil.PdNSdLocal.format("0.0.0.0", 8153, 8163, "")
         }
 
-        ConfFileUtil.writeToFile(pdnsd, File(Consts.baseDir + "pdnsd-vpn.conf"))
+        ConfFileUtil.writeToFile(pdnsd, File(Consts.baseDir + "pdnsd-nat.conf"))
 
-        val cmd = Consts.baseDir + "pdnsd -c " + Consts.baseDir + "pdnsd-vpn.conf"
+        val cmd = Consts.baseDir + "pdnsd -c " + Consts.baseDir + "pdnsd-nat.conf"
 
-        pdnsdPID = Jni.exec(cmd)
+        pdnsdProcess = ProcessBuilder().command(cmd.split(" ").toList()).redirectErrorStream(
+                true).start()
+        //pdnsdPID = Jni.exec(cmd)
     }
 
     private fun startRedsocksDaemon()
@@ -312,8 +252,9 @@ class SSRNatService : Service()
         val conf = ConfFileUtil.RedSocks.format(connProfile!!.localPort)
         val cmd = "${Consts.baseDir}redsocks -c ${Consts.baseDir}redsocks-nat.conf"
         ConfFileUtil.writeToFile(conf, File("${Consts.baseDir}redsocks-nat.conf"))
-        Log.e("EXC", cmd)
-        redsocksPID = Jni.exec(cmd)
+        redsocksProcess = ProcessBuilder()
+                .command(cmd.split(" ").toList())
+                .redirectErrorStream(true).start()
     }
 
     private fun killProcesses()
@@ -333,21 +274,16 @@ class SSRNatService : Service()
             udprs!!.stopUDPRelayServer()
             udprs = null
         }
-        try
+        if (pdnsdProcess != null)
         {
-            android.os.Process.killProcess(pdnsdPID)
+            pdnsdProcess!!.destroy()
+            pdnsdProcess = null
         }
-        catch(ignored: Exception)
+        if (redsocksProcess != null)
         {
+            redsocksProcess!!.destroy()
+            redsocksProcess = null
         }
-        try
-        {
-            android.os.Process.killProcess(redsocksPID)
-        }
-        catch(ignored: Exception)
-        {
-        }
-
         ShellUtil().runRootCmd("${CommonUtils.iptables} -t nat -F OUTPUT")
     }
 
@@ -376,20 +312,24 @@ class SSRNatService : Service()
         else
         {
             val pm = packageManager
-            val uidSet: MutableSet<Int> = hashSetOf()
             connProfile!!.proxyApps.forEach({ app ->
                 try
                 {
                     val ai = pm.getApplicationInfo(app, PackageManager.GET_ACTIVITIES)
-                    Log.e("EXC", "${ai.uid}")
-                    uidSet.add(ai.uid)
-                    http_sb.add((CommonUtils.iptables + CMD_IPTABLES_DNAT_ADD_SOCKS)
+                    http_sb.add(("${CommonUtils.iptables}$CMD_IPTABLES_DNAT_ADD_SOCKS")
                             .replace("-t nat", "-t nat -m owner --uid-owner ${ai.uid}"))
                 }
                 catch(ignored: Exception)
                 {
                 }
             })
+        }
+        //
+        init_sb.forEach {
+            Log.e("EXC", it)
+        }
+        http_sb.forEach {
+            Log.e("EXC", it)
         }
         //
         ShellUtil().runRootCmd(init_sb.toTypedArray())
@@ -424,13 +364,13 @@ class SSRNatService : Service()
                 connProfile!!.server = ip
             }
             //
+            startSSRLocal()
             startTunnel()
             if (!connProfile!!.dnsForward)
             {
                 startDnsDaemon()
             }
             startRedsocksDaemon()
-            startSSRLocal()
             setupIptables()
             //
             flushDns()
@@ -439,7 +379,7 @@ class SSRNatService : Service()
                     Intent(this@SSRNatService, MainActivity::class.java), 0)
             val notificationBuilder = NotificationCompat.Builder(this@SSRNatService)
             notificationBuilder
-                    .setWhen(0)
+                    .setWhen(0)//may be can set Long.MAX to shield notification icon display.
                     .setColor(ContextCompat.getColor(this@SSRNatService,
                             R.color.material_accent_500))
                     .setTicker("Nat service started")

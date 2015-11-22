@@ -154,7 +154,7 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
                     }
 
                     recv = Arrays.copyOfRange(attach.localReadBuf, 0, rcnt)
-                    ImplUtils.bytesHexDmp("TLRECV", recv)
+
                     //
                     recv = attach.proto!!.beforeEncrypt(recv)
                     recv = attach.crypto!!.encrypt(recv)
@@ -260,7 +260,6 @@ class SSRTunnel(private val remoteIP: String, private val localIP: String, dnsIp
                     recv = attach.obfs!!.beforeDecrypt(recv, false)//TODO
                     recv = attach.crypto!!.decrypt(recv)
                     recv = attach.proto!!.afterDecrypt(recv)
-                    ImplUtils.bytesHexDmp("TRRECV", recv)
                     //
                     attach.localSkt!!.outputStream.write(recv)
                 }

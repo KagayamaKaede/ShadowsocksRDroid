@@ -4,15 +4,15 @@ apply plugin: 'com.google.osdetector'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    buildToolsVersion "23.0.2"
 
     //noinspection GroovyAssignabilityCheck
     defaultConfig {
         applicationId "com.proxy.shadowsocksr"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 12
-        versionName "1.1.1 Test"
+        versionCode 13
+        versionName "1.1.2 Beta"
     }
     //noinspection GroovyAssignabilityCheck
     buildTypes {

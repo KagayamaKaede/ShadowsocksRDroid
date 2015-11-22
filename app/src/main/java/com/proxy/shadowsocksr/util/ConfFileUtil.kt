@@ -6,11 +6,9 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 
-class ConfFileUtil
+object ConfFileUtil
 {
-    companion object
-    {
-        @JvmStatic const val RedSocks="""base {
+    val RedSocks = """base {
  log_debug = off;
  log_info = off;
  log = stderr;
@@ -27,7 +25,7 @@ redsocks {
 }
 
 """
-        @JvmStatic const val PdNSdLocal = """global {
+    val PdNSdLocal = """global {
  perm_cache = 2048;
  cache_dir = "/data/data/com.proxy.shadowsocksr";
  server_ip = %s;
@@ -57,7 +55,7 @@ rr {
  owner=localhost;
  soa=localhost,root.localhost,42,86400,900,86400,86400;
 }"""
-        @JvmStatic const val PdNSdDirect = """global {
+    val PdNSdDirect = """global {
  perm_cache = 2048;
  cache_dir = \"/data/data/com.proxy.shadowsocksr\";
  server_ip = %s;
@@ -100,20 +98,18 @@ rr {
  soa=localhost,root.localhost,42,86400,900,86400,86400;
 }"""
 
-        @JvmStatic fun writeToFile(c: String, f: File)
+    fun writeToFile(c: String, f: File)
+    {
+        try
         {
-            try
-            {
-                val pw = PrintWriter(f)
-                pw.write(c)
-                pw.flush()
-                pw.close()
-            }
-            catch (e: FileNotFoundException)
-            {
-                Log.e("EXC", "config file save failed.")
-            }
-
+            val pw = PrintWriter(f)
+            pw.write(c)
+            pw.flush()
+            pw.close()
+        }
+        catch (e: FileNotFoundException)
+        {
+            Log.e("EXC", "config file save failed.")
         }
     }
 }

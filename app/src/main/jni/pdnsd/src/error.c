@@ -61,6 +61,7 @@ void crash_msg(char *msg)
  * the optional following arguments are the arguments like in printf */
 void log_message(int prior, const char *s, ...)
 {
+#ifndef ANDROID
 	int gotlock=0;
 	va_list va;
 	FILE *f;
@@ -96,10 +97,10 @@ void log_message(int prior, const char *s, ...)
 			if(!localtime_r(&tt, &tm) || strftime(ts, sizeof(ts), "* %m/%d %T| ", &tm) <=0)
 				ts[0]=0;
 			fprintf(f,"%spdnsd: %s: ", ts,
-				prior<=LOG_CRIT?"critical":
-				prior==LOG_ERR?"error":
-				prior==LOG_WARNING?"warning":
-				"info");
+					prior<=LOG_CRIT?"critical":
+					prior==LOG_ERR?"error":
+					prior==LOG_WARNING?"warning":
+					"info");
 		}
 		va_start(va,s);
 		vfprintf(f,s,va);
@@ -112,6 +113,7 @@ void log_message(int prior, const char *s, ...)
 	}
 	if (gotlock)
 		pthread_mutex_unlock(&loglock);
+#endif
 }
 
 

@@ -87,7 +87,7 @@ LOCAL_LDFLAGS += -pie -fPIE
 include $(BUILD_EXECUTABLE)
 
 ########################################################
-## pdnsd library
+## pdnsd
 ########################################################
 
 include $(CLEAR_VARS)
@@ -96,7 +96,7 @@ PDNSD_SOURCES  := $(wildcard $(LOCAL_PATH)/pdnsd/src/*.c)
 
 LOCAL_MODULE    := pdnsd
 LOCAL_SRC_FILES := $(PDNSD_SOURCES:$(LOCAL_PATH)/%=%)
-LOCAL_CFLAGS    := -pie -fPIE -Wall -O2 -I$(LOCAL_PATH)/pdnsd
+LOCAL_CFLAGS    := -pie -fPIE -DANDROID -Wall -O2 -I$(LOCAL_PATH)/pdnsd
 
 LOCAL_LDFLAGS += -pie -fPIE
 

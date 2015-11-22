@@ -12,7 +12,7 @@ import java.util.concurrent.Executors
 
 class UDPRelayServer(
         private val remoteIP: String, private val localIP: String, private val remotePort: Int,
-        private val localPort: Int, private val isTunnelMode: Boolean, private val isVPNMode: Boolean,
+        private val localPort: Int, private val isTunnelMode: Boolean,
         cryptMethod: String, pwd: String, dnsIp: String?, dnsPort: Int?) : Thread()
 {
     private var udpServer: DatagramSocket? = null
@@ -33,7 +33,7 @@ class UDPRelayServer(
 
     init
     {
-        cache = LruCache<SocketAddress, UDPRemoteDataHandler>(48)
+        cache = LruCache<SocketAddress, UDPRemoteDataHandler>(56)
         crypto = UDPEncryptor(pwd, cryptMethod)
         ivLen = crypto.ivLen
         if (isTunnelMode)
@@ -129,6 +129,7 @@ class UDPRelayServer(
                         dataLocalIn = ByteArray(buff.length - 3)
                         System.arraycopy(buf, 3, dataLocalIn, 0, buff.length - 3)
                     }
+
                     val dataRemoteOut = crypto.encrypt(dataLocalIn)
                     //
                     var handler: UDPRemoteDataHandler? = cache.get(buff.socketAddress)
@@ -136,7 +137,7 @@ class UDPRelayServer(
                     {
                         val remoteSkt = DatagramSocket()
                         remoteSkt.connect(isaRemote)
-                        if (isVPNMode)
+                        if (onNeedProtectUDPListener != null)
                         {
                             val isProtected = onNeedProtectUDPListener!!.onNeedProtectUDP(remoteSkt)
                             if (isProtected)
@@ -197,7 +198,6 @@ class UDPRelayServer(
                     //
                     if (buff!!.length < ivLen + 1)
                     {
-                        //continue
                         break
                     }
 
@@ -216,8 +216,9 @@ class UDPRelayServer(
                         System.arraycopy(dataRemoteIn, 0, dataLocalOut, 3, dataRemoteIn.size)
                     }
                     //
-                    val pktLocalOut = DatagramPacket(dataLocalOut, 0, dataLocalOut.size)
-                    pktLocalOut.socketAddress = localAddress
+                    val pktLocalOut = DatagramPacket(dataLocalOut, 0, dataLocalOut.size,
+                            localAddress)
+                    Log.e("EXC - LA",localAddress.toString())
                     udpServer!!.send(pktLocalOut)
                 }
             }

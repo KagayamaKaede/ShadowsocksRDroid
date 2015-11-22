@@ -1,3 +1,10 @@
+##1.1.2 Beta
+
++ Improve network operate speed.
++ Reduce RAM usage.
++ Add NAT mode, but can not use yet.
++ ```May be contains many bug```.
+
 ##1.1.1 Test
 
 + Improve crypt operating speed.
