@@ -110,8 +110,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, AdapterView.OnIt
         isVPNMode = (Hawk.get<GlobalProfile>("GlobalProfile")).vpnMode
         if (isVPNMode)
         {
-            val b=bindService(Intent(this, SSRVPNService::class.java), this, Context.BIND_AUTO_CREATE)
-            Log.e("EXC",if (b) "T" else "F")
+            bindService(Intent(this, SSRVPNService::class.java), this, Context.BIND_AUTO_CREATE)
         }
         else
         {

@@ -82,6 +82,11 @@
             android:summary="@string/forwarding_ipv6_traffic_to_remote"
             android:title="@string/ipv6_route"/>
         <CheckBoxPreference
+            android:checked="false"
+            android:key="udp_relay"
+            android:summary="Not include dns package"
+            android:title="UDP Relay"/>
+        <CheckBoxPreference
             android:checked="true"
             android:key="udp_dns"
             android:summary="@string/udp_dns"

@@ -45,14 +45,8 @@ jstring Java_com_proxy_shadowsocksr_Jni_getABI
 
     if (family == ANDROID_CPU_FAMILY_X86) {
         abi = "x86";
-    } else if (family == ANDROID_CPU_FAMILY_MIPS) {
-        abi = "mips";
     } else if (family == ANDROID_CPU_FAMILY_ARM) {
         abi = "armeabi-v7a";
-    } else if (family == ANDROID_CPU_FAMILY_ARM64) {
-        abi = "arm64-v8a";
-    } else if (family == ANDROID_CPU_FAMILY_X86_64) {
-        abi = "x86_64";
     }
     return env->NewStringUTF(abi);
 }

@@ -21,6 +21,7 @@ import com.proxy.shadowsocksr.util.ShellUtil
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.lang.Process
 import java.net.DatagramSocket
 import java.net.Socket
 import java.util.*
@@ -32,8 +33,8 @@ class SSRVPNService() : VpnService(), OnNeedProtectTCPListener, OnNeedProtectUDP
     private val PRIVATE_VLAN6 = "fdfe:dcba:9875::%s"
     private var conn: ParcelFileDescriptor? = null
 
-    private var pdnsdPID = 0
-    private var tun2socksPID = 0
+    private var pdnsdProcess: Process? = null
+    private var tun2socksProcess: Process? = null
 
     private var connProfile: ConnectProfile? = null
 
@@ -147,12 +148,11 @@ class SSRVPNService() : VpnService(), OnNeedProtectTCPListener, OnNeedProtectUDP
             }
             else
             {
-                if (copyDaemonBin(fn, f))
+                if (!copyDaemonBin(fn, f))
                 {
-                    ShellUtil().runCmd("chmod 755 ${f.absolutePath}")
-                    return true
+                    return false
                 }
-                return false
+                ShellUtil().runCmd("chmod 755 ${f.absolutePath}")
             }
         }
         return true
@@ -380,7 +380,10 @@ class SSRVPNService() : VpnService(), OnNeedProtectTCPListener, OnNeedProtectUDP
 
         val cmd = Consts.baseDir + "pdnsd -c " + Consts.baseDir + "pdnsd-vpn.conf"
 
-        pdnsdPID = Jni.exec(cmd)
+        pdnsdProcess = ProcessBuilder()
+                .command(cmd.split(" ").toList())
+                .redirectErrorStream(true)
+                .start()
     }
 
     private fun startVpn(): Int
@@ -458,6 +461,8 @@ class SSRVPNService() : VpnService(), OnNeedProtectTCPListener, OnNeedProtectUDP
             cmd += " --netif-ip6addr ${PRIVATE_VLAN6.format("2")}"
         }
 
+        cmd += " --enable-udprelay"
+
         if (connProfile!!.dnsForward)
         {
             cmd += " --enable-udprelay"
@@ -467,7 +472,10 @@ class SSRVPNService() : VpnService(), OnNeedProtectTCPListener, OnNeedProtectUDP
             cmd += " --dnsgw ${PRIVATE_VLAN.format("1")}:8153"
         }
 
-        tun2socksPID = Jni.exec(cmd)
+        tun2socksProcess = ProcessBuilder()
+                .command(cmd.split(" ").toList())
+                .redirectErrorStream(true)
+                .start()
 
         return fd
     }
@@ -479,37 +487,26 @@ class SSRVPNService() : VpnService(), OnNeedProtectTCPListener, OnNeedProtectUDP
             local!!.stopSSRLocal()
             local = null
         }
-
         if (tunnel != null)
         {
             tunnel!!.stopTunnel()
             tunnel = null
         }
-
         if (udprs != null)
         {
             udprs!!.stopUDPRelayServer()
             udprs = null
         }
-        //
-        try
+        if (pdnsdProcess != null)
         {
-            android.os.Process.killProcess(pdnsdPID)
+            pdnsdProcess!!.destroy()
+            pdnsdProcess = null
         }
-        catch (e: Exception)
+        if (tun2socksProcess != null)
         {
-            Log.e("EXC", "PDNSD KILL FAILED: ${e.message}")
+            tun2socksProcess!!.destroy()
+            tun2socksProcess = null
         }
-
-        try
-        {
-            android.os.Process.killProcess(tun2socksPID)
-        }
-        catch (e: Exception)
-        {
-            Log.e("EXC", "TUN2SOCKS KILL FAILED: ${e.message}")
-        }
-
         //
         ShellUtil().runCmd("rm -f ${Consts.baseDir}pdnsd-vpn.conf")
     }
