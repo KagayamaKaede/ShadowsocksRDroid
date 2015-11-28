@@ -1,6 +1,6 @@
 package com.proxy.shadowsocksr.impl.crypto.crypto
 
-import com.google.code.commons.checksum.ChecksumUtils
+import android.util.Log
 import com.proxy.shadowsocksr.impl.ImplUtils
 import org.spongycastle.crypto.StreamCipher
 import org.spongycastle.crypto.engines.RC4Engine
@@ -14,22 +14,20 @@ class RC4MD5Crypto(cryptMethod: String, key: ByteArray) : AbsCrypto(cryptMethod,
     //rc4-md5 spec: https://github.com/shadowsocks/shadowsocks/issues/178
     override fun updateEncryptIV(iv: ByteArray)
     {
-        val bts = ByteArray(key.size + iv.size)
+        var bts = ByteArray(key.size + iv.size)
         System.arraycopy(key, 0, bts, 0, key.size)
         System.arraycopy(iv, 0, bts, key.size, iv.size)
-        ImplUtils.fillCRC32(bts, bts, 0)
-        e.reset()
+        bts = ImplUtils.getMD5(bts)
         e.init(true, KeyParameter(bts))
     }
 
     override fun updateDecryptIV(iv: ByteArray)
     {
-        val bts = ByteArray(key.size + iv.size)
+        var bts = ByteArray(key.size + iv.size)
         System.arraycopy(key, 0, bts, 0, key.size)
         System.arraycopy(iv, 0, bts, key.size, iv.size)
-        ImplUtils.fillCRC32(bts, bts, 0)
-        d.reset()
-        d.init(true, KeyParameter(bts))
+        bts = ImplUtils.getMD5(bts)
+        d.init(false, KeyParameter(bts))
     }
 
     override fun encrypt(data: ByteArray): ByteArray

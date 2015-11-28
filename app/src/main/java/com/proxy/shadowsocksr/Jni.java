@@ -7,7 +7,7 @@ public final class Jni
         System.loadLibrary("Jni");
     }
 
-    public static native int exec(String cmd);
+    //public static native int exec(String cmd);
 
     public static native String getABI();
 

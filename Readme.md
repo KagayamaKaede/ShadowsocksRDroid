@@ -7,11 +7,8 @@ Compatible Shadowsocks protocol and support some ShadowsocksR function.
 
 ##Plans
 
-* Full Kotlin implementation of Shadowsocks stable function.
-* Improve the material design UI.
 * Improve performance, reduce memory and battery usage.
 * Fix bug.
-* Write Kotlin implementation of ShadowsocksR plugin.
 
 ##Develop
 

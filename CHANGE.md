@@ -1,3 +1,9 @@
+##1.1.3 Beta
+
++ Fixed start fail when first start vpn.
++ Fixed RC4-MD5 crypto.
++
+
 ##1.1.2 Beta
 
 + Improve network operate speed.

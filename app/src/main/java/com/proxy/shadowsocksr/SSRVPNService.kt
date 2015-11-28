@@ -461,7 +461,7 @@ class SSRVPNService() : VpnService(), OnNeedProtectTCPListener, OnNeedProtectUDP
             cmd += " --netif-ip6addr ${PRIVATE_VLAN6.format("2")}"
         }
 
-        cmd += " --enable-udprelay"
+        //cmd += " --enable-udprelay"
 
         if (connProfile!!.dnsForward)
         {

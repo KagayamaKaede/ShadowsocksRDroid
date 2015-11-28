@@ -30,46 +30,43 @@ package com.proxy.shadowsocksr.util
 
 import java.util.regex.Pattern
 
-class InetAddressUtil
+object  InetAddressUtil
 {
-    companion object
+    private val IPV4_BASIC_PATTERN_STRING = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
+    private val IPV4_PATTERN = Pattern.compile("^$IPV4_BASIC_PATTERN_STRING$")
+    private val IPV6_STD_PATTERN = Pattern.compile(
+            "^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}$")
+    private val IPV6_HEX_COMPRESSED_PATTERN = Pattern.compile(
+            "^(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)::(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)$")
+
+    private val COLON_CHAR = ':'
+    private val MAX_COLON_COUNT = 7
+
+    fun isIPv4Address(input: String): Boolean
     {
-        private val IPV4_BASIC_PATTERN_STRING = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])"
-        private val IPV4_PATTERN = Pattern.compile("^$IPV4_BASIC_PATTERN_STRING$")
-        private val IPV6_STD_PATTERN = Pattern.compile(
-                "^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){7}$")
-        private val IPV6_HEX_COMPRESSED_PATTERN = Pattern.compile(
-                "^(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)::(([0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})?)$")
+        return IPV4_PATTERN.matcher(input).matches()
+    }
 
-        private val COLON_CHAR = ':'
-        private val MAX_COLON_COUNT = 7
+    fun isIPv6StdAddress(input: String): Boolean
+    {
+        return IPV6_STD_PATTERN.matcher(input).matches()
+    }
 
-        fun isIPv4Address(input: String): Boolean
+    fun isIPv6HexCompressedAddress(input: String): Boolean
+    {
+        var colonCount = 0
+        for (i in 0..input.length - 1)
         {
-            return IPV4_PATTERN.matcher(input).matches()
-        }
-
-        fun isIPv6StdAddress(input: String): Boolean
-        {
-            return IPV6_STD_PATTERN.matcher(input).matches()
-        }
-
-        fun isIPv6HexCompressedAddress(input: String): Boolean
-        {
-            var colonCount = 0
-            for (i in 0..input.length - 1)
+            if (input[i] == COLON_CHAR)
             {
-                if (input[i] == COLON_CHAR)
-                {
-                    colonCount++
-                }
+                colonCount++
             }
-            return colonCount <= MAX_COLON_COUNT && IPV6_HEX_COMPRESSED_PATTERN.matcher(input).matches()
         }
+        return colonCount <= MAX_COLON_COUNT && IPV6_HEX_COMPRESSED_PATTERN.matcher(input).matches()
+    }
 
-        fun isIPv6Address(input: String): Boolean
-        {
-            return isIPv6StdAddress(input) || isIPv6HexCompressedAddress(input)
-        }
+    fun isIPv6Address(input: String): Boolean
+    {
+        return isIPv6StdAddress(input) || isIPv6HexCompressedAddress(input)
     }
 }

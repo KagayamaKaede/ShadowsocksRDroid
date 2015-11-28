@@ -1,6 +1,5 @@
 package com.proxy.shadowsocksr.impl
 
-import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -13,7 +12,8 @@ object AddressUtils
 
     fun ipv4BytesToIp(bytes: ByteArray): String
     {
-        return StringBuilder().append(bytes[0].toInt() and 255).append('.')
+        return StringBuilder()
+                .append(bytes[0].toInt() and 255).append('.')
                 .append(bytes[1].toInt() and 255).append('.')
                 .append(bytes[2].toInt() and 255).append('.')
                 .append(bytes[3].toInt() and 255).toString()
@@ -59,13 +59,13 @@ object AddressUtils
 
                 var addLong = ip.toLong() and UNSIGNED_INT_MASK
                 var lowLong = ((broadcast.toLong() and UNSIGNED_INT_MASK) -
-                               (if ((network.toLong() and UNSIGNED_INT_MASK) > 1L)
-                                   network.toLong() + 1L
-                               else 0L)).toLong() and UNSIGNED_INT_MASK
+                        (if ((network.toLong() and UNSIGNED_INT_MASK) > 1L)
+                            network.toLong() + 1L
+                        else 0L)).toLong() and UNSIGNED_INT_MASK
                 var highLong = ((broadcast.toLong() and UNSIGNED_INT_MASK) -
-                                (if ((network.toLong() and UNSIGNED_INT_MASK) > 1L)
-                                    broadcast.toLong() - 1L
-                                else 0L)).toLong() and UNSIGNED_INT_MASK
+                        (if ((network.toLong() and UNSIGNED_INT_MASK) > 1L)
+                            broadcast.toLong() - 1L
+                        else 0L)).toLong() and UNSIGNED_INT_MASK
                 if (addLong >= lowLong && addLong <= highLong)
                 {
                     return true;

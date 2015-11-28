@@ -7,6 +7,11 @@ import android.preference.CheckBoxPreference
 import android.preference.Preference
 import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
+import android.support.v4.view.ViewCompat
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ListView
 
 import com.orhanobut.hawk.Hawk
 import com.proxy.shadowsocksr.Consts
@@ -81,20 +86,21 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         }
     }
 
-    //    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-    //                              savedInstanceState: Bundle?): View?
-    //    {
-    //        val v = super.onCreateView(inflater, container, savedInstanceState)
-    //
-    //        if (v != null)
-    //        {
-    //            val lv = v.findViewById(android.R.id.list) as ListView
-    //            ViewCompat.setNestedScrollingEnabled(lv, true)
-    //            lv.clipToPadding = false
-    //            //lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
-    //        }
-    //        return super.onCreateView(inflater, container, savedInstanceState)
-    //    }
+//    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+//            savedInstanceState: Bundle?): View?
+//    {
+//        val v = super.onCreateView(inflater, container, savedInstanceState)
+//
+//        if (v != null)
+//        {
+//            val lv = v.findViewById(android.R.id.list) as ListView
+//            ViewCompat.setNestedScrollingEnabled(lv, true)
+//            //lv.clipToPadding = false
+//            ////lv.setPadding(0, 0, 0, ScreenUtil.getNavigationBarSize(getActivity()).y);
+//            //
+//        }
+//        return super.onCreateView(inflater, container, savedInstanceState)
+//    }
 
     override fun onResume()
     {
@@ -151,14 +157,14 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
         var jump = false
         when (key)
         {
-            "route" -> globalProfile!!.route = sp.getString(key, "bypass-lan")
-            "ipv6_route" -> globalProfile!!.ipv6Route = sp.getBoolean("ipv6_route", false)
+            "route"           -> globalProfile!!.route = sp.getString(key, "bypass-lan")
+            "ipv6_route"      -> globalProfile!!.ipv6Route = sp.getBoolean("ipv6_route", false)
             "proxy_work_mode" ->
                 globalProfile!!.vpnMode = sp.getBoolean("proxy_work_mode", true)
-            "global_proxy" -> globalProfile!!.globalProxy = sp.getBoolean(key, false)
-            "udp_dns" -> globalProfile!!.dnsForward = sp.getBoolean(key, true)
-            "auto_connect" -> globalProfile!!.autoConnect = sp.getBoolean(key, false)
-            else -> jump = true
+            "global_proxy"    -> globalProfile!!.globalProxy = sp.getBoolean(key, false)
+            "udp_dns"         -> globalProfile!!.dnsForward = sp.getBoolean(key, true)
+            "auto_connect"    -> globalProfile!!.autoConnect = sp.getBoolean(key, false)
+            else              -> jump = true
         }
         if (!jump)
         {
@@ -184,7 +190,7 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
 
         when (key)
         {
-            "label" ->
+            "label"         ->
             {
                 var changed: String = sp.getString(key, currentSvr + System.currentTimeMillis())
                 val lst = Hawk.get<ArrayList<String>>("ServerList")
@@ -206,18 +212,18 @@ class PrefFragment : PreferenceFragment(), SharedPreferences.OnSharedPreferenceC
                 return
             }
 
-            "server" -> ss.server = sp.getString(key, Consts.defaultIP)
-            "remote_port" -> ss.remotePort = Integer.valueOf(sp.getString(
+            "server"        -> ss.server = sp.getString(key, Consts.defaultIP)
+            "remote_port"   -> ss.remotePort = Integer.valueOf(sp.getString(
                     key, Consts.defaultRemotePort.toString()))!!
-            "local_port" -> ss.localPort = Integer.valueOf(sp.getString(
+            "local_port"    -> ss.localPort = Integer.valueOf(sp.getString(
                     key, Consts.defaultLocalPort.toString()))!!
-            "crypt_method" -> ss.cryptMethod = sp.getString(key, Consts.defaultCryptMethod)
-            "password" -> ss.passwd = sp.getString(key, "")
+            "crypt_method"  -> ss.cryptMethod = sp.getString(key, Consts.defaultCryptMethod)
+            "password"      -> ss.passwd = sp.getString(key, "")
             "protocol_type" -> ss.tcpProtocol = sp.getString(key, Consts.defaultTcpProtocol)
-            "obfs_method" -> ss.obfsMethod = sp.getString(key, Consts.defaultObfsMethod)
-            "obfs_param" -> ss.obfsParam = sp.getString(key, "")
-            "tcp_over_udp" -> ss.tcpOverUdp = sp.getBoolean(key, false)
-            "udp_over_tcp" -> ss.udpOverTcp = sp.getBoolean(key, false)
+            "obfs_method"   -> ss.obfsMethod = sp.getString(key, Consts.defaultObfsMethod)
+            "obfs_param"    -> ss.obfsParam = sp.getString(key, "")
+            "tcp_over_udp"  -> ss.tcpOverUdp = sp.getBoolean(key, false)
+            "udp_over_tcp"  -> ss.udpOverTcp = sp.getBoolean(key, false)
         }
         Hawk.put(currentSvr, ss)
     }

@@ -2,11 +2,11 @@ package com.proxy.shadowsocksr
 
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
-import android.os.IBinder
-import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.os.IBinder
 import android.os.RemoteException
 import android.support.v4.app.NotificationCompat
 import android.support.v4.content.ContextCompat
@@ -341,8 +341,8 @@ class SSRNatService : Service()
         killProcesses()
         //
         Thread({
-            if (!InetAddressUtil.Companion.isIPv4Address(connProfile!!.server) &&
-                    !InetAddressUtil.Companion.isIPv6Address(connProfile!!.server))
+            if (!InetAddressUtil.isIPv4Address(connProfile!!.server) &&
+                    !InetAddressUtil.isIPv6Address(connProfile!!.server))
             {
                 val du: DNSUtil = DNSUtil()
                 var ip = du.resolve(connProfile!!.server, true)
