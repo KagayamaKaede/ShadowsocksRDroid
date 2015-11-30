@@ -3,7 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ShadowsocksRDroid.iml" filepath="$PROJECT_DIR$/ShadowsocksRDroid.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jvmVer/jvmVer.iml" filepath="$PROJECT_DIR$/jvmVer/jvmVer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/nativeVer/nativeVer.iml" filepath="$PROJECT_DIR$/nativeVer/nativeVer.iml" />
     </modules>
   </component>
 </project>

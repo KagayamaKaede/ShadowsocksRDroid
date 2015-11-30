@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="crypt_method_entry">
+        <item>AES-256-CFB</item>
+        <item>CHACHA20</item>
+        <item>AES-192-CFB</item>
+        <item>AES-128-CFB</item>
+        <item>SALSA20</item>
+        <item>RC4-MD5</item>
+    </string-array>
+    <string-array name="crypt_method_value">
+        <item>aes-256-cfb</item>
+        <item>chacha20</item>
+        <item>aes-192-cfb</item>
+        <item>aes-128-cfb</item>
+        <item>salsa20</item>
+        <item>rc4-md5</item>
+    </string-array>
+
+    <string-array name="route_entry">
+        <item>@string/all</item>
+        <item>@string/bypass_lan</item>
+        <item>@string/bypass_lan_list</item>
+    </string-array>
+    <string-array name="route_value">
+        <item>all</item>
+        <item>bypass-lan</item>
+        <item>bypass-lan-and-list</item>
+    </string-array>
+
+    <string-array name="tcp_protocol_entry">
+        <item>Origin</item>
+        <item>Verify Simple</item>
+        <item>Verify Deflate</item>
+        <item>Auth Simple</item>
+    </string-array>
+    <string-array name="tcp_protocol_value">
+        <item>origin</item>
+        <item>verify_simple</item>
+        <item>verify_deflate</item>
+        <item>auth_simple</item>
+    </string-array>
+
+    <string-array name="obfs_method_entry">
+        <item>Plain</item>
+        <item>Http Simple</item>
+        <item>TLS Simple</item>
+        <item>Random Head</item>
+    </string-array>
+    <string-array name="obfs_method_value">
+        <item>plain</item>
+        <item>http_simple</item>
+        <item>tls_simple</item>
+        <item>random_head</item>
+    </string-array>
+</resources>
