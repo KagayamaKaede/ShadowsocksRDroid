@@ -1,6 +1,6 @@
 package com.proxy.shadowsocksrn.items
 
-import com.proxy.shadowsocksr.Consts
+import com.proxy.shadowsocksrn.Consts
 
 import java.io.Serializable
 

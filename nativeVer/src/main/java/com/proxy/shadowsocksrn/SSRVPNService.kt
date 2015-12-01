@@ -188,7 +188,7 @@ class SSRVPNService() : VpnService()
     {
         killProcesses()
         //
-        Thread(Runnable {
+        Thread({
             if (!InetAddressUtil().isIPv4Address(connProfile!!.server) &&
                     !InetAddressUtil().isIPv6Address(connProfile!!.server))
             {
@@ -208,7 +208,7 @@ class SSRVPNService() : VpnService()
                         }
 
                     }
-                    return@Runnable
+                    return@Thread
                 }
                 connProfile!!.server = ip
             }
@@ -251,9 +251,11 @@ class SSRVPNService() : VpnService()
                                 this@SSRVPNService, -1, Intent(
                                 this@SSRVPNService, MainActivity::class.java), 0)
                         val notificationBuilder = NotificationCompat.Builder(this@SSRVPNService)
-                        notificationBuilder.setWhen(0).setColor(ContextCompat.getColor(
-                                this@SSRVPNService,
-                                R.color.material_accent_500)).setTicker(
+                        notificationBuilder
+                                .setWhen(0)
+                                .setColor(ContextCompat.getColor(
+                                        this@SSRVPNService,
+                                        R.color.material_accent_500)).setTicker(
                                 "VPN service started").setContentTitle(
                                 getString(R.string.app_name)).setContentText(
                                 connProfile!!.label).setContentIntent(open).setPriority(
@@ -261,7 +263,7 @@ class SSRVPNService() : VpnService()
                                 R.drawable.ic_stat_shadowsocks)
                         startForeground(1, notificationBuilder.build())
                         //
-                        return@Runnable
+                        return@Thread
                     }
                     tries++
                 }
@@ -276,7 +278,6 @@ class SSRVPNService() : VpnService()
                 catch (ignored: Exception)
                 {
                 }
-
             }
         }).start()
     }

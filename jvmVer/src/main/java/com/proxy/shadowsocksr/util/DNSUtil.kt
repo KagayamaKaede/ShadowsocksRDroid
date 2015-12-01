@@ -76,7 +76,7 @@ class DNSUtil
                     if (!ia.isLoopbackAddress && ia.isLinkLocalAddress)
                     {
                         val addr = ia.hostAddress.toUpperCase()
-                        return InetAddressUtil.isIPv6Address(addr)
+                        return InetAddressUtil().isIPv6Address(addr)
                     }
                 }
             }

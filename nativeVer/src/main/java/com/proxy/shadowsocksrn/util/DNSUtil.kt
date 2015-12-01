@@ -21,7 +21,7 @@ class DNSUtil
                 {
                     when (addrType)
                     {
-                        Type.A -> return (r as ARecord).address.hostAddress
+                        Type.A    -> return (r as ARecord).address.hostAddress
                         Type.AAAA -> return (r as AAAARecord).address.hostAddress
                     }
                 }

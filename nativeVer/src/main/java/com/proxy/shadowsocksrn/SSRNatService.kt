@@ -19,7 +19,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.Inet6Address
 import java.net.InetAddress
-import java.util.*
 
 class SSRNatService : Service()
 {
@@ -179,26 +178,75 @@ class SSRNatService : Service()
 
     private fun startSSRLocal()
     {
-        var aclList: MutableList<String> = arrayListOf()
+        val localConf = ConfFileUtil().SSRLocal.format(
+                connProfile!!.server,
+                connProfile!!.remotePort,
+                connProfile!!.localPort,
+                connProfile!!.passwd,
+                connProfile!!.cryptMethod, 600)
+        //
+        ConfFileUtil().writeToFile(localConf, File("${Consts.baseDir}ssr-local-nat.conf"))
+        //
+        val sb = StringBuilder()
+        sb.append(
+                "${Consts.baseDir}ss-local -V -u -b 127.0.0.1 -t 600 -c ${Consts.baseDir}ssr-local-nat.conf -f ${Consts.baseDir}ssr-local-nat.pid")
+        //
+        var aclArray: Array<String> = arrayOf()
         if (connProfile!!.route != "all")
         {
             when (connProfile!!.route)
             {
-                "bypass-lan"          -> aclList = Arrays.asList(
-                        *resources.getStringArray(R.array.private_route))
-                "bypass-lan-and-list" -> aclList = Arrays.asList(
-                        *resources.getStringArray(R.array.chn_route_full))
+                "bypass-lan"          -> aclArray = resources.getStringArray(R.array.private_route)
+                "bypass-lan-and-list" -> aclArray = resources.getStringArray(R.array.chn_route_full)
             }
+            val s = StringBuilder()
+            aclArray.forEach {
+                s.append(it).append(Consts.lineSept)
+            }
+            ConfFileUtil().writeToFile(s.toString(), File("${Consts.baseDir}acl.list"))
         }
 
-
-
-        localProcess = ProcessBuilder().command("").redirectErrorStream(true).start()
+        localProcess = ProcessBuilder()
+                .command(sb.toString().split(" "))
+                .redirectErrorStream(true)
+                .start()
     }
 
     private fun startTunnel()
     {
-        tunnelProcess = ProcessBuilder().command("").redirectErrorStream(true).start()
+        if (connProfile!!.dnsForward)
+        {
+            val tunnelConf = ConfFileUtil().SSRLocal.format(
+                    connProfile!!.server,
+                    connProfile!!.remotePort, 8153,
+                    connProfile!!.passwd,
+                    connProfile!!.cryptMethod, 10)
+            ConfFileUtil().writeToFile(tunnelConf, File("${Consts.baseDir}ssr-tunnel-nat.conf"))
+
+            val cmd = "${Consts.baseDir}ss-tunnel -u -t 10 -b 127.0.0.1 -L 8.8.8.8:53 -l 8153 -c ${Consts.baseDir}ssr-tunnel-nat.conf"
+
+            tunnelProcess = ProcessBuilder()
+                    .command(cmd.split(" "))
+                    .redirectErrorStream(true)
+                    .start()
+        }
+        else
+        {
+            val tunnelConf = ConfFileUtil().SSRLocal.format(
+                    connProfile!!.server,
+                    connProfile!!.remotePort, 8163,
+                    connProfile!!.passwd,
+                    connProfile!!.cryptMethod, 10)
+            ConfFileUtil().writeToFile(tunnelConf, File("${Consts.baseDir}ssr-tunnel-nat.conf"))
+
+            val cmd = "${Consts.baseDir}ss-tunnel -u -t 10 -b 127.0.0.1 -L 8.8.8.8:53 -l 8153 -c ${Consts.baseDir}ssr-tunnel-nat.conf"
+
+            tunnelProcess = ProcessBuilder()
+                    .command(cmd.split(" "))
+                    .redirectErrorStream(true)
+                    .start()
+        }
+
     }
 
     private fun startDnsDaemon()
@@ -220,7 +268,7 @@ class SSRNatService : Service()
 
         val cmd = Consts.baseDir + "pdnsd -c " + Consts.baseDir + "pdnsd-nat.conf"
 
-        pdnsdProcess = ProcessBuilder().command(cmd.split(" ").toList()).redirectErrorStream(
+        pdnsdProcess = ProcessBuilder().command(cmd.split(" ")).redirectErrorStream(
                 true).start()
     }
 
@@ -230,7 +278,7 @@ class SSRNatService : Service()
         val cmd = "${Consts.baseDir}redsocks -c ${Consts.baseDir}redsocks-nat.conf"
         ConfFileUtil().writeToFile(conf, File("${Consts.baseDir}redsocks-nat.conf"))
         redsocksProcess = ProcessBuilder()
-                .command(cmd.split(" ").toList())
+                .command(cmd.split(" "))
                 .redirectErrorStream(true).start()
     }
 
@@ -351,7 +399,7 @@ class SSRNatService : Service()
                     Intent(this@SSRNatService, MainActivity::class.java), 0)
             val notificationBuilder = NotificationCompat.Builder(this@SSRNatService)
             notificationBuilder
-                    .setWhen(0)//may be can set Long.MAX to shield notification icon display.
+                    .setWhen(0)
                     .setColor(ContextCompat.getColor(this@SSRNatService,
                             R.color.material_accent_500))
                     .setTicker("Nat service started")
