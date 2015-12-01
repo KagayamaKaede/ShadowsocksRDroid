@@ -1,5 +1,7 @@
 # ShadowsocksR Droid
 
+# 最近一周没有时间做开发。
+
 [中文版本介绍](https://github.com/KagayamaKaede/ShadowsocksRDroid/blob/master/Readme.cn.md)
 
 A ShadowsocksR client for Android4.0+(API Level 14+,and support 64bit cpu), written in Kotlin and some Java.
